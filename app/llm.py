@@ -14,7 +14,11 @@ from .config import (
 
 
 def _get_client() -> openai.OpenAI:
-    api_key = os.getenv(OPENROUTER_API_KEY_ENV)
+    # Usa la chiave API direttamente o fallback alla variabile d'ambiente
+    api_key = "***REMOVED***"
+    if not api_key:
+        api_key = os.getenv(OPENROUTER_API_KEY_ENV)
+    
     # Aggiunge header consigliati da OpenRouter per migliorare l'affidabilità
     return openai.OpenAI(
         api_key=api_key,
@@ -59,8 +63,8 @@ def generate_overview(prompt: str, max_tokens: int = 220) -> Tuple[str, dict]:
             "mistralai/mistral-nemo:free",
             "qwen/qwen2.5-32b-instruct:free",
             "meta-llama/llama-3.1-8b-instruct:free",
-            "nousresearch/hermes-3-llama-3.1-70b:free",
-            "openai/gpt-oss-20b:free",
+            "microsoft/phi-3.5-mini:free",
+            "google/gemma-2-9b-it:free",
         ]
         # metti il modello corrente all'inizio e poi gli altri
         if DEFAULT_LLM_MODEL in retry_models:
