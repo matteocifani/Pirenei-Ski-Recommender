@@ -196,7 +196,8 @@ def build_llm_prompt(df_kpis: pd.DataFrame, best_name: str, livello: str, profil
         f"Per la data {target_date} l'app ha selezionato la stazione migliore: {best_name}. "
         f"Scrivi un’overview molto breve (max 2 frasi, 35–45 parole), chiara e utile, che spieghi perché {best_name} è preferibile rispetto alle altre. "
         f"Usa informazioni concrete: km/% piste, meteo (nebbia/vento/sole/pioggia), rischio valanghe e coerenza con livello '{livello}' e profilo '{profilo}'. "
-        f"Non fare elenchi; evita superlativi generici. Se non emergono differenze nette, evidenzia il miglior compromesso.\n"
+        f"Non fare elenchi; evita superlativi generici. Se non emergono differenze nette, evidenzia il miglior compromesso. "
+        f"Sii coerente con i dati della dashboard e spiega chiaramente perché {best_name} è consigliata.\n"
         f"Dati sintetici (usa solo come base, non ripetere letteralmente etichette BEST/ALT):\n{context}"
     )
     return prompt
@@ -204,7 +205,19 @@ def build_llm_prompt(df_kpis: pd.DataFrame, best_name: str, livello: str, profil
 
 def build_festaiolo_prompt(df_rec: pd.DataFrame, best_name: str, livello: str, target_date: datetime.date) -> str:
     # Estrae signal dalle recensioni per tema "festaiolo" per best + 2 alternative
-    parts = []
+    parole_festaiolo = [
+        "divertente", "giovanile", "apres ski", "festa", "fete", "party", "fiesta", "juvenil", 
+        "jovanil", "juventud", "jove", "great atmosphere", "young", "atmosfera", "nightlife", 
+        "bar", "ristoranti", "divertimento", "entertainment", "fun", "lively", "vibrant"
+    ]
+    
+    # Costruisci il prompt con focus sulla stazione consigliata
+    prompt_parts = [
+        f"Per la data {target_date} e livello '{livello}', {best_name} è la stazione consigliata dal sistema.",
+        f"Scrivi un mini-riassunto (max 3 frasi) che spieghi perché {best_name} è consigliata per il profilo festaiolo."
+    ]
+    
+    # Aggiungi contesto dalle recensioni
     try:
         by_station = (
             df_rec.groupby("nome_stazione")[["festaiolo", "ristoranti", "coda", "Stelle"]]
@@ -216,13 +229,21 @@ def build_festaiolo_prompt(df_rec: pd.DataFrame, best_name: str, livello: str, t
                 f"- {r['nome_stazione']}: festaiolo={r.get('festaiolo',0):.2f}, stelle={r.get('Stelle',0):.2f}, ristoranti={r.get('ristoranti',0):.2f}, code={r.get('coda',0):.2f}"
             )
     except Exception:
-        pass
-    context = "\n".join(parts)
-    return (
-        f"Per la data {target_date} e livello '{livello}', fai un mini-riassunto (max 2 frasi) sul tema 'festa' "
-        f"basandoti sui segnali di recensione (indicatori: festaiolo, stelle, ristoranti, code, divertente, giovanile, apres ski, festa, fete, party, fiesta, juvenil, jovanil, juventud, jove, great atmosphere, young) per {best_name} e alternative. "
-        f"Sii pratico e specifico (atmosfera, après-ski, nightlife). Evita elenchi.\nDati sintetici:\n{context}"
+        parts = []
+    
+    context = "\n".join(parts) if parts else ""
+    keywords = ", ".join(parole_festaiolo[:15]) + ", ..."
+    
+    prompt_parts.append(
+        f"Spiega l'atmosfera e la vita notturna di {best_name} e menziona alternative se disponibili. "
+        f"Considera recensioni per divertimento/ristoranti con parole chiave: {keywords}. "
+        f"Sii pratico e specifico (atmosfera, après-ski, nightlife). Evita elenchi e sii coerente con i dati della dashboard."
     )
+    
+    if context:
+        prompt_parts.append(f"Dati recensioni:\n{context}")
+    
+    return " ".join(prompt_parts)
 
 
 def build_familiare_prompt(df_rec: pd.DataFrame, best_name: str, livello: str, target_date: datetime.date) -> str:
@@ -234,7 +255,14 @@ def build_familiare_prompt(df_rec: pd.DataFrame, best_name: str, livello: str, t
         "chaotique", "désorganisé", "waiting", "wait", "crowd", "crowded", "full", "line", "chaos",
         "chaotic", "busy", "overcrowded", "unorganized", "messy"
     ]
-    parts = []
+    
+    # Costruisci il prompt con focus sulla stazione consigliata
+    prompt_parts = [
+        f"Per la data {target_date} e livello '{livello}', {best_name} è la stazione consigliata dal sistema.",
+        f"Scrivi un mini-riassunto (max 3 frasi) che spieghi perché {best_name} è consigliata per il profilo familiare."
+    ]
+    
+    # Aggiungi contesto dalle recensioni
     try:
         by_station = (
             df_rec.groupby("nome_stazione")[["familiare", "sicurezza", "coda", "Stelle"]]
@@ -246,19 +274,24 @@ def build_familiare_prompt(df_rec: pd.DataFrame, best_name: str, livello: str, t
                 f"- {r['nome_stazione']}: family={r.get('familiare',0):.2f}, sicurezza={r.get('sicurezza',0):.2f}, code={r.get('coda',0):.2f}, stelle={r.get('Stelle',0):.2f}"
             )
     except Exception:
-        pass
-    context = "\n".join(parts)
+        parts = []
+    
+    context = "\n".join(parts) if parts else ""
     keywords = ", ".join(parole_code[:10]) + ", ..."
-    return (
-        f"Per la data {target_date} e livello '{livello}', scrivi un mini-riassunto (max 2 frasi) focalizzato su famiglie. "
-        f"Dai priorità a: servizi per bambini, sicurezza percepita, organizzazione (code/affollamento), rapporto qualità/prezzo. "
-        f"Considera indicatori da recensioni per {best_name} e alternative (familiare, sicurezza, coda, stelle). "
-        f"Se utile, intercetta menzioni a code/affollamento con parole chiave tipo: {keywords}. Evita elenchi.\n"
-        f"Dati sintetici:\n{context}"
+    
+    prompt_parts.append(
+        f"Spiega i servizi per famiglie di {best_name} e menziona alternative se disponibili. "
+        f"Considera recensioni per servizi familiari con parole chiave: {keywords}. "
+        f"Evita elenchi, sii conciso e coerente con i dati della dashboard."
     )
+    
+    if context:
+        prompt_parts.append(f"Dati recensioni:\n{context}")
+    
+    return " ".join(prompt_parts)
 
 
-def build_lowcost_prompt(df_rec: pd.DataFrame, best_name: str, livello: str, target_date: datetime.date) -> str:
+def build_lowcost_prompt(df_rec: pd.DataFrame, best_name: str, livello: str, target_date: datetime.date, df_ratio: pd.DataFrame = None) -> str:
     # Panoramica low-cost: segnali recensione su prezzi e rapporto qualità-prezzo
     parole_lowcost = [
         "barato", "económico", "económica", "asequible", "precio", "precios", "oferta", "ofertas", 
@@ -269,9 +302,28 @@ def build_lowcost_prompt(df_rec: pd.DataFrame, best_name: str, livello: str, tar
         "abordable", "prix", "offre", "offres", "cheap", "affordable", "budget", "value", "deal", 
         "discount", "sale", "promotion", "offer", "cost-effective", "good value", "worth it"
     ]
-    parts = []
+    
+    # Costruisci il prompt con focus sulla stazione consigliata
+    prompt_parts = [
+        f"Per la data {target_date} e livello '{livello}', {best_name} è la stazione consigliata dal sistema.",
+        f"Scrivi un mini-riassunto (max 3 frasi) che spieghi perché {best_name} è consigliata per il profilo low-cost."
+    ]
+    
+    # Aggiungi informazioni dal rapporto qualità-prezzo se disponibile
+    if df_ratio is not None and not df_ratio.empty:
+        best_ratio = df_ratio[df_ratio["nome_stazione"] == best_name]
+        if not best_ratio.empty:
+            best_euro_km = best_ratio.iloc[0].get("rapporto_euro_km", 0)
+            best_km = best_ratio.iloc[0].get("kmopen", 0)
+            best_price = best_ratio.iloc[0].get("Prezzo_skipass", 0)
+            
+            prompt_parts.append(
+                f"Usa questi dati: {best_name} ha rapporto €/km={best_euro_km:.2f}, "
+                f"km aperti={best_km:.1f}, prezzo skipass={best_price:.2f}€."
+            )
+    
+    # Aggiungi contesto dalle recensioni
     try:
-        # Usa solo le colonne disponibili
         available_cols = [col for col in ["lowcost", "Stelle"] if col in df_rec.columns]
         if available_cols:
             by_station = (
@@ -287,16 +339,21 @@ def build_lowcost_prompt(df_rec: pd.DataFrame, best_name: str, livello: str, tar
                     part_parts.append(f"stelle={r.get('Stelle',0):.2f}")
                 parts.append(", ".join(part_parts))
     except Exception:
-        pass
-    context = "\n".join(parts)
+        parts = []
+    
+    context = "\n".join(parts) if parts else ""
     keywords = ", ".join(parole_lowcost[:15]) + ", ..."
-    return (
-        f"Per la data {target_date} e livello '{livello}', scrivi un mini-riassunto (max 2 frasi) focalizzato su rapporto qualità-prezzo. "
-        f"Dai priorità a: convenienza economica, offerte disponibili, valore percepito, alternative economiche. "
-        f"Considera indicatori da recensioni per {best_name} e alternative (lowcost, stelle). "
-        f"Se utile, intercetta menzioni a prezzi/offerte con parole chiave tipo: {keywords}. Evita elenchi.\n"
-        f"Dati sintetici:\n{context}"
+    
+    prompt_parts.append(
+        f"Spiega la convenienza di {best_name} e menziona alternative economiche se disponibili. "
+        f"Considera recensioni per prezzi/offerte con parole chiave: {keywords}. "
+        f"Evita elenchi, sii conciso e coerente con i dati della dashboard."
     )
+    
+    if context:
+        prompt_parts.append(f"Dati recensioni:\n{context}")
+    
+    return " ".join(prompt_parts)
 
 
 def build_local_overview(df_kpis: pd.DataFrame, best_name: str) -> str:
@@ -626,7 +683,7 @@ def main():
     # AI overview: disattivata quando livello == "nessuno"
     if livello != "nessuno":
         st.subheader("✨ AI overview")
-        api_key_present = bool(os.getenv("OPENROUTER_API_KEY"))
+        api_key_present = True
         try:
             if not api_key_present:
                 st.info("Configura OPENROUTER_API_KEY per abilitare l'overview AI.")
@@ -636,7 +693,12 @@ def main():
                     output, usage = generate_overview(prompt, max_tokens=160)
                 model_used = usage.get("model") if isinstance(usage, dict) else None
                 if isinstance(usage, dict) and usage.get("error"):
-                    st.error(f"Errore modello: {usage['error']}")
+                    error_msg = usage['error']
+                    if "401" in str(error_msg) or "User not found" in str(error_msg):
+                        st.warning("🔑 Chiave API OpenRouter non valida o scaduta. Aggiorna la chiave per abilitare l'AI overview.")
+                        st.info("💡 Vai su https://openrouter.ai/ per generare una nuova chiave API gratuita.")
+                    else:
+                        st.error(f"Errore modello: {error_msg}")
                     if model_used:
                         st.caption(f"Modello: {model_used}")
                 elif output:
@@ -1553,7 +1615,7 @@ def main():
         # 3) AI Overview – Low-Cost
         try:
             st.subheader("🤖 AI Overview – Low-Cost")
-            prompt_lowcost = build_lowcost_prompt(df_filtered_rec, best_name, livello, data_sel)
+            prompt_lowcost = build_lowcost_prompt(df_filtered_rec, best_name, livello, data_sel, df_ratio)
             out, usage = generate_overview(prompt_lowcost, max_tokens=140)
             st.write(out or "Nessun contenuto disponibile ora.")
             if isinstance(usage, dict) and usage.get("model"):
