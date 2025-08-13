@@ -9,6 +9,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import pydeck as pdk
 import streamlit as st
+from sklearn.linear_model import LinearRegression
 
 from app.data_loader import load_datasets
 from app.prediction import compute_indices, get_historical_data_for_date
@@ -16,64 +17,397 @@ from app.scoring import apply_profile_adjustment, build_ranking
 from app.llm import generate_overview
 from app.config import SUPPORTED_PROFILES
 
-
-st.set_page_config(layout="wide", page_title="🎿 Sci su misura v2 - Pirenei", page_icon="🎿")
-
-# Minimal modern styling
-st.markdown(
-    """
-    <style>
-      .main {
-        background: radial-gradient(1200px 600px at 10% 10%, rgba(0, 140, 255, 0.08), transparent 60%),
-                    radial-gradient(1000px 500px at 90% 20%, rgba(0, 255, 200, 0.06), transparent 60%),
-                    linear-gradient(180deg, #0b1020, #0f1426 40%, #0b1020);
-        color: #e6efff;
-      }
-      .glass-wrap { display: flex; gap: 16px; }
-      .glass-card {
-        width: 100%;
-        background: rgba(255, 255, 255, 0.06);
-        border: 1px solid rgba(255, 255, 255, 0.12);
-        border-radius: 16px;
-        padding: 14px 16px;
-        position: relative;
-        overflow: hidden;
-      }
-      .glass-card:before {
-        content: "";
-        position: absolute; inset: -2px;
-        background: radial-gradient(600px 200px at 20% -20%, rgba(0,255,200,0.12), transparent 60%),
-                    radial-gradient(500px 200px at 120% 120%, rgba(0,170,255,0.12), transparent 60%);
-        filter: blur(20px);
-        z-index: 0;
-      }
-      .glass-card .content { position: relative; z-index: 1; }
-      .kpi-card { min-height: 120px; display: flex; }
-      .hero {
-        background: linear-gradient(135deg, rgba(0, 170, 255, 0.22), rgba(0, 255, 170, 0.12));
-        border: 1px solid rgba(255, 255, 255, 0.16);
-        box-shadow: 0 10px 40px rgba(0, 200, 255, 0.15), 0 10px 40px rgba(0, 255, 160, 0.12);
-        border-radius: 18px;
-        padding: 18px 20px;
-      }
-      .kpi {font-size: 24px; font-weight: 700;}
-      .subtle {color:#a9b8d0; font-size:13px}
-      .good {color:#6ef7c8}
-      .warn {color:#ffd27e}
-      .bad {color:#ff7e7e}
-      /* podium styles */
-      .podium {display:flex; align-items:flex-end; gap:12px; margin: 8px 0 18px}
-      .podium .col {flex:1; text-align:center}
-      .podium .step {background: rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.12); border-radius:10px; padding:10px 8px}
-      .podium .s1 {height: 180px}
-      .podium .s2 {height: 120px}
-      .podium .s3 {height: 120px}
-      .podium .name {font-weight:700}
-      .podium .medal {font-size: 22px; opacity:0.9}
-    </style>
-    """,
-    unsafe_allow_html=True,
+# Modern UI Configuration
+st.set_page_config(
+    page_title="🏔️ Ski Resort Recommender",
+    page_icon="🏔️",
+    layout="wide",
+    initial_sidebar_state="expanded"
 )
+
+# Modern Design System CSS
+st.markdown("""
+<style>
+/* Modern Design System - Light/Dark Mode Compatible */
+:root {
+    /* Color Palette */
+    --primary: #007AFF;
+    --primary-light: #5AC8FA;
+    --primary-dark: #0051D5;
+    --secondary: #5856D6;
+    --accent: #FF2D92;
+    --success: #34C759;
+    --warning: #FF9500;
+    --error: #FF3B30;
+    
+    /* Neutral Colors */
+    --bg-primary: #FFFFFF;
+    --bg-secondary: #F2F2F7;
+    --bg-tertiary: #E5E5EA;
+    --text-primary: #000000;
+    --text-secondary: #8E8E93;
+    --text-tertiary: #C7C7CC;
+    
+    /* Borders & Shadows */
+    --border-light: #E5E5EA;
+    --border-medium: #C7C7CC;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.1);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.1);
+    --shadow-lg: 0 8px 24px rgba(0,0,0,0.12);
+    
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, var(--primary), var(--primary-light));
+    --gradient-secondary: linear-gradient(135deg, var(--secondary), var(--accent));
+    --gradient-success: linear-gradient(135deg, var(--success), #30D158);
+    --gradient-warning: linear-gradient(135deg, var(--warning), #FF6B35);
+    
+    /* Glow Effects */
+    --glow-primary: 0 0 20px rgba(0, 122, 255, 0.3);
+    --glow-secondary: 0 0 20px rgba(88, 86, 214, 0.3);
+    --glow-success: 0 0 20px rgba(52, 199, 89, 0.3);
+    --glow-warning: 0 0 20px rgba(255, 149, 0, 0.3);
+}
+
+/* Dark Mode Overrides */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg-primary: #000000;
+        --bg-secondary: #1C1C1E;
+        --bg-tertiary: #2C2C2E;
+        --text-primary: #FFFFFF;
+        --text-secondary: #8E8E93;
+        --text-tertiary: #48484A;
+        --border-light: #38383A;
+        --border-medium: #48484A;
+    }
+}
+
+/* Global Styles */
+.main {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+/* Modern Cards */
+.modern-card {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-light);
+    border-radius: 16px;
+    padding: 24px;
+    margin: 16px 0;
+    box-shadow: var(--shadow-sm);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(20px);
+}
+
+.modern-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--primary);
+}
+
+/* Hero Section */
+.hero-section {
+    background: var(--gradient-primary);
+    border-radius: 20px;
+    padding: 32px;
+    margin: 24px 0;
+    text-align: center;
+    color: white;
+    box-shadow: var(--glow-primary);
+}
+
+.hero-title {
+    font-size: 3rem;
+    font-weight: 800;
+    margin: 0 0 8px 0;
+    letter-spacing: -0.02em;
+}
+
+.hero-subtitle {
+    font-size: 1.25rem;
+    font-weight: 500;
+    opacity: 0.9;
+    margin: 0;
+}
+
+/* KPI Cards */
+.kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+    margin: 24px 0;
+}
+
+.kpi-card {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-light);
+    border-radius: 16px;
+    padding: 24px;
+    text-align: center;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--gradient-primary);
+}
+
+.kpi-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--primary);
+}
+
+.kpi-value {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: var(--primary);
+    margin: 16px 0 8px 0;
+    letter-spacing: -0.02em;
+}
+
+.kpi-label {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* Modern Headers */
+.modern-header {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin: 2rem 0 1rem 0;
+    letter-spacing: -0.02em;
+}
+
+.modern-subheader {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 1.5rem 0 1rem 0;
+    letter-spacing: -0.01em;
+}
+
+.modern-section-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin: 1rem 0 0.5rem 0;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* AI Overview Section */
+.ai-overview-section {
+    background: linear-gradient(135deg, rgba(0, 122, 255, 0.05), rgba(88, 86, 214, 0.05));
+    border: 1px solid rgba(0, 122, 255, 0.1);
+    border-radius: 20px;
+    padding: 28px;
+    margin: 24px 0;
+    position: relative;
+}
+
+.ai-overview-section::before {
+    content: '✨';
+    position: absolute;
+    top: -12px;
+    left: 24px;
+    background: var(--bg-primary);
+    padding: 0 12px;
+    font-size: 1.2rem;
+}
+
+.ai-overview-content {
+    color: var(--text-primary);
+    line-height: 1.6;
+    font-size: 1.1rem;
+}
+
+/* Modern Buttons */
+.stButton > button {
+    background: var(--gradient-primary);
+    border: none;
+    border-radius: 12px;
+    color: white;
+    font-weight: 600;
+    padding: 12px 24px;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    box-shadow: var(--shadow-sm);
+}
+
+.stButton > button:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg), var(--glow-primary);
+}
+
+/* Modern Tables */
+.modern-table {
+    background: var(--bg-primary);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-light);
+}
+
+.modern-table th {
+    background: var(--gradient-primary);
+    color: white;
+    font-weight: 600;
+    padding: 16px;
+    text-align: left;
+}
+
+.modern-table td {
+    padding: 16px;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.modern-table tr:hover {
+    background: rgba(0, 122, 255, 0.05);
+}
+
+/* Podium */
+.podium-container {
+    display: flex;
+    justify-content: center;
+    align-items: end;
+    gap: 24px;
+    margin: 32px 0;
+}
+
+.podium-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.podium-1 {
+    background: var(--gradient-warning);
+    height: 120px;
+    width: 120px;
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    box-shadow: var(--glow-warning);
+}
+
+.podium-2 {
+    background: var(--gradient-secondary);
+    height: 100px;
+    width: 100px;
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    box-shadow: var(--glow-secondary);
+}
+
+.podium-3 {
+    background: var(--gradient-success);
+    height: 80px;
+    width: 80px;
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    box-shadow: var(--glow-success);
+}
+
+.podium-medal {
+    font-size: 1.5rem;
+    margin-bottom: 8px;
+}
+
+.podium-name {
+    font-weight: 700;
+    font-size: 0.9rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .hero-title {
+        font-size: 2rem;
+    }
+    
+    .kpi-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .podium-container {
+        flex-direction: column;
+        align-items: center;
+    }
+}
+
+/* Streamlit Element Overrides */
+.stSelectbox > div > div {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+}
+
+.stDateInput > div > div {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+}
+
+/* Plotly Chart Styling */
+.js-plotly-plot .plotly .main-svg {
+    border-radius: 12px;
+}
+
+/* Success/Info/Warning/Error Messages */
+.stSuccess {
+    background: rgba(52, 199, 89, 0.1);
+    border: 1px solid rgba(52, 199, 89, 0.2);
+    border-radius: 12px;
+    color: var(--success);
+}
+
+.stInfo {
+    background: rgba(0, 122, 255, 0.1);
+    border: 1px solid rgba(0, 122, 255, 0.2);
+    border-radius: 12px;
+    color: var(--primary);
+}
+
+.stWarning {
+    background: rgba(255, 149, 0, 0.1);
+    border: 1px solid rgba(255, 149, 0, 0.2);
+    border-radius: 12px;
+    color: var(--warning);
+}
+
+.stError {
+    background: rgba(255, 59, 48, 0.1);
+    border: 1px solid rgba(255, 59, 48, 0.2);
+    border-radius: 12px;
+    color: var(--error);
+}
+</style>
+""", unsafe_allow_html=True)
 
 
 def aggregate_station_kpis(df: pd.DataFrame) -> pd.DataFrame:
@@ -157,9 +491,62 @@ def ensure_lat_lon(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+def create_speedometer(value: float, reference: float, title: str, unit: str = ""):
+    """Create a modern speedometer chart with Plotly."""
+    # Normalize values to 0-100 range
+    value_pct = min(100, max(0, value * 100))
+    reference_pct = min(100, max(0, reference * 100))
+    
+    # Create gauge chart
+    fig = go.Figure(go.Indicator(
+        mode="gauge+number+delta",
+        value=value_pct,
+        domain={'x': [0, 1], 'y': [0, 1]},
+        title={'text': title, 'font': {'size': 16}},
+        delta={'reference': reference_pct, 'increasing': {'color': "#FF3B30"}, 'decreasing': {'color': "#34C759"}},
+        gauge={
+            'axis': {'range': [None, 100], 'tickwidth': 1, 'tickcolor': "darkblue"},
+            'bar': {'color': "#007AFF"},
+            'bgcolor': "white",
+            'borderwidth': 2,
+            'bordercolor': "gray",
+            'steps': [
+                {'range': [0, 25], 'color': '#FF3B30'},
+                {'range': [25, 50], 'color': '#FF9500'},
+                {'range': [50, 75], 'color': '#FFCC02'},
+                {'range': [75, 100], 'color': '#34C759'}
+            ],
+            'threshold': {
+                'line': {'color': "red", 'width': 4},
+                'thickness': 0.75,
+                'value': 90
+            }
+        }
+    ))
+    
+    # Update layout for modern look
+    fig.update_layout(
+        height=300,
+        margin=dict(l=10, r=10, t=40, b=60),
+        font={'color': "#000000"},
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)'
+    )
+    
+    return fig
+
+def format_date_for_display(date_obj: datetime.date) -> str:
+    """Formatta una data nel formato 'XX mese 20XX'"""
+    month_names = {
+        1: "gennaio", 2: "febbraio", 3: "marzo", 4: "aprile", 5: "maggio", 6: "giugno",
+        7: "luglio", 8: "agosto", 9: "settembre", 10: "ottobre", 11: "novembre", 12: "dicembre"
+    }
+    return f"{date_obj.day} {month_names[date_obj.month]} {date_obj.year}"
+
 def build_llm_prompt(df_kpis: pd.DataFrame, best_name: str, livello: str, profilo: str, target_date: datetime.date) -> str:
     # Trova riga best
     best = df_kpis[df_kpis["nome_stazione"] == best_name].iloc[0].to_dict() if not df_kpis.empty else {}
+    
     # Seleziona 2 alternative principali (per km aperti stimati)
     others = (
         df_kpis[df_kpis["nome_stazione"] != best_name]
@@ -168,20 +555,24 @@ def build_llm_prompt(df_kpis: pd.DataFrame, best_name: str, livello: str, profil
         .to_dict(orient="records")
         if "km_open_est" in df_kpis.columns else []
     )
+    
     def fmt(x, pct=False):
         try:
             return f"{float(x)*100:.0f}%" if pct else f"{float(x):.0f}"
         except Exception:
             return "-"
+    
     # facts per best
     b_km = fmt(best.get("km_open_est", 0))
     b_pct = fmt(best.get("pct_open", 0), pct=True)
     b_neb = fmt(best.get("nebbia", 0), pct=True)
     b_ven = fmt(best.get("vento", 0), pct=True)
     b_av  = f"{float(best.get('avalanche', 0)):.1f}" if best.get('avalanche') is not None else "-"
+    
     lines = [
         f"BEST {best_name}: km aperti {b_km}, % aperte {b_pct}, nebbia {b_neb}, vento {b_ven}, valanghe {b_av}"
     ]
+    
     for o in others:
         o_km = fmt(o.get("km_open_est", 0))
         o_pct = fmt(o.get("pct_open", 0), pct=True)
@@ -191,33 +582,24 @@ def build_llm_prompt(df_kpis: pd.DataFrame, best_name: str, livello: str, profil
         lines.append(
             f"ALT {o['nome_stazione']}: km {o_km}, % {o_pct}, nebbia {o_neb}, vento {o_ven}, valanghe {o_av}"
         )
+    
     context = "\n".join(lines)
+    
+    # Formatta la data nel formato richiesto
+    formatted_date = format_date_for_display(target_date)
+    
     prompt = (
-        f"Per la data {target_date} l'app ha selezionato la stazione migliore: {best_name}. "
-        f"Scrivi un’overview molto breve (max 2 frasi, 35–45 parole), chiara e utile, che spieghi perché {best_name} è preferibile rispetto alle altre. "
+        f"Per la data {formatted_date} l'app ha selezionato la stazione migliore: {best_name}. "
+        f"Scrivi un'overview molto breve (max 2 frasi, 35–45 parole), chiara e utile, che spieghi perché {best_name} è preferibile rispetto alle altre. "
         f"Usa informazioni concrete: km/% piste, meteo (nebbia/vento/sole/pioggia), rischio valanghe e coerenza con livello '{livello}' e profilo '{profilo}'. "
-        f"Non fare elenchi; evita superlativi generici. Se non emergono differenze nette, evidenzia il miglior compromesso. "
-        f"Sii coerente con i dati della dashboard e spiega chiaramente perché {best_name} è consigliata.\n"
+        f"Non fare elenchi; evita superlativi generici. Se non emergono differenze nette, evidenzia il miglior compromesso.\n"
         f"Dati sintetici (usa solo come base, non ripetere letteralmente etichette BEST/ALT):\n{context}"
     )
     return prompt
 
-
 def build_festaiolo_prompt(df_rec: pd.DataFrame, best_name: str, livello: str, target_date: datetime.date) -> str:
     # Estrae signal dalle recensioni per tema "festaiolo" per best + 2 alternative
-    parole_festaiolo = [
-        "divertente", "giovanile", "apres ski", "festa", "fete", "party", "fiesta", "juvenil", 
-        "jovanil", "juventud", "jove", "great atmosphere", "young", "atmosfera", "nightlife", 
-        "bar", "ristoranti", "divertimento", "entertainment", "fun", "lively", "vibrant"
-    ]
-    
-    # Costruisci il prompt con focus sulla stazione consigliata
-    prompt_parts = [
-        f"Per la data {target_date} e livello '{livello}', {best_name} è la stazione consigliata dal sistema.",
-        f"Scrivi un mini-riassunto (max 3 frasi) che spieghi perché {best_name} è consigliata per il profilo festaiolo."
-    ]
-    
-    # Aggiungi contesto dalle recensioni
+    parts = []
     try:
         by_station = (
             df_rec.groupby("nome_stazione")[["festaiolo", "ristoranti", "coda", "Stelle"]]
@@ -229,22 +611,18 @@ def build_festaiolo_prompt(df_rec: pd.DataFrame, best_name: str, livello: str, t
                 f"- {r['nome_stazione']}: festaiolo={r.get('festaiolo',0):.2f}, stelle={r.get('Stelle',0):.2f}, ristoranti={r.get('ristoranti',0):.2f}, code={r.get('coda',0):.2f}"
             )
     except Exception:
-        parts = []
+        pass
     
-    context = "\n".join(parts) if parts else ""
-    keywords = ", ".join(parole_festaiolo[:15]) + ", ..."
+    context = "\n".join(parts)
     
-    prompt_parts.append(
-        f"Spiega l'atmosfera e la vita notturna di {best_name} e menziona alternative se disponibili. "
-        f"Considera recensioni per divertimento/ristoranti con parole chiave: {keywords}. "
-        f"Sii pratico e specifico (atmosfera, après-ski, nightlife). Evita elenchi e sii coerente con i dati della dashboard."
+    # Formatta la data nel formato richiesto
+    formatted_date = format_date_for_display(target_date)
+    
+    return (
+        f"Per la data {formatted_date} e livello '{livello}', fai un mini-riassunto (max 2 frasi) sul tema 'festa' "
+        f"basandoti sui segnali di recensione (indicatori: festaiolo, stelle, ristoranti, code, divertente, giovanile, apres ski, festa, fete, party, fiesta, juvenil, jovanil, juventud, jove, great atmosphere, young) per {best_name} e alternative. "
+        f"Sii pratico e specifico (atmosfera, après-ski, nightlife). Evita elenchi.\nDati sintetici:\n{context}"
     )
-    
-    if context:
-        prompt_parts.append(f"Dati recensioni:\n{context}")
-    
-    return " ".join(prompt_parts)
-
 
 def build_familiare_prompt(df_rec: pd.DataFrame, best_name: str, livello: str, target_date: datetime.date) -> str:
     # Panoramica family-friendly: segnali recensione e code
@@ -256,13 +634,7 @@ def build_familiare_prompt(df_rec: pd.DataFrame, best_name: str, livello: str, t
         "chaotic", "busy", "overcrowded", "unorganized", "messy"
     ]
     
-    # Costruisci il prompt con focus sulla stazione consigliata
-    prompt_parts = [
-        f"Per la data {target_date} e livello '{livello}', {best_name} è la stazione consigliata dal sistema.",
-        f"Scrivi un mini-riassunto (max 3 frasi) che spieghi perché {best_name} è consigliata per il profilo familiare."
-    ]
-    
-    # Aggiungi contesto dalle recensioni
+    parts = []
     try:
         by_station = (
             df_rec.groupby("nome_stazione")[["familiare", "sicurezza", "coda", "Stelle"]]
@@ -274,24 +646,23 @@ def build_familiare_prompt(df_rec: pd.DataFrame, best_name: str, livello: str, t
                 f"- {r['nome_stazione']}: family={r.get('familiare',0):.2f}, sicurezza={r.get('sicurezza',0):.2f}, code={r.get('coda',0):.2f}, stelle={r.get('Stelle',0):.2f}"
             )
     except Exception:
-        parts = []
+        pass
     
-    context = "\n".join(parts) if parts else ""
+    context = "\n".join(parts)
     keywords = ", ".join(parole_code[:10]) + ", ..."
     
-    prompt_parts.append(
-        f"Spiega i servizi per famiglie di {best_name} e menziona alternative se disponibili. "
-        f"Considera recensioni per servizi familiari con parole chiave: {keywords}. "
-        f"Evita elenchi, sii conciso e coerente con i dati della dashboard."
+    # Formatta la data nel formato richiesto
+    formatted_date = format_date_for_display(target_date)
+    
+    return (
+        f"Per la data {formatted_date} e livello '{livello}', scrivi un mini-riassunto (max 2 frasi) focalizzato su famiglie. "
+        f"Dai priorità a: servizi per bambini, sicurezza percepita, organizzazione (code/affollamento), rapporto qualità/prezzo. "
+        f"Considera indicatori da recensioni per {best_name} e alternative (familiare, sicurezza, coda, stelle). "
+        f"Se utile, intercetta menzioni a code/affollamento con parole chiave tipo: {keywords}. Evita elenchi.\n"
+        f"Dati sintetici:\n{context}"
     )
-    
-    if context:
-        prompt_parts.append(f"Dati recensioni:\n{context}")
-    
-    return " ".join(prompt_parts)
 
-
-def build_lowcost_prompt(df_rec: pd.DataFrame, best_name: str, livello: str, target_date: datetime.date, df_ratio: pd.DataFrame = None) -> str:
+def build_lowcost_prompt(df_rec: pd.DataFrame, best_name: str, livello: str, target_date: datetime.date) -> str:
     # Panoramica low-cost: segnali recensione su prezzi e rapporto qualità-prezzo
     parole_lowcost = [
         "barato", "económico", "económica", "asequible", "precio", "precios", "oferta", "ofertas", 
@@ -303,27 +674,9 @@ def build_lowcost_prompt(df_rec: pd.DataFrame, best_name: str, livello: str, tar
         "discount", "sale", "promotion", "offer", "cost-effective", "good value", "worth it"
     ]
     
-    # Costruisci il prompt con focus sulla stazione consigliata
-    prompt_parts = [
-        f"Per la data {target_date} e livello '{livello}', {best_name} è la stazione consigliata dal sistema.",
-        f"Scrivi un mini-riassunto (max 3 frasi) che spieghi perché {best_name} è consigliata per il profilo low-cost."
-    ]
-    
-    # Aggiungi informazioni dal rapporto qualità-prezzo se disponibile
-    if df_ratio is not None and not df_ratio.empty:
-        best_ratio = df_ratio[df_ratio["nome_stazione"] == best_name]
-        if not best_ratio.empty:
-            best_euro_km = best_ratio.iloc[0].get("rapporto_euro_km", 0)
-            best_km = best_ratio.iloc[0].get("kmopen", 0)
-            best_price = best_ratio.iloc[0].get("Prezzo_skipass", 0)
-            
-            prompt_parts.append(
-                f"Usa questi dati: {best_name} ha rapporto €/km={best_euro_km:.2f}, "
-                f"km aperti={best_km:.1f}, prezzo skipass={best_price:.2f}€."
-            )
-    
-    # Aggiungi contesto dalle recensioni
+    parts = []
     try:
+        # Usa solo le colonne disponibili
         available_cols = [col for col in ["lowcost", "Stelle"] if col in df_rec.columns]
         if available_cols:
             by_station = (
@@ -339,21 +692,21 @@ def build_lowcost_prompt(df_rec: pd.DataFrame, best_name: str, livello: str, tar
                     part_parts.append(f"stelle={r.get('Stelle',0):.2f}")
                 parts.append(", ".join(part_parts))
     except Exception:
-        parts = []
+        pass
     
-    context = "\n".join(parts) if parts else ""
+    context = "\n".join(parts)
     keywords = ", ".join(parole_lowcost[:15]) + ", ..."
     
-    prompt_parts.append(
-        f"Spiega la convenienza di {best_name} e menziona alternative economiche se disponibili. "
-        f"Considera recensioni per prezzi/offerte con parole chiave: {keywords}. "
-        f"Evita elenchi, sii conciso e coerente con i dati della dashboard."
+    # Formatta la data nel formato richiesto
+    formatted_date = format_date_for_display(target_date)
+    
+    return (
+        f"Per la data {formatted_date} e livello '{livello}', scrivi un mini-riassunto (max 2 frasi) focalizzato su rapporto qualità-prezzo. "
+        f"Dai priorità a: convenienza economica, offerte disponibili, valore percepito, alternative economiche. "
+        f"Considera indicatori da recensioni per {best_name} e alternative (lowcost, stelle). "
+        f"Se utile, intercetta menzioni a prezzi/offerte con parole chiave tipo: {keywords}. Evita elenchi.\n"
+        f"Dati sintetici:\n{context}"
     )
-    
-    if context:
-        prompt_parts.append(f"Dati recensioni:\n{context}")
-    
-    return " ".join(prompt_parts)
 
 
 def build_local_overview(df_kpis: pd.DataFrame, best_name: str) -> str:
@@ -380,1308 +733,737 @@ def _llm_overview_cached(prompt: str, max_tokens: int) -> tuple[str, dict]:
 
 
 def render_map_with_best(df_coords: pd.DataFrame, best_name: str, tooltip_km: bool = False):
-    # Prepara DF con coordinate di tutte le stazioni
-    base_coords = df_coords.copy()
-    def _norm(s: str) -> str:
-        try:
-            return re.sub(r"\s+", " ", str(s).strip().lower())
-        except Exception:
-            return str(s)
-    has_latlon = any(c.lower() in ("lat","latitude","latitudine") for c in base_coords.columns) and \
-                 any(c.lower() in ("lon","lng","long","longitude","longitudine") for c in base_coords.columns)
-    if not has_latlon:
-        # prova a recuperare da df_meteo
-        try:
-            _, _, df_meteo_all, _ = load_datasets()
-            if df_meteo_all is not None and not df_meteo_all.empty:
-                meteo_all = ensure_lat_lon(df_meteo_all.copy())
-                meteo_coords = meteo_all[["nome_stazione", "lat", "lon"]].drop_duplicates()
-                base_coords = base_coords.merge(meteo_coords, on="nome_stazione", how="left")
-        except Exception:
-            pass
-    base_coords = ensure_lat_lon(
-        base_coords[["nome_stazione"] + [
-            c for c in base_coords.columns
-            if c.lower() in ("lat","latitude","latitudine","lon","lng","long","longitude","longitudine")
-        ]].drop_duplicates()
-    )
-    map_data = base_coords.dropna(subset=["lat", "lon"]).copy()
-    if map_data.empty:
-        st.info("Coordinate non disponibili per la mappa.")
-        return
-    map_data["_norm_name"] = map_data["nome_stazione"].apply(_norm)
-    best_norm = _norm(best_name)
-    # Trova coords esatte per la consigliata direttamente dal meteo come fallback forte
-    best_pt = pd.DataFrame()
-    try:
-        _, _, df_meteo_all, _ = load_datasets()
-        if df_meteo_all is not None and not df_meteo_all.empty:
-            meteo_all = ensure_lat_lon(df_meteo_all.copy())
-            meteo_all["_norm_name"] = meteo_all["nome_stazione"].apply(_norm)
-            match_exact = meteo_all[meteo_all["_norm_name"] == best_norm]
-            if not match_exact.empty:
-                best_pt = match_exact[["nome_stazione","lat","lon"]].drop_duplicates().head(1).copy()
-            else:
-                token = best_norm.split(" ")[0] if best_norm else ""
-                if token:
-                    match_partial = meteo_all[meteo_all["_norm_name"].str.contains(re.escape(token), na=False)]
-                    if not match_partial.empty:
-                        best_pt = match_partial[["nome_stazione","lat","lon"]].drop_duplicates().head(1).copy()
-    except Exception:
-        pass
-    if best_pt.empty:
-        # fallback su mappa aggregata
-        cand = map_data[map_data["_norm_name"] == best_norm]
-        if cand.empty and best_norm:
-            token = best_norm.split(" ")[0]
-            cand = map_data[map_data["_norm_name"].str.contains(re.escape(token), na=False)]
-        if not cand.empty:
-            best_pt = cand[["nome_stazione","lat","lon"]].drop_duplicates().head(1).copy()
-    # layer base e layer corona
-    center_lat = map_data["lat"].mean()
-    center_lon = map_data["lon"].mean()
-    view_state = pdk.ViewState(latitude=center_lat, longitude=center_lon, zoom=7, pitch=0)
+    """Render a modern map with the best station highlighted."""
+    if df_coords.empty or "lat" not in df_coords.columns or "lon" not in df_coords.columns:
+        return None
+    
+    # Prepare map data
+    map_data = df_coords.copy()
+    map_data["highlight"] = (map_data["nome_stazione"] == best_name).astype(int)
+    map_data["radius"] = np.where(map_data["highlight"] == 1, 15000, 8000)
+    
+    # Create layers
     layer_all = pdk.Layer(
         "ScatterplotLayer",
-        data=map_data,
+        data=map_data[map_data["highlight"] == 0],
         get_position='[lon, lat]',
-        get_radius=8000,
-        get_fill_color='[255, 0, 0, 160]',
+        get_radius='radius',
+        get_fill_color='[100, 100, 100, 180]',
         pickable=True,
-        auto_highlight=True,
     )
+    
     layers = [layer_all]
+    
+    # Highlight best station
+    best_pt = map_data[map_data["highlight"] == 1]
     if not best_pt.empty:
-        # Pallino verde per l'impianto consigliato
+        # Pallino verde più grande per l'impianto consigliato
         best_layer = pdk.Layer(
             "ScatterplotLayer",
             data=best_pt,
             get_position='[lon, lat]',
-            get_radius=12000,
-            get_fill_color='[0, 200, 0, 220]',
+            get_radius=15000,
+            get_fill_color='[0, 200, 0, 220]',  # Verde
             pickable=False,
         )
-        layers.append(best_layer)
-    deck = pdk.Deck(layers=layers, initial_view_state=view_state, tooltip={"text": "{nome_stazione}"})
-    st.pydeck_chart(deck, use_container_width=True)
+        
+        # Corona sopra il pallino verde
+        crown_layer = pdk.Layer(
+            "TextLayer",
+            data=best_pt,
+            get_position='[lon, lat]',
+            get_text='👑',
+            get_size=35,
+            get_color='[255, 215, 0, 255]',
+            get_angle=0,
+            pickable=False,
+        )
+        
+        layers.extend([best_layer, crown_layer])
+    
+    # View state
+    view_state = pdk.ViewState(
+        longitude=map_data["lon"].mean(),
+        latitude=map_data["lat"].mean(),
+        zoom=8,
+        pitch=0,
+    )
+    
+    # Create deck
+    deck = pdk.Deck(
+        layers=layers,
+        initial_view_state=view_state,
+        tooltip={"text": "{nome_stazione}\nKm aperti: {km_open_est}" if tooltip_km else "{nome_stazione}"}
+    )
+    
+    return deck
 
 
 def main():
-    st.title("🏔️ Pirenei Ski Recommender v2")
-
-    with st.spinner("Caricamento dati..."):
-        df_infonieve, df_valanghe, df_meteo, df_recensioni = load_datasets()
-
-    if df_infonieve is None:
-        st.error("Impossibile caricare i dati. Verifica i CSV.")
+    st.markdown('<h1 class="modern-header">🏔️ Ski Resort Recommender</h1>', unsafe_allow_html=True)
+    st.markdown('<p class="modern-section-title">Trova la stazione sciistica perfetta per il tuo weekend</p>', unsafe_allow_html=True)
+    
+    # Sidebar
+    with st.sidebar:
+        st.markdown('<h3 class="modern-subheader">⚙️ Configurazione</h3>', unsafe_allow_html=True)
+        
+        # Date selector
+        data_sel = st.date_input(
+            "📅 Data target",
+            value=datetime.date.today(),
+            min_value=datetime.date(2024, 1, 1),
+            max_value=datetime.date(2025, 12, 31)
+        )
+        
+        # Level selector
+        livello = st.selectbox(
+            "🎯 Livello di difficoltà",
+            options=["nessuno", "base", "medio", "esperto"],
+            index=0
+        )
+        
+        # Profile selector
+        profilo = st.selectbox(
+            "👥 Profilo utente",
+            options=["nessuno"] + list(SUPPORTED_PROFILES),
+            index=0
+        )
+        
+        st.markdown('<div class="modern-card">', unsafe_allow_html=True)
+        st.markdown("**💡 Suggerimento:** Seleziona un livello e un profilo per ricevere raccomandazioni personalizzate basate su AI.")
+        st.markdown('</div>', unsafe_allow_html=True)
+    
+    # Load data
+    try:
+        df_meteo, df_infonieve, df_recensioni, df_valanghe = load_datasets()
+    except Exception as e:
+        st.error(f"Errore nel caricamento dei dati: {e}")
         return
-
-    st.sidebar.header("Filtri")
-    min_date = df_infonieve["date"].min().date()
-    default_date = datetime.date(2025, 12, 17)
-    data_sel = st.sidebar.date_input("Data", value=default_date, min_value=min_date, max_value=datetime.date(2030, 12, 31))
-    livello = st.sidebar.selectbox("Livello", ["nessuno", "base", "medio", "esperto"], index=3)
-    profilo = st.sidebar.selectbox("Profilo (opzionale)", SUPPORTED_PROFILES, index=0)
-    profilo_norm = str(profilo).strip().lower()
-
-    # Considera sempre tutte le stazioni
-    df_filtered_infonieve = df_infonieve.copy()
-    df_filtered_val = df_valanghe.copy()
-    df_filtered_meteo = df_meteo.copy()
-    df_filtered_rec = df_recensioni.copy()
-
-    df_with_indices = compute_indices(
-        df_filtered_infonieve, df_filtered_val, df_filtered_meteo, df_filtered_rec, data_sel
-    )
-
-    if df_with_indices.empty:
-        st.warning("La stazione non è aperta in questa data. Prova a scegliere un altro giorno per divertirti sulla neve!")
-        # Tabella media apertura/chiusura per impianto (sugli anni disponibili) con logica 5 chiusi/prima e 5 aperti/dopo
+    
+    # Compute indices
+    try:
+        df_kpis = compute_indices(df_meteo, df_infonieve, df_recensioni, df_valanghe, data_sel)
+    except Exception as e:
+        st.error(f"Errore nel calcolo degli indici: {e}")
+        return
+    
+    # Apply profile adjustment
+    if profilo != "nessuno":
+        df_kpis = apply_profile_adjustment(df_kpis, profilo)
+    
+    # Build ranking
+    df_ranking = build_ranking(df_kpis, livello, profilo)
+    
+    if df_ranking.empty:
+        st.warning("Nessuna stazione disponibile per i criteri selezionati.")
+        return
+    
+    # Get best station
+    best_name = df_ranking.iloc[0]["nome_stazione"]
+    best_row = df_kpis[df_kpis["nome_stazione"] == best_name].iloc[0]
+    
+    # Hero Section - Stazione consigliata
+    if not (livello == "nessuno" and profilo == "nessuno"):
+        st.markdown(
+            f"""
+            <div class="hero-section">
+                <h1 class="hero-title">🎯 {best_name}</h1>
+                <p class="hero-subtitle">Stazione consigliata per il tuo profilo</p>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+    
+    # KPI Grid
+    if not (livello == "nessuno" and profilo == "nessuno"):
+        st.markdown('<h2 class="modern-subheader">📊 Indicatori chiave</h2>', unsafe_allow_html=True)
+        
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            st.markdown(
+                f"""
+                <div class="kpi-card">
+                    <div class="kpi-label">Km piste aperte stimati</div>
+                    <div class="kpi-value">{best_row.km_open_est:.0f} km</div>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+        
+        with col2:
+            pct = best_row.pct_open * 100 if best_row.pct_open == best_row.pct_open else 0
+            st.markdown(
+                f"""
+                <div class="kpi-card">
+                    <div class="kpi-label">% piste aperte (stima)</div>
+                    <div class="kpi-value">{pct:.0f}%</div>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+        
+        with col3:
+            st.markdown(
+                f"""
+                <div class="kpi-card">
+                    <div class="kpi-label">Probabilità impianto aperto</div>
+                    <div class="kpi-value">{best_row.open_prob*100:.0f}%</div>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+    
+    # AI Overview
+    if livello != "nessuno":
+        st.markdown('<h2 class="modern-subheader">✨ AI Overview</h2>', unsafe_allow_html=True)
+        
         try:
-            base = df_infonieve.dropna(subset=["date"]).copy()
-            base["date"] = pd.to_datetime(base["date"], errors="coerce")
-            base = base.dropna(subset=["date"])  # robustezza
-            base["year"] = base["date"].dt.year
-
-            # Costruisci colonna stato (1 aperto, 0 chiuso)
-            if "idestado" in base.columns:
-                base["stato"] = base["idestado"].fillna(0).astype(int).clip(0, 1)
-            elif "kmopen" in base.columns:
-                base["stato"] = (base["kmopen"].fillna(0) > 0).astype(int)
+            prompt = build_llm_prompt(df_kpis, best_name, livello, profilo, data_sel)
+            with st.spinner("Generazione riepilogo AI..."):
+                output, usage = generate_overview(prompt, max_tokens=160)
+            
+            if output:
+                st.markdown(
+                    f"""
+                    <div class="ai-overview-section">
+                        <div class="ai-overview-content">{output}</div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+                
+                if isinstance(usage, dict) and usage.get("model"):
+                    st.caption(f"Modello: {usage['model']}")
             else:
-                base["stato"] = 0  # se non sappiamo, consideriamo chiuso
-
-            rows = []
-            for (staz, yr), g in base.groupby(["nome_stazione", "year"], as_index=False):
-                gd = g.sort_values("date").reset_index(drop=True)
-                s = gd["stato"].astype(int).tolist()
-                dates = gd["date"].tolist()
-                n = len(gd)
-                open_date = None
-                close_date = None
-                for i in range(n):
-                    # finestre
-                    prev5 = s[i-5:i] if i-5 >= 0 else []
-                    next5 = s[i+1:i+6] if i+6 <= n else []
-                    if len(prev5) == 5 and len(next5) == 5:
-                        # apertura: 5 chiusi prima (tutti 0) e 5 aperti dopo (tutti 1)
-                        if sum(prev5) == 0 and sum(next5) == 5 and open_date is None:
-                            open_date = dates[i]
-                        # chiusura: 5 aperti prima e 5 chiusi dopo
-                        if sum(prev5) == 5 and sum(next5) == 0 and close_date is None:
-                            close_date = dates[i]
-                    if open_date is not None and close_date is not None:
-                        break
-                if open_date is not None or close_date is not None:
-                    rows.append({
-                        "nome_stazione": staz,
-                        "year": yr,
-                        "apertura": open_date,
-                        "chiusura": close_date,
-                    })
-
-            if rows:
-                per_year = pd.DataFrame(rows)
-                # calcola DOY medi ignorando NaT
-                if "apertura" in per_year:
-                    per_year["apertura_doy"] = pd.to_datetime(per_year["apertura"]).dt.dayofyear
-                if "chiusura" in per_year:
-                    per_year["chiusura_doy"] = pd.to_datetime(per_year["chiusura"]).dt.dayofyear
-                avg = per_year.groupby("nome_stazione", as_index=False).agg(
-                    apertura_doy=("apertura_doy", "mean"), chiusura_doy=("chiusura_doy", "mean")
+                st.error("Nessuna risposta dal modello.")
+        except Exception as e:
+            st.error(f"LLM non disponibile: {e}")
+    
+    # Main content sections
+    if livello != "nessuno":
+        # Approfondimenti
+        st.markdown('<h2 class="modern-subheader">📊 Approfondimenti</h2>', unsafe_allow_html=True)
+        
+        # Top stations by km open
+        top_km = df_kpis.nlargest(8, "km_open_est")
+        if not top_km.empty:
+            fig_km = px.bar(
+                top_km, 
+                x="nome_stazione", 
+                y="km_open_est", 
+                title="Km piste aperte per stazione",
+                labels={"nome_stazione": "Stazione", "km_open_est": "Km aperti"}
+            )
+            fig_km.update_layout(xaxis_tickangle=-45)
+            st.plotly_chart(fig_km, use_container_width=True)
+        
+        # Quota max per stazione
+        quota = df_kpis[["nome_stazione", "Quota_max"]].dropna()
+        if not quota.empty:
+            fig_quota = px.bar(
+                quota, 
+                x="nome_stazione", 
+                y="Quota_max", 
+                title="Quota max per stazione", 
+                labels={"nome_stazione": "Stazione", "Quota_max": "Quota max (m)"}
+            )
+            fig_quota.update_layout(xaxis_tickangle=-45, yaxis=dict(range=[2000, 2800]))
+            # Aggiungi i valori sulle barre
+            fig_quota.update_traces(texttemplate='%{y:.0f}m', textposition='outside')
+            st.plotly_chart(fig_quota, use_container_width=True)
+        
+        # Km totali
+        top_total = df_kpis.sort_values("km_total_est", ascending=False).head(8)
+        fig_bar_total = px.bar(
+            top_total, 
+            x="nome_stazione", 
+            y="km_total_est", 
+            title="Km piste totali", 
+            labels={"nome_stazione": "Stazione", "km_total_est": "Km totali"}
+        )
+        fig_bar_total.update_layout(xaxis_tickangle=-45)
+        # Aggiungi i valori sulle barre
+        fig_bar_total.update_traces(texttemplate='%{y:.0f} km', textposition='outside')
+        st.plotly_chart(fig_bar_total, use_container_width=True)
+        
+        # Prezzi medi per impianto
+        try:
+            price_cols = [c for c in ["Prezzo_skipass", "Prezzo_scuola", "Prezzo_noleggio"] if c in df_kpis.columns]
+            if price_cols:
+                df_price = (
+                    df_kpis[["nome_stazione"] + price_cols]
+                    .drop_duplicates().fillna(0)
                 )
-
-                def doy_to_label(doy: float) -> str:
-                    try:
-                        ts = pd.Timestamp(2000, 1, 1) + pd.to_timedelta(int(round(doy)) - 1, unit="D")
-                        return ts.strftime("%d %b")
-                    except Exception:
-                        return "-"
-
-                avg["Apertura media"] = avg["apertura_doy"].apply(doy_to_label)
-                avg["Chiusura media"] = avg["chiusura_doy"].apply(doy_to_label)
-                avg = avg.sort_values("apertura_doy", ascending=True)
-                table = avg[["nome_stazione", "Apertura media", "Chiusura media"]].rename(
-                    columns={"nome_stazione": "Impianto"}
+                # Mappa nomi colonne per rimuovere underscore
+                name_mapping = {
+                    "Prezzo_skipass": "Skipass",
+                    "Prezzo_scuola": "Scuola",
+                    "Prezzo_noleggio": "Noleggio"
+                }
+                df_price_renamed = df_price.rename(columns=name_mapping)
+                melted_p = df_price_renamed.melt("nome_stazione", value_vars=list(name_mapping.values()), var_name="Voce", value_name="Prezzo")
+                fig_prices = px.bar(
+                    melted_p,
+                    x="Prezzo", 
+                    y="nome_stazione", 
+                    color="Voce",
+                    barmode="group",
+                    title="Prezzi medi per impianto (skipass, scuola, noleggio)",
+                    labels={"nome_stazione": "Impianto", "Prezzo": "€"}
                 )
-                st.dataframe(table, use_container_width=True, hide_index=True)
+                st.plotly_chart(fig_prices, use_container_width=True)
         except Exception:
             pass
-        return
-
-    df_scored = apply_profile_adjustment(df_with_indices, livello, profilo)
-    ranking = build_ranking(df_scored, "indice_finale")
-
-    # Aggregated KPIs (mean over the window) for all stations
-    df_kpis = aggregate_station_kpis(df_with_indices)
-
-    # Best station name
-    best_name = ranking.iloc[0]["nome_stazione"] if not ranking.empty else df_kpis.sort_values("km_open_est", ascending=False).iloc[0]["nome_stazione"]
-
-    # Mostra raccomandazione solo se almeno un filtro è selezionato
-    if not (livello == "nessuno" and profilo == "nessuno"):
-        st.subheader(f"✅ Stazione consigliata: {best_name}")
-        k_row = (
-            df_kpis[df_kpis["nome_stazione"] == best_name].iloc[0]
-            if not df_kpis.empty
-            else None
-        )
-        if k_row is not None:
-            col1, col2, col3 = st.columns(3)
+        
+        # KPI tecnici
+        if "Snowpark" in df_kpis.columns:
+            st.markdown('<h3 class="modern-section-title">KPI tecnici</h3>', unsafe_allow_html=True)
+            
+            top_best = df_kpis.nlargest(5, "km_open_est")
+            vals = top_best[["Snowpark", "Area_gare", "Slalom", "Superpipe"]].fillna(0).mean()
+            
+            col1, col2, col3, col4 = st.columns(4)
+            
             with col1:
                 st.markdown(
                     f"""
-                        <div class='glass-card kpi-card'><div class='content'>
-                      <div class='subtle'>Km piste aperte stimati</div>
-                      <div class='kpi'>{k_row.km_open_est:.0f} km</div>
-                    </div></div>
+                    <div class="kpi-card">
+                        <div class="kpi-label">Snowpark</div>
+                        <div class="kpi-value">{vals.get('Snowpark',0):.0f}</div>
+                    </div>
                     """,
-                    unsafe_allow_html=True,
+                    unsafe_allow_html=True
                 )
+            
             with col2:
-                pct = k_row.pct_open * 100 if k_row.pct_open == k_row.pct_open else 0
                 st.markdown(
                     f"""
-                        <div class='glass-card kpi-card'><div class='content'>
-                      <div class='subtle'>% piste aperte (stima)</div>
-                      <div class='kpi'>{pct:.0f}%</div>
-                    </div></div>
+                    <div class="kpi-card">
+                        <div class="kpi-label">Area gare</div>
+                        <div class="kpi-value">{vals.get('Area_gare',0):.0f}</div>
+                    </div>
                     """,
-                    unsafe_allow_html=True,
+                    unsafe_allow_html=True
                 )
+            
             with col3:
                 st.markdown(
                     f"""
-                        <div class='glass-card kpi-card'><div class='content'>
-                      <div class='subtle'>Probabilità impianto aperto</div>
-                      <div class='kpi'>{k_row.open_prob*100:.0f}%</div>
-                    </div></div>
+                    <div class="kpi-card">
+                        <div class="kpi-label">Slalom</div>
+                        <div class="kpi-value">{vals.get('Slalom',0):.0f}</div>
+                    </div>
                     """,
-                    unsafe_allow_html=True,
+                    unsafe_allow_html=True
                 )
-    # end header cards
-
-    # Map with highlight (solo per livelli diversi da "nessuno"; per "nessuno" la mostriamo più sotto)
-    if livello != "nessuno" and not df_kpis.empty:
-        base_coords = ensure_lat_lon(df_filtered_infonieve[["nome_stazione"] + [c for c in df_filtered_infonieve.columns if c.lower() in ("lat","latitude","latitudine","lon","lng","long","longitude","longitudine")]].drop_duplicates())
-        map_data = df_kpis.merge(base_coords, on="nome_stazione", how="left").dropna(subset=["lat", "lon"])
+            
+            with col4:
+                st.markdown(
+                    f"""
+                    <div class="kpi-card">
+                        <div class="kpi-label">Superpipe</div>
+                        <div class="kpi-value">{vals.get('Superpipe',0):.0f}</div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+        
+        # Mappa
+        st.markdown('<h3 class="modern-section-title">🗺️ Mappa</h3>', unsafe_allow_html=True)
+        
+        # Prepare map data
+        map_data = df_kpis[["nome_stazione", "lat", "lon", "km_open_est"]].dropna()
         if not map_data.empty:
-            center_lat = map_data["lat"].mean()
-            center_lon = map_data["lon"].mean()
-            view_state = pdk.ViewState(latitude=center_lat, longitude=center_lon, zoom=7, pitch=0)
-
-            def color_for_avalanche(x: float) -> List[int]:
-                if x <= 2:
-                    return [80, 220, 160, 180]
-                if x <= 3:
-                    return [240, 200, 80, 200]
-                return [240, 100, 100, 220]
-
-            map_data["color"] = map_data["avalanche"].fillna(3).apply(color_for_avalanche)
-            map_data["radius"] = np.clip((map_data["km_open_est"].fillna(0) + 5) * 500, 3000, 15000)
-            map_data["highlight"] = np.where(map_data["nome_stazione"] == best_name, 1, 0)
-            best_pt = map_data[map_data["highlight"] == 1].copy()
-            if not best_pt.empty:
-                best_pt["star"] = "★"
-
+            map_data["highlight"] = (map_data["nome_stazione"] == best_name).astype(int)
+            map_data["radius"] = np.where(map_data["highlight"] == 1, 15000, 8000)
+            
+            # Create layers
             layer_all = pdk.Layer(
                 "ScatterplotLayer",
-                data=map_data,
+                data=map_data[map_data["highlight"] == 0],
                 get_position='[lon, lat]',
-                get_radius="radius",
-                get_fill_color="color",
+                get_radius='radius',
+                get_fill_color='[100, 100, 100, 180]',
                 pickable=True,
-                auto_highlight=True,
             )
-            # Ring per la consigliata (solo bordo, senza riempimento)
-            ring_layer = pdk.Layer(
-                "ScatterplotLayer",
-                data=map_data[map_data["highlight"] == 1],
-                get_position='[lon, lat]',
-                get_radius="radius",
-                stroked=True,
-                filled=False,
-                get_line_color='[0, 200, 255, 255]',
-                line_width_min_pixels=2,
-                pickable=False,
-            )
-            star_layer = pdk.Layer(
-                "TextLayer",
-                data=best_pt,
-                get_position='[lon, lat]',
-                get_text='star',
-                get_size=28,
-                get_color='[255,255,255,255]',
-                get_angle=0,
-                pickable=False,
-            )
-            deck = pdk.Deck(layers=[layer_all, ring_layer, star_layer], initial_view_state=view_state, tooltip={"text": "{nome_stazione}\nKm aperti: {km_open_est}"})
-            st.pydeck_chart(deck, use_container_width=True)
-
-    # Space for separation (avoid redundant horizontal rule under caption)
-    st.write("")
-    # AI overview: disattivata quando livello == "nessuno"
-    if livello != "nessuno":
-        st.subheader("✨ AI overview")
-        api_key_present = True
-        try:
-            if not api_key_present:
-                st.info("Configura OPENROUTER_API_KEY per abilitare l'overview AI.")
-            else:
-                prompt = build_llm_prompt(df_kpis, best_name, livello, profilo, data_sel)
-                with st.spinner("Generazione riepilogo AI..."):
-                    output, usage = generate_overview(prompt, max_tokens=160)
-                model_used = usage.get("model") if isinstance(usage, dict) else None
-                if isinstance(usage, dict) and usage.get("error"):
-                    error_msg = usage['error']
-                    if "401" in str(error_msg) or "User not found" in str(error_msg):
-                        st.warning("🔑 Chiave API OpenRouter non valida o scaduta. Aggiorna la chiave per abilitare l'AI overview.")
-                        st.info("💡 Vai su https://openrouter.ai/ per generare una nuova chiave API gratuita.")
-                    else:
-                        st.error(f"Errore modello: {error_msg}")
-                    if model_used:
-                        st.caption(f"Modello: {model_used}")
-                elif output:
-                    st.write(output)
-                    if model_used:
-                        st.caption(f"Modello: {model_used}")
-                else:
-                    st.error("Nessuna risposta dal modello.")
-        except Exception as e:
-            st.error(f"LLM non disponibile: {e}")
-
-    st.markdown("---")
-    # Level-specific visualizations (no raw index shown)
-    if livello == "base":
-        st.subheader("Per principianti: dove trovi più piste facili e condizioni stabili")
-        # Mappa con consigliata evidenziata
-        st.subheader("Mappa delle stazioni (consigliata evidenziata)")
-        render_map_with_best(df_with_indices, best_name)
-
-        # Podio Top 3 (estetico, senza esporre il valore indice)
-        if not df_with_indices.empty and "indice_base" in df_with_indices.columns:
-            top3 = (df_with_indices.groupby("nome_stazione")["indice_base"].mean()
-                    .sort_values(ascending=False).head(3).reset_index())
-            if len(top3) > 0:
-                names = top3["nome_stazione"].tolist()
-                first = names[0] if len(names) > 0 else ""
-                second = names[1] if len(names) > 1 else ""
-                third = names[2] if len(names) > 2 else ""
-                st.markdown("""
-                <div class='podium'>
-                  <div class='col'>
-                    <div class='step s2'>
-                      <div class='medal'>🥈</div>
-                      <div class='name'>%s</div>
-                    </div>
-                  </div>
-                  <div class='col'>
-                    <div class='step s1'>
-                      <div class='medal'>🥇</div>
-                      <div class='name'>%s</div>
-                    </div>
-                  </div>
-                  <div class='col'>
-                    <div class='step s3'>
-                      <div class='medal'>🥉</div>
-                      <div class='name'>%s</div>
-                    </div>
-                  </div>
-                </div>
-                """ % (second, first, third), unsafe_allow_html=True)
-
-        # Probabilità meteo (±3 giorni su anni precedenti per date future)
-        from datetime import date as _date
-        def create_speedometer(value_pct: float, title: str, color: str, reference_pct: float | None = None) -> go.Figure:
-            indicator = go.Indicator(
-                mode="gauge+number",
-                value=max(0, min(100, value_pct)),
-                title={"text": title, "font": {"size": 30}},
-                number={"suffix": "%", "font": {"size": 36, "color": "#e6efff"}},
-                gauge={
-                    "axis": {"range": [0, 100]},
-                    "bar": {"color": color},
-                    "steps": [
-                        {"range": [0, 33], "color": "#1f2937"},
-                        {"range": [33, 66], "color": "#374151"},
-                        {"range": [66, 100], "color": "#4b5563"},
-                    ],
-                },
-            )
-            fig = go.Figure(indicator)
-            # delta al centro basso
-            if reference_pct is not None:
-                delta_val = max(0, min(100, value_pct)) - max(0, min(100, reference_pct))
-                fig.add_annotation(
-                    x=0.5, y=0.10, xref="paper", yref="paper",
-                    text=f"{delta_val:+.2f}%", showarrow=False,
-                    font=dict(size=16, color="#16a34a" if delta_val < 0 else "#ef4444")
-                )
-            fig.update_layout(height=260, margin=dict(l=10, r=10, t=30, b=20))
-            return fig
-
-        # Dati meteo correnti/previsti (±3 giorni) sempre da storico per coerenza
-        meteo_data = get_historical_data_for_date(df_filtered_meteo, data_sel, days_range=3)
-        if not meteo_data.empty:
-            st.subheader("Probabilità condizioni meteo (storico ±3 giorni)")
-            # baseline ±15 giorni sugli anni precedenti
-            baseline = get_historical_data_for_date(df_filtered_meteo, data_sel, days_range=15)
-            col1, col2 = st.columns(2)
-            with col1:
-                prob_nebbia = float(meteo_data.get("nebbia", 0).mean() * 100)
-                baseline_nebbia = float((baseline.get("nebbia", 0).mean() * 100) if not baseline.empty else 0)
-                fig_n = create_speedometer(prob_nebbia, "Prob. Nebbia", "#94a3b8", reference_pct=baseline_nebbia)
-                st.plotly_chart(fig_n, use_container_width=True)
-            with col2:
-                prob_pioggia = float(meteo_data.get("pioggia", 0).mean() * 100)
-                baseline_pioggia = float((baseline.get("pioggia", 0).mean() * 100) if not baseline.empty else 0)
-                fig_p = create_speedometer(prob_pioggia, "Prob. Pioggia", "#60a5fa", reference_pct=baseline_pioggia)
-                st.plotly_chart(fig_p, use_container_width=True)
-            st.caption("Nota: probabilità calcolate sui dati storici per periodi simili; il delta confronta con la media degli anni precedenti nella finestra ±15 giorni.")
-        else:
-            st.warning("Dati meteo non disponibili per questa data")
-
-        # Barre impilate piste verdi/blu ordinate per indice_base
-        if not df_with_indices.empty and "indice_base" in df_with_indices.columns:
-            st.subheader("Distribuzione piste verdi e blu")
-            piste_base = df_with_indices[["nome_stazione", "Piste_verdi", "Piste_blu", "indice_base"]].drop_duplicates()
-            piste_base = piste_base.sort_values("indice_base", ascending=False)
-            fig_piste_base = px.bar(
-                piste_base,
-                x="nome_stazione",
-                y=["Piste_verdi", "Piste_blu"],
-                title="Piste verdi e blu per stazione (ordinate per indice base)",
-                color_discrete_map={"Piste_verdi": "#4CAF50", "Piste_blu": "#2196F3"}
-            )
-            fig_piste_base.update_layout(xaxis_tickangle=-45)
-            st.plotly_chart(fig_piste_base, use_container_width=True)
-
-        # Sezione Festaiolo (profilo) – solo se selezionato
-        if profilo_norm == "festaiolo":
-            st.subheader("Profilo: Festaiolo")
-            # Grafico 1: km di sci notturno (asse X), impianti su Y
-            try:
-                df_night = df_with_indices[["nome_stazione", "Scii_notte"]].drop_duplicates().fillna(0)
-                if not df_night.empty:
-                    fig_night = px.bar(
-                        df_night.sort_values("Scii_notte", ascending=False),
-                        x="nome_stazione", y="Scii_notte",
-                        title="Km di sci notturno per impianto",
-                        labels={"Scii_notte": "Km sci notturno", "nome_stazione": "Impianto"}
-                    )
-                    st.plotly_chart(fig_night, use_container_width=True)
-            except Exception:
-                pass
-
-        if profilo_norm == "familiare":
-            st.subheader("Profilo: Familiare")
-            # 1) Numero aree bambini per impianto
-            try:
-                if "Area_bambini" in df_with_indices.columns:
-                    df_kids = (
-                        df_with_indices[["nome_stazione", "Area_bambini"]]
-                        .drop_duplicates().fillna(0)
-                        .sort_values("Area_bambini", ascending=False)
-                    )
-                    fig_kids = px.bar(
-                        df_kids,
-                        x="nome_stazione", y="Area_bambini",
-                        title="Numero aree bambini per impianto",
-                        labels={"nome_stazione": "Impianto", "Area_bambini": "Aree bambini"}
-                    )
-                    fig_kids.update_layout(xaxis_tickangle=-45)
-                    st.plotly_chart(fig_kids, use_container_width=True)
-                else:
-                    st.info("Dato non disponibile: 'Area_bambini'")
-            except Exception:
-                pass
-
-            # 2) Prezzi medi per impianto (skipass, scuola, noleggio)
-            try:
-                price_cols = [c for c in ["Prezzo_skipass", "Prezzo_scuola", "Prezzo_noleggio"] if c in df_with_indices.columns]
-                if price_cols:
-                    df_price = (
-                        df_with_indices[["nome_stazione"] + price_cols]
-                        .drop_duplicates().fillna(0)
-                    )
-                    melted_p = df_price.melt("nome_stazione", value_vars=price_cols, var_name="Voce", value_name="Prezzo")
-                    fig_prices = px.bar(
-                        melted_p,
-                        x="Prezzo", y="nome_stazione", color="Voce",
-                        barmode="group",
-                        title="Prezzi medi per impianto (skipass, scuola, noleggio)",
-                        labels={"nome_stazione": "Impianto", "Prezzo": "€"}
-                    )
-                    st.plotly_chart(fig_prices, use_container_width=True)
-                else:
-                    st.info("Dati prezzo non disponibili (skipass/scuola/noleggio)")
-            except Exception:
-                pass
-
-            # 3) AI Overview – Famiglia
-            try:
-                st.subheader("AI Overview – Famiglia")
-                prompt_family = build_familiare_prompt(df_filtered_rec, best_name, livello, data_sel)
-                out, usage = generate_overview(prompt_family, max_tokens=140)
-                st.write(out or "Nessun contenuto disponibile ora.")
-                if isinstance(usage, dict) and usage.get("model"):
-                    st.caption(f"Modello: {usage['model']}")
-            except Exception:
-                pass
-            # RIMOSSI: Snowpark/Superpipe e AI Overview – Festa (solo per profilo festaiolo)
-
-    elif livello == "medio":
-        st.subheader("Per intermedi: equilibrio tra piste e sicurezza")
-        # Mappa con consigliata evidenziata
-        st.subheader("Mappa delle stazioni (consigliata evidenziata)")
-        render_map_with_best(df_with_indices, best_name)
-
-        # Podio Top 3 per indice_medio
-        if "indice_medio" in df_with_indices.columns and not df_with_indices.empty:
-            top3m = (
-                df_with_indices.groupby("nome_stazione")["indice_medio"].mean()
-                .sort_values(ascending=False).head(3).reset_index()
-            )
-            if not top3m.empty:
-                names = top3m["nome_stazione"].tolist()
-                first = names[0] if len(names) > 0 else ""
-                second = names[1] if len(names) > 1 else ""
-                third = names[2] if len(names) > 2 else ""
-                st.markdown(
-                    f"""
-                    <div class='podium'>
-                      <div class='col'>
-                        <div class='step s2'>
-                          <div class='medal'>🥈</div>
-                          <div class='name'>{second}</div>
-                        </div>
-                      </div>
-                      <div class='col'>
-                        <div class='step s1'>
-                          <div class='medal'>🥇</div>
-                          <div class='name'>{first}</div>
-                        </div>
-                      </div>
-                      <div class='col'>
-                        <div class='step s3'>
-                          <div class='medal'>🥉</div>
-                          <div class='name'>{third}</div>
-                        </div>
-                      </div>
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
-
-        # Meteo compatto (5 mini-donut) per la stazione consigliata
-        try:
-            meteo_win = get_historical_data_for_date(df_filtered_meteo, data_sel, days_range=3)
-            if not meteo_win.empty:
-                m_best = meteo_win[meteo_win.get("nome_stazione", "").astype(str) == best_name]
-                if m_best.empty:
-                    m_best = meteo_win
-                pioggia = float(m_best.get("pioggia", 0).mean() * 100)
-                nebbia = float(m_best.get("nebbia", 0).mean() * 100)
-                sole    = float(m_best.get("sole", 0).mean() * 100)
-                vento   = float(m_best.get("vento", 0).mean() * 100)
-                neve_pct = 0.0
-                snow_win = get_historical_data_for_date(df_filtered_infonieve, data_sel, days_range=3)
-                if not snow_win.empty:
-                    s_best = snow_win[snow_win.get("nome_stazione", "").astype(str) == best_name]
-                    if s_best.empty:
-                        s_best = snow_win
-                    cm = s_best.get("espesor_medio", 0).fillna(0)
-                    if not cm.empty:
-                        cmin, cmax = cm.min(), cm.max()
-                        neve_pct = float(((cm.mean() - cmin) / (cmax - cmin) * 100) if cmax > cmin else 0)
-
-                def donut(value, label, color):
-                    val = max(0.0, min(100.0, value))
-                    rem = 100 - val
-                    fig = go.Figure(
-                        data=[go.Pie(values=[val, rem], hole=0.72, sort=False, direction='clockwise', marker_colors=[color, 'rgba(255,255,255,0.08)'], textinfo='none')]
-                    )
-                    fig.add_annotation(text=f"{val:.0f}%", x=0.5, y=0.5, showarrow=False, font=dict(size=22, color='#e6efff'))
-                    fig.update_layout(
-                        title=dict(text=label, font=dict(size=16), y=0.9),
-                        showlegend=False, margin=dict(l=0, r=0, t=50, b=10), height=220
-                    )
-                    return fig
-
-                st.subheader("Meteo (storico ±3 giorni)")
-                r1c1, r1c2, r1c3 = st.columns(3)
-                with r1c1:
-                    st.plotly_chart(donut(pioggia, "Pioggia", "#60A5FA"), use_container_width=True)
-                with r1c2:
-                    st.plotly_chart(donut(sole, "Sole", "#F59E0B"), use_container_width=True)
-                with r1c3:
-                    st.plotly_chart(donut(nebbia, "Nebbia", "#94a3b8"), use_container_width=True)
-                st.write("")
-                r2c1, r2c2, r2c3 = st.columns([1,1,1])
-                with r2c1:
-                    st.plotly_chart(donut(vento, "Vento", "#00C8FF"), use_container_width=True)
-                with r2c2:
-                    st.plotly_chart(donut(neve_pct, "Neve", "#6EE7B7"), use_container_width=True)
-                with r2c3:
-                    st.write("")
-        except Exception:
-            pass
-
-        # Mappa delle stazioni (con evidenza della consigliata)
-        try:
-            if not df_with_indices.empty:
-                base_coords = ensure_lat_lon(
-                    df_filtered_infonieve[["nome_stazione"] + [
-                        c for c in df_filtered_infonieve.columns
-                        if c.lower() in ("lat","latitude","latitudine","lon","lng","long","longitude","longitudine")
-                    ]].drop_duplicates()
-                )
-                map_data = base_coords.dropna(subset=["lat", "lon"]).copy()
-                if not map_data.empty:
-                    map_data["highlight"] = (map_data["nome_stazione"] == best_name).astype(int)
-                    center_lat = map_data["lat"].mean()
-                    center_lon = map_data["lon"].mean()
-                    view_state = pdk.ViewState(latitude=center_lat, longitude=center_lon, zoom=7, pitch=0)
-
-                    layer_all = pdk.Layer(
-                        "ScatterplotLayer",
-                        data=map_data,
-                        get_position='[lon, lat]',
-                        get_radius=8000,
-                        get_fill_color='[255, 0, 0, 140]'
-                    )
-                    layer_best = pdk.Layer(
-                        "ScatterplotLayer",
-                        data=map_data[map_data["highlight"] == 1],
-                        get_position='[lon, lat]',
-                        get_radius=12000,
-                        get_fill_color='[0, 200, 255, 200]'
-                    )
-                    deck = pdk.Deck(
-                        layers=[layer_all, layer_best],
-                        initial_view_state=view_state,
-                        tooltip={"text": "{nome_stazione}"}
-                    )
-                    st.pydeck_chart(deck, use_container_width=True)
-        except Exception:
-            pass
-
-        # Barre: piste blu/rosse ordinate per indice_medio
-        if not df_with_indices.empty and "indice_medio" in df_with_indices.columns:
-            st.subheader("Piste blu e rosse per stazione (ordinate per indice medio)")
-            piste = df_with_indices[["nome_stazione", "Piste_blu", "Piste_rosse", "indice_medio"]].drop_duplicates()
-            piste = piste.sort_values("indice_medio", ascending=False)
-            melted = piste.melt("nome_stazione", value_vars=["Piste_blu", "Piste_rosse"], var_name="Tipo", value_name="Numero")
-            fig = px.bar(
-                melted,
-                x="nome_stazione", y="Numero", color="Tipo", barmode="stack",
-                color_discrete_map={"Piste_blu": "#60A5FA", "Piste_rosse": "#FB7185"},
-            )
-            fig.update_layout(xaxis_tickangle=-45)
-            st.plotly_chart(fig, use_container_width=True)
-
-        # Sezione Festaiolo (profilo)
-        if profilo_norm == "festaiolo":
-            st.subheader("Profilo: Festaiolo")
-            try:
-                df_night = df_with_indices[["nome_stazione", "Scii_notte"]].drop_duplicates().fillna(0)
-                if not df_night.empty:
-                    fig_night = px.bar(
-                        df_night.sort_values("Scii_notte", ascending=False),
-                        x="nome_stazione", y="Scii_notte",
-                        title="Km di sci notturno per impianto",
-                        labels={"Scii_notte": "Km sci notturno", "nome_stazione": "Impianto"}
-                    )
-                    st.plotly_chart(fig_night, use_container_width=True)
-            except Exception:
-                pass
-            try:
-                cols = [c for c in ["Snowpark", "Superpipe"] if c in df_with_indices.columns]
-                df_acts = df_with_indices[["nome_stazione"] + cols].drop_duplicates().fillna(0)
-                if not df_acts.empty:
-                    melted = df_acts.melt("nome_stazione", value_vars=cols, var_name="Attività", value_name="Valore")
-                    fig_acts = px.bar(
-                        melted, x="nome_stazione", y="Valore", color="Attività",
-                        barmode="group", title="Snowpark e Superpipe"
-                    )
-                    st.plotly_chart(fig_acts, use_container_width=True)
-            except Exception:
-                pass
-            try:
-                prompt_f = build_festaiolo_prompt(df_filtered_rec, best_name, livello, data_sel)
-                st.subheader("AI Overview – Festa")
-                out, usage = generate_overview(prompt_f, max_tokens=140)
-                st.write(out or "Nessun contenuto disponibile ora.")
-                if isinstance(usage, dict) and usage.get("model"):
-                    st.caption(f"Modello: {usage['model']}")
-            except Exception:
-                pass
-
-        # Sezione Familiare (profilo)
-        if profilo_norm == "familiare":
-            st.subheader("Profilo: Familiare")
-            # 1) Numero aree bambini per impianto
-            try:
-                if "Area_bambini" in df_with_indices.columns:
-                    df_kids = (
-                        df_with_indices[["nome_stazione", "Area_bambini"]]
-                        .drop_duplicates().fillna(0)
-                        .sort_values("Area_bambini", ascending=False)
-                    )
-                    fig_kids = px.bar(
-                        df_kids,
-                        x="nome_stazione", y="Area_bambini",
-                        title="Numero aree bambini per impianto",
-                        labels={"nome_stazione": "Impianto", "Area_bambini": "Aree bambini"}
-                    )
-                    fig_kids.update_layout(xaxis_tickangle=-45)
-                    st.plotly_chart(fig_kids, use_container_width=True)
-                else:
-                    st.info("Dato non disponibile: 'Area_bambini'")
-            except Exception:
-                pass
-
-            # 2) Prezzi medi per impianto (skipass, scuola, noleggio)
-            try:
-                price_cols = [c for c in ["Prezzo_skipass", "Prezzo_scuola", "Prezzo_noleggio"] if c in df_with_indices.columns]
-                if price_cols:
-                    df_price = (
-                        df_with_indices[["nome_stazione"] + price_cols]
-                        .drop_duplicates().fillna(0)
-                    )
-                    melted_p = df_price.melt("nome_stazione", value_vars=price_cols, var_name="Voce", value_name="Prezzo")
-                    fig_prices = px.bar(
-                        melted_p,
-                        x="Prezzo", y="nome_stazione", color="Voce",
-                        barmode="group",
-                        title="Prezzi medi per impianto (skipass, scuola, noleggio)",
-                        labels={"nome_stazione": "Impianto", "Prezzo": "€"}
-                    )
-                    st.plotly_chart(fig_prices, use_container_width=True)
-                else:
-                    st.info("Dati prezzo non disponibili (skipass/scuola/noleggio)")
-            except Exception:
-                pass
-
-            # 3) AI Overview – Famiglia
-            try:
-                st.subheader("AI Overview – Famiglia")
-                prompt_family = build_familiare_prompt(df_filtered_rec, best_name, livello, data_sel)
-                out, usage = generate_overview(prompt_family, max_tokens=140)
-                st.write(out or "Nessun contenuto disponibile ora.")
-                if isinstance(usage, dict) and usage.get("model"):
-                    st.caption(f"Modello: {usage['model']}")
-            except Exception:
-                pass
-
-    elif livello == "esperto":
-        st.subheader("Per esperti: caratteristiche tecniche e chilometri")
-        # Mappa con consigliata evidenziata
-        st.subheader("Mappa delle stazioni (consigliata evidenziata)")
-        render_map_with_best(df_with_indices, best_name)
-
-        # Podio Top 3 per indice_esperto
-        if not df_with_indices.empty and "indice_esperto" in df_with_indices.columns:
-            top3e = (
-                df_with_indices.groupby("nome_stazione")["indice_esperto"].mean()
-                .sort_values(ascending=False).head(3).reset_index()
-            )
-            if not top3e.empty:
-                names = top3e["nome_stazione"].tolist()
-                first = names[0] if len(names) > 0 else ""
-                second = names[1] if len(names) > 1 else ""
-                third = names[2] if len(names) > 2 else ""
-                st.markdown(
-                    f"""
-                    <div class='podium'>
-                      <div class='col'>
-                        <div class='step s2'>
-                          <div class='medal'>🥈</div>
-                          <div class='name'>{second}</div>
-                        </div>
-                      </div>
-                      <div class='col'>
-                        <div class='step s1'>
-                          <div class='medal'>🥇</div>
-                          <div class='name'>{first}</div>
-                        </div>
-                      </div>
-                      <div class='col'>
-                        <div class='step s3'>
-                          <div class='medal'>🥉</div>
-                          <div class='name'>{third}</div>
-                        </div>
-                      </div>
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
-
-        # Speedometer rischio valanghe (1-5) per la stazione consigliata (con delta vs baseline ±15g)
-        try:
-            brow = df_kpis[df_kpis["nome_stazione"] == best_name].iloc[0]
-            risk = float(brow.get("avalanche", 3.0))
-            # baseline: media danger_level_avg nella finestra ±15 giorni su anni precedenti
-            base_val = get_historical_data_for_date(df_filtered_val, data_sel, days_range=15)
-            bstation = base_val[base_val.get("nome_stazione", "").astype(str) == best_name]
-            baseline = float(bstation.get("danger_level_avg", 0).mean()) if not bstation.empty else 0.0
-            # Due livelli: subheader esterno e delta in basso, numero centrato
-            d = risk - baseline
-            st.subheader("Rischio valanghe (1-5)")
-            fig_risk = go.Figure()
-            fig_risk.add_trace(go.Indicator(
-                mode="gauge+number",
-                value=risk,
-                number={"font": {"size": 30, "color": "#e6efff"}},
-                gauge={
-                    "axis": {"range": [1, 5]},
-                    "bar": {"color": "#ef4444"},
-                    "steps": [
-                        {"range": [1, 2], "color": "#16a34a"},
-                        {"range": [2, 3], "color": "#f59e0b"},
-                        {"range": [3, 5], "color": "#7f1d1d"},
-                    ],
-                },
-                domain={"x": [0, 1], "y": [0.15, 1]}
-            ))
-            # Delta come annotation molto in basso
-            fig_risk.add_annotation(x=0.5, y=0.05, xref="paper", yref="paper",
-                                    text=f"Δ {d:+.2f} vs media ±15g", showarrow=False,
-                                    font=dict(size=12, color="#16a34a" if d < 0 else "#ef4444"))
-            fig_risk.update_layout(height=230, margin=dict(l=10, r=10, t=20, b=40))
-            st.plotly_chart(fig_risk, use_container_width=True)
-        except Exception:
-            pass
-
-        # KPI tecnici (stazione consigliata)
-        try:
-            top_best = df_with_indices[df_with_indices["nome_stazione"] == best_name]
-            if not top_best.empty:
-                st.subheader("KPI tecnici")
-                vals = top_best[["Snowpark", "Area_gare", "Slalom", "Superpipe"]].fillna(0).mean()
-                c1, c2, c3, c4 = st.columns(4)
-                with c1:
-                    st.markdown(f"""<div class='glass-card kpi-card'><div class='content'><div class='subtle'><b>Snowpark</b></div><div class='kpi'>{vals.get('Snowpark',0):.0f}</div></div></div>""", unsafe_allow_html=True)
-                with c2:
-                    st.markdown(f"""<div class='glass-card kpi-card'><div class='content'><div class='subtle'><b>Area gare</b></div><div class='kpi'>{vals.get('Area_gare',0):.0f}</div></div></div>""", unsafe_allow_html=True)
-                with c3:
-                    st.markdown(f"""<div class='glass-card kpi-card'><div class='content'><div class='subtle'><b>Slalom</b></div><div class='kpi'>{vals.get('Slalom',0):.0f}</div></div></div>""", unsafe_allow_html=True)
-                with c4:
-                    st.markdown(f"""<div class='glass-card kpi-card'><div class='content'><div class='subtle'><b>Superpipe</b></div><div class='kpi'>{vals.get('Superpipe',0):.0f}</div></div></div>""", unsafe_allow_html=True)
-        except Exception:
-            pass
-
-        # Quota max: grafico a barre (Top 10) con scala 2000-3000 m
-        try:
-            quota = (
-                df_with_indices.groupby("nome_stazione")["Quota_max"].mean().dropna().sort_values(ascending=False).head(10).reset_index()
-            )
-            if not quota.empty:
-                fig_quota = px.bar(quota, x="nome_stazione", y="Quota_max", title="Quota max per stazione", labels={"nome_stazione": "Stazione", "Quota_max": "Quota max (m)"})
-                fig_quota.update_layout(xaxis_tickangle=-45, yaxis=dict(range=[2000, 2800]))
-                st.plotly_chart(fig_quota, use_container_width=True)
-        except Exception:
-            pass
-
-        # Km totali: solo totali per le prime 8 stazioni
-        top_total = df_kpis.sort_values("km_total_est", ascending=False).head(8)
-        fig_bar_total = px.bar(top_total, x="nome_stazione", y="km_total_est", title="Km piste totali", labels={"nome_stazione": "Stazione", "km_total_est": "Km totali"})
-        fig_bar_total.update_layout(xaxis_tickangle=-45)
-        st.plotly_chart(fig_bar_total, use_container_width=True)
-
-        if profilo_norm == "festaiolo":
-            st.subheader("Profilo: Festaiolo")
-            try:
-                df_night = df_with_indices[["nome_stazione", "Scii_notte"]].drop_duplicates().fillna(0)
-                if not df_night.empty:
-                    fig_night = px.bar(
-                        df_night.sort_values("Scii_notte", ascending=False),
-                        x="nome_stazione", y="Scii_notte",
-                        title="Km di sci notturno per impianto",
-                        labels={"Scii_notte": "Km sci notturno", "nome_stazione": "Impianto"}
-                    )
-                    st.plotly_chart(fig_night, use_container_width=True)
-            except Exception:
-                pass
-            try:
-                cols = [c for c in ["Snowpark", "Superpipe"] if c in df_with_indices.columns]
-                df_acts = df_with_indices[["nome_stazione"] + cols].drop_duplicates().fillna(0)
-                if not df_acts.empty:
-                    melted = df_acts.melt("nome_stazione", value_vars=cols, var_name="Attività", value_name="Valore")
-                    fig_acts = px.bar(
-                        melted, x="nome_stazione", y="Valore", color="Attività",
-                        barmode="group", title="Snowpark e Superpipe"
-                    )
-                    st.plotly_chart(fig_acts, use_container_width=True)
-            except Exception:
-                pass
-            try:
-                prompt_f = build_festaiolo_prompt(df_filtered_rec, best_name, livello, data_sel)
-                st.subheader("AI Overview – Festa")
-                out, usage = generate_overview(prompt_f, max_tokens=140)
-                st.write(out or "Nessun contenuto disponibile ora.")
-                if isinstance(usage, dict) and usage.get("model"):
-                    st.caption(f"Modello: {usage['model']}")
-            except Exception:
-                pass
-
-        # Sezione Familiare (profilo)
-        if profilo_norm == "familiare":
-            st.subheader("Profilo: Familiare")
-            # 1) Numero aree bambini per impianto
-            try:
-                if "Area_bambini" in df_with_indices.columns:
-                    df_kids = (
-                        df_with_indices[["nome_stazione", "Area_bambini"]]
-                        .drop_duplicates().fillna(0)
-                        .sort_values("Area_bambini", ascending=False)
-                    )
-                    fig_kids = px.bar(
-                        df_kids,
-                        x="nome_stazione", y="Area_bambini",
-                        title="Numero aree bambini per impianto",
-                        labels={"nome_stazione": "Impianto", "Area_bambini": "Aree bambini"}
-                    )
-                    fig_kids.update_layout(xaxis_tickangle=-45)
-                    st.plotly_chart(fig_kids, use_container_width=True)
-                else:
-                    st.info("Dato non disponibile: 'Area_bambini'")
-            except Exception:
-                pass
-
-            # 2) Prezzi medi per impianto (skipass, scuola, noleggio)
-            try:
-                price_cols = [c for c in ["Prezzo_skipass", "Prezzo_scuola", "Prezzo_noleggio"] if c in df_with_indices.columns]
-                if price_cols:
-                    df_price = (
-                        df_with_indices[["nome_stazione"] + price_cols]
-                        .drop_duplicates().fillna(0)
-                    )
-                    melted_p = df_price.melt("nome_stazione", value_vars=price_cols, var_name="Voce", value_name="Prezzo")
-                    fig_prices = px.bar(
-                        melted_p,
-                        x="Prezzo", y="nome_stazione", color="Voce",
-                        barmode="group",
-                        title="Prezzi medi per impianto (skipass, scuola, noleggio)",
-                        labels={"nome_stazione": "Impianto", "Prezzo": "€"}
-                    )
-                    st.plotly_chart(fig_prices, use_container_width=True)
-                else:
-                    st.info("Dati prezzo non disponibili (skipass/scuola/noleggio)")
-            except Exception:
-                pass
-
-            # 3) AI Overview – Famiglia
-            try:
-                st.subheader("AI Overview – Famiglia")
-                prompt_family = build_familiare_prompt(df_filtered_rec, best_name, livello, data_sel)
-                out, usage = generate_overview(prompt_family, max_tokens=140)
-                st.write(out or "Nessun contenuto disponibile ora.")
-                if isinstance(usage, dict) and usage.get("model"):
-                    st.caption(f"Modello: {usage['model']}")
-            except Exception:
-                pass
-
-    else:  # nessuno (panoramica base)
-        st.subheader("Panoramica generale")
-        # Grafico a barre: numero piste per tipologia per impianto (stacked)
-        piste_cols = ["Piste_verdi", "Piste_blu", "Piste_rosse", "Piste_nere"]
-        if set(piste_cols).issubset(df_with_indices.columns):
-            piste_counts = (
-                df_with_indices[["nome_stazione"] + piste_cols]
-                .drop_duplicates()
-                .fillna(0)
-            )
-            # Ordine per impianti con più piste aperte (se disponibile kmopen), altrimenti per somma piste
-            if "kmopen" in df_with_indices.columns:
-                km_order = (
-                    df_with_indices.groupby("nome_stazione")["kmopen"].mean().sort_values(ascending=False).index.tolist()
-                )
-                order = km_order
-            else:
-                piste_counts["tot_piste"] = (
-                    piste_counts["Piste_verdi"]
-                    + piste_counts["Piste_blu"]
-                    + piste_counts["Piste_rosse"]
-                    + piste_counts["Piste_nere"]
-                )
-                order = piste_counts.sort_values("tot_piste", ascending=False)["nome_stazione"].tolist()
-            rename_map = {
-                "Piste_verdi": "Piste verdi",
-                "Piste_blu": "Piste blu",
-                "Piste_rosse": "Piste rosse",
-                "Piste_nere": "Piste nere",
-            }
-            melted = piste_counts.rename(columns=rename_map).melt(
-                "nome_stazione",
-                value_vars=list(rename_map.values()),
-                var_name="Tipo",
-                value_name="Numero",
-            )
-            color_map = {
-                "Piste verdi": "#22c55e",
-                "Piste blu": "#60a5fa",
-                "Piste rosse": "#ef4444",
-                "Piste nere": "#111827",
-            }
-            fig_stack = px.bar(
-                melted,
-                x="nome_stazione",
-                y="Numero",
-                color="Tipo",
-                barmode="stack",
-                title="Numero piste per impianto e tipologia",
-                color_discrete_map=color_map,
-                category_orders={"nome_stazione": order},
-            )
-            fig_stack.update_layout(xaxis_tickangle=-45)
-            st.plotly_chart(fig_stack, use_container_width=True)
-
-        # Mappa degli impianti (centrata sulla zona) - versione semplice senza highlight in "nessuno"
-        st.subheader("Mappa delle stazioni sciistiche")
-        if not df_with_indices.empty:
-            map_data = df_with_indices[["nome_stazione", "lat", "lon"]].drop_duplicates().dropna()
-            if map_data.empty:
-                # fallback su merge se lat/lon non presenti direttamente
-                base_coords = ensure_lat_lon(
-                    df_filtered_infonieve[["nome_stazione"] + [c for c in df_filtered_infonieve.columns if c.lower() in ("lat","latitude","latitudine","lon","lng","long","longitude","longitudine")]].drop_duplicates()
-                )
-                map_data = base_coords.dropna(subset=["lat", "lon"]).copy()
-            if not map_data.empty:
-                center_lat = map_data["lat"].mean()
-                center_lon = map_data["lon"].mean()
-                view_state = pdk.ViewState(latitude=center_lat, longitude=center_lon, zoom=7, pitch=0)
-                layer_all = pdk.Layer(
-                    "ScatterplotLayer",
-                    data=map_data,
-                    get_position='[lon, lat]',
-                    get_radius=8000,
-                    get_fill_color='[255, 0, 0, 140]',
-                    pickable=True,
-                    auto_highlight=True,
-                )
-                deck = pdk.Deck(layers=[layer_all], initial_view_state=view_state, tooltip={"text": "{nome_stazione}"})
-                st.pydeck_chart(deck, use_container_width=True)
-
-        # Messaggio guida per profili senza livello
-        if profilo_norm != "nessuno":
-            if profilo_norm == "festaiolo":
-                st.info("Seleziona un livello (Base/Medio/Esperto) per vedere la dashboard 'Festaiolo'.")
-        else:
-            st.info("Seleziona un profilo per avere informazioni più approfondite")
-
-        # Trend spessore medio per tutti gli impianti, con focus selezionabile
-        st.subheader("Trend spessore neve (tutti gli impianti)")
-        try:
-            anno = (pd.to_datetime(data_sel).year) - 1
-            start = pd.Timestamp(anno, 11, 1)
-            end = pd.Timestamp(anno + 1, 5, 1)
-            history = df_filtered_infonieve[(df_filtered_infonieve["date"] >= start) & (df_filtered_infonieve["date"] < end)].dropna(subset=["espesor_medio"]).copy()
-            if not history.empty:
-                stations = sorted(history["nome_stazione"].unique().tolist())
-                focus = st.selectbox("Evidenzia impianto", options=["(Nessuno)"] + stations, index=0)
-                solo = st.checkbox("Mostra solo impianto selezionato", value=False)
-                palette = px.colors.qualitative.Set2 + px.colors.qualitative.Set3 + px.colors.qualitative.T10
-                color_cycle = {name: palette[i % len(palette)] for i, name in enumerate(stations)}
-                fig_lines = go.Figure()
-                for name, grp in history.groupby("nome_stazione"):
-                    if solo and focus != "(Nessuno)" and name != focus:
-                        continue
-                    if focus != "(Nessuno)" and name != focus:
-                        color = "rgba(160,160,160,0.25)"
-                        width = 1
-                        opacity = 1.0
-                    else:
-                        color = color_cycle[name]
-                        width = 2.4 if focus == name else 1.8
-                        opacity = 0.98
-                    fig_lines.add_trace(
-                        go.Scatter(
-                            x=grp["date"],
-                            y=grp["espesor_medio"],
-                            mode="lines",
-                            name=name,
-                            line=dict(color=color, width=width),
-                            opacity=opacity,
-                        )
-                    )
-                fig_lines.update_layout(xaxis_title="Data", yaxis_title="Spessore medio (cm)")
-                st.plotly_chart(fig_lines, use_container_width=True)
-        except Exception:
-            pass
-
-    # --- Sezione finale: classifiche semplici per livello e profilo ---
-    
-    # Sezione Profilo Low-Cost (solo se selezionato, dopo tutti i livelli)
-    if profilo_norm == "lowcost":
-        st.markdown("---")
-        st.subheader("💰 Profilo: Low-Cost")
-        
-        # 1) Grafico a barre: costi di ski pass, scuola sci e noleggio
-        try:
-            price_cols = [c for c in ["Prezzo_skipass", "Prezzo_scuola", "Prezzo_noleggio"] if c in df_with_indices.columns]
             
-            if price_cols:
-                df_price_lowcost = (
-                    df_with_indices[["nome_stazione"] + price_cols]
-                    .drop_duplicates().fillna(0)
+            # Highlight best station
+            best_pt = map_data[map_data["highlight"] == 1]
+            if not best_pt.empty:
+                # Pallino verde più grande per l'impianto consigliato
+                best_layer = pdk.Layer(
+                    "ScatterplotLayer",
+                    data=best_pt,
+                    get_position='[lon, lat]',
+                    get_radius=15000,
+                    get_fill_color='[0, 200, 0, 220]',  # Verde
+                    pickable=False,
                 )
-                # Ordina per prezzo medio totale
-                df_price_lowcost["prezzo_medio"] = df_price_lowcost[price_cols].mean(axis=1)
-                df_price_lowcost = df_price_lowcost.sort_values("prezzo_medio", ascending=True)
                 
-                melted_prices = df_price_lowcost.melt("nome_stazione", value_vars=price_cols, var_name="Voce", value_name="Prezzo")
-                fig_prices_lowcost = px.bar(
-                    melted_prices,
-                    x="nome_stazione", y="Prezzo", color="Voce",
-                    barmode="group",
-                    title="💰 Costi per impianto (skipass, scuola, noleggio) - Ordine crescente per prezzo medio",
-                    labels={"nome_stazione": "Impianto", "Prezzo": "€", "Voce": "Tipo costo"},
-                    color_discrete_map={"Prezzo_skipass": "#FF6B6B", "Prezzo_scuola": "#4ECDC4", "Prezzo_noleggio": "#45B7D1"}
+                # Corona sopra il pallino verde
+                crown_layer = pdk.Layer(
+                    "TextLayer",
+                    data=best_pt,
+                    get_position='[lon, lat]',
+                    get_text='👑',
+                    get_size=35,
+                    get_color='[255, 215, 0, 255]',
+                    get_angle=0,
+                    pickable=False,
                 )
-                fig_prices_lowcost.update_layout(xaxis_tickangle=-45)
-                st.plotly_chart(fig_prices_lowcost, use_container_width=True)
+                
+                layers = [layer_all, best_layer, crown_layer]
             else:
-                st.info("Dati prezzo non disponibili per l'analisi low-cost")
-        except Exception as e:
-            st.warning(f"Errore nella visualizzazione prezzi: {e}")
+                layers = [layer_all]
+            
+            # View state
+            view_state = pdk.ViewState(
+                longitude=map_data["lon"].mean(),
+                latitude=map_data["lat"].mean(),
+                zoom=8,
+                pitch=0,
+            )
+            
+            # Create deck
+            deck = pdk.Deck(
+                layers=layers,
+                initial_view_state=view_state,
+                tooltip={"text": "{nome_stazione}\nKm aperti: {km_open_est}"}
+            )
+            
+            st.pydeck_chart(deck, use_container_width=True)
+    
+    # Expert level specific content
+    if livello == "esperto":
+        st.markdown('<h2 class="modern-subheader">🏆 Classifica Top 3</h2>', unsafe_allow_html=True)
         
-        # 2) Tabella rapporto kmopen/costo skipass
-        try:
-            if not df_with_indices.empty and "kmopen" in df_with_indices.columns and "Prezzo_skipass" in df_with_indices.columns:
-                # Raggruppa per stazione e calcola le medie per avere una riga per stazione
-                df_ratio = (
-                    df_with_indices.groupby("nome_stazione")
-                    .agg({
-                        "kmopen": "mean",
-                        "Prezzo_skipass": "mean"
-                    })
-                    .reset_index()
-                    .dropna()
+        # Get top 3 by expert index
+        df_with_indices = df_ranking.copy()
+        if "indice_esperto" in df_with_indices.columns:
+            top_3 = df_with_indices.nlargest(3, "indice_esperto")
+            
+            if not top_3.empty:
+                st.markdown(
+                    """
+                    <div class="podium-container">
+                    """,
+                    unsafe_allow_html=True
                 )
                 
-                if not df_ratio.empty:
-                    # Imputa kmopen per Saint-Lary usando regressione kmopen vs kmtotal
-                    try:
-                        from sklearn.linear_model import LinearRegression
-                        
-                        # Prepara dati per il training (escludi Saint-Lary e considera solo idestado=1)
-                        df_train = df_with_indices[
-                            (df_with_indices["nome_stazione"] != "Saint-Lary") & 
-                            (df_with_indices["idestado"] == 1) &
-                            (df_with_indices["kmopen"] > 0) &
-                            (df_with_indices["kmtotal"] > 0)
-                        ].copy()
-                        
-                        if len(df_train) >= 3:  # Serve almeno 3 punti per la regressione
-                            # Crea features per la regressione: kmtotal vs kmopen
-                            X_train = df_train[["kmtotal"]].values
-                            y_train = df_train["kmopen"].values
-                            
-                            # Addestra il modello di regressione lineare
-                            model = LinearRegression()
-                            model.fit(X_train, y_train)
-                            
-                            # Predici kmopen per Saint-Lary usando il suo kmtotal
-                            saint_lary_data = df_with_indices[
-                                (df_with_indices["nome_stazione"] == "Saint-Lary") & 
-                                (df_with_indices["idestado"] == 1)
-                            ]
-                            
-                            if not saint_lary_data.empty and "kmtotal" in saint_lary_data.columns:
-                                saint_lary_kmtotal = saint_lary_data["kmtotal"].mean()
-                                
-                                if saint_lary_kmtotal > 0:
-                                    # Predici kmopen per Saint-Lary
-                                    predicted_kmopen = model.predict([[saint_lary_kmtotal]])[0]
-                                    
-                                    # Aggiorna il valore di kmopen per Saint-Lary nella tabella
-                                    df_ratio.loc[df_ratio["nome_stazione"] == "Saint-Lary", "kmopen"] = max(0, predicted_kmopen)
-                                else:
-                                    st.warning("⚠️ Saint-Lary non ha kmtotal > 0 per l'imputazione")
-                            else:
-                                st.warning("⚠️ Dati Saint-Lary non trovati per l'imputazione")
-                        else:
-                            st.warning("⚠️ Dati insufficienti per l'imputazione (servono almeno 3 stazioni con kmopen > 0 e kmtotal > 0)")
-                    except Exception as e:
-                        st.warning(f"⚠️ Errore nell'imputazione: {e}")
-                    
-                    # Calcola il rapporto euro/km (costo per chilometro di pista)
-                    df_ratio["rapporto_euro_km"] = np.where(
-                        df_ratio["kmopen"] > 0,
-                        df_ratio["Prezzo_skipass"] / df_ratio["kmopen"],
-                        0
+                # First place
+                st.markdown(
+                    f"""
+                    <div class="podium-step">
+                        <div class="podium-1">
+                            <div class="podium-medal">🥇</div>
+                            <div class="podium-name">{top_3.iloc[0]['nome_stazione']}</div>
+                        </div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+                
+                # Second place
+                if len(top_3) > 1:
+                    st.markdown(
+                        f"""
+                        <div class="podium-step">
+                            <div class="podium-2">
+                                <div class="podium-medal">🥈</div>
+                                <div class="podium-name">{top_3.iloc[1]['nome_stazione']}</div>
+                            </div>
+                        </div>
+                        """,
+                        unsafe_allow_html=True
+                    )
+                
+                # Third place
+                if len(top_3) > 2:
+                    st.markdown(
+                        f"""
+                        <div class="podium-step">
+                            <div class="podium-3">
+                                <div class="podium-medal">🥉</div>
+                                <div class="podium-name">{top_3.iloc[2]['nome_stazione']}</div>
+                            </div>
+                        </div>
+                        """,
+                        unsafe_allow_html=True
+                    )
+                
+                st.markdown("</div>", unsafe_allow_html=True)
+    
+    # Base/Medium level specific content
+    elif livello in ["base", "medio"]:
+        st.markdown('<h2 class="modern-subheader">🏆 Classifica Top 3</h2>', unsafe_allow_html=True)
+        
+        # Get top 3 by base index
+        df_with_indices = df_ranking.copy()
+        if "indice_base" in df_with_indices.columns:
+            top_3 = df_with_indices.nlargest(3, "indice_base")
+            
+            if not top_3.empty:
+                st.markdown(
+                    """
+                    <div class="podium-container">
+                    """,
+                    unsafe_allow_html=True
+                )
+                
+                # First place
+                st.markdown(
+                    f"""
+                    <div class="podium-step">
+                        <div class="podium-1">
+                            <div class="podium-medal">🥇</div>
+                            <div class="podium-name">{top_3.iloc[0]['nome_stazione']}</div>
+                        </div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+                
+                # Second place
+                if len(top_3) > 1:
+                    st.markdown(
+                        f"""
+                        <div class="podium-step">
+                            <div class="podium-2">
+                                <div class="podium-medal">🥈</div>
+                                <div class="podium-name">{top_3.iloc[1]['nome_stazione']}</div>
+                            </div>
+                        </div>
+                        """,
+                        unsafe_allow_html=True
+                    )
+                
+                # Third place
+                if len(top_3) > 2:
+                    st.markdown(
+                        f"""
+                        <div class="podium-step">
+                            <div class="podium-3">
+                                <div class="podium-medal">🥉</div>
+                                <div class="podium-name">{top_3.iloc[2]['nome_stazione']}</div>
+                            </div>
+                        </div>
+                        """,
+                        unsafe_allow_html=True
+                    )
+                
+                st.markdown("</div>", unsafe_allow_html=True)
+    
+    # Weather probability charts
+    if livello != "nessuno":
+        st.markdown('<h3 class="modern-section-title">🌤️ Probabilità condizioni meteo (storico ±3 giorni)</h3>', unsafe_allow_html=True)
+        
+        # Get historical data
+        try:
+            historical_data = get_historical_data_for_date(data_sel, df_meteo)
+            
+            if not historical_data.empty:
+                # Create speedometer charts
+                col1, col2 = st.columns(2)
+                
+                with col1:
+                    # Sunshine probability
+                    sun_prob = historical_data["sole"].mean()
+                    fig_sun = create_speedometer(
+                        sun_prob, 
+                        historical_data["sole"].mean(), 
+                        "Probabilità sole", 
+                        "%"
+                    )
+                    st.plotly_chart(fig_sun, use_container_width=True)
+                
+                with col2:
+                    # Rain probability
+                    rain_prob = historical_data["pioggia"].mean()
+                    fig_rain = create_speedometer(
+                        rain_prob, 
+                        historical_data["pioggia"].mean(), 
+                        "Probabilità pioggia", 
+                        "%"
+                    )
+                    st.plotly_chart(fig_rain, use_container_width=True)
+                
+                col3, col4 = st.columns(2)
+                
+                with col3:
+                    # Fog probability
+                    fog_prob = historical_data["nebbia"].mean()
+                    fig_fog = create_speedometer(
+                        fog_prob, 
+                        historical_data["nebbia"].mean(), 
+                        "Probabilità nebbia", 
+                        "%"
+                    )
+                    st.plotly_chart(fig_fog, use_container_width=True)
+                
+                with col4:
+                    # Wind probability
+                    wind_prob = historical_data["vento"].mean()
+                    fig_wind = create_speedometer(
+                        wind_prob, 
+                        historical_data["vento"].mean(), 
+                        "Probabilità vento", 
+                        "%"
+                    )
+                    st.plotly_chart(fig_wind, use_container_width=True)
+        
+        except Exception as e:
+            st.warning(f"Impossibile caricare i dati meteo storici: {e}")
+    
+    # Avalanche risk
+    if livello != "nessuno":
+        st.markdown('<h3 class="modern-section-title">⚠️ Rischio valanghe</h3>', unsafe_allow_html=True)
+        
+        try:
+            # Get historical avalanche data
+            historical_avalanche = get_historical_data_for_date(data_sel, df_valanghe)
+            
+            if not historical_avalanche.empty:
+                risk = historical_avalanche["danger_level_avg"].mean()
+                baseline = df_valanghe["danger_level_avg"].mean()
+                
+                # Create speedometer for avalanche risk
+                fig_risk = create_speedometer(
+                    risk, 
+                    baseline, 
+                    "Rischio valanghe (1-5)", 
+                    ""
+                )
+                
+                fig_risk.update_layout(height=230, margin=dict(l=10, r=10, t=20, b=40))
+                st.plotly_chart(fig_risk, use_container_width=True)
+                
+                st.info("L'indice di valanghe, conosciuto come Scala Europea del Pericolo di Valanghe, è uno strumento a 5 livelli utilizzato per valutare e comunicare il rischio di valanghe (0=basso, 5=molto alto)")
+        
+        except Exception as e:
+            st.warning(f"Impossibile caricare i dati valanghe: {e}")
+    
+    # Profile-specific AI Overview
+    if profilo != "nessuno" and livello != "nessuno":
+        st.markdown('<h3 class="modern-section-title">🤖 AI Overview - Profilo specifico</h3>', unsafe_allow_html=True)
+        
+        try:
+            if profilo == "festaiolo":
+                prompt_profile = build_festaiolo_prompt(df_recensioni, best_name, livello, data_sel)
+                output_profile, usage_profile = generate_overview(prompt_profile, max_tokens=140)
+                
+                if output_profile:
+                    st.markdown(
+                        f"""
+                        <div class="ai-overview-section">
+                            <div class="ai-overview-content">{output_profile}</div>
+                        </div>
+                        """,
+                        unsafe_allow_html=True
                     )
                     
-                    # Ordina per rapporto migliore (meno euro per km = migliore rapporto)
-                    df_ratio = df_ratio.sort_values("rapporto_euro_km", ascending=True)
+                    if isinstance(usage_profile, dict) and usage_profile.get("model"):
+                        st.caption(f"Modello: {usage_profile['model']}")
+            
+            elif profilo == "familiare":
+                # Show specific data for recommended station
+                if "Area_bambini" in df_kpis.columns:
+                    best_station_data = df_kpis[df_kpis["nome_stazione"] == best_name]
+                    if not best_station_data.empty:
+                        area_bambini = best_station_data["Area_bambini"].iloc[0]
+                        if pd.notna(area_bambini) and area_bambini > 0:
+                            st.info(f"🎯 **{best_name}** ha **{int(area_bambini)} aree bambini** aperte per i tuoi piccoli!")
+                
+                prompt_profile = build_familiare_prompt(df_recensioni, best_name, livello, data_sel)
+                output_profile, usage_profile = generate_overview(prompt_profile, max_tokens=140)
+                
+                if output_profile:
+                    st.markdown(
+                        f"""
+                        <div class="ai-overview-section">
+                            <div class="ai-overview-content">{output_profile}</div>
+                        </div>
+                        """,
+                        unsafe_allow_html=True
+                    )
                     
-                    # Prepara tabella finale
-                    df_table = df_ratio[["nome_stazione", "Prezzo_skipass", "kmopen", "rapporto_euro_km"]].copy()
+                    if isinstance(usage_profile, dict) and usage_profile.get("model"):
+                        st.caption(f"Modello: {usage_profile['model']}")
+            
+            elif profilo == "lowcost":
+                prompt_profile = build_lowcost_prompt(df_recensioni, best_name, livello, data_sel)
+                output_profile, usage_profile = generate_overview(prompt_profile, max_tokens=140)
+                
+                if output_profile:
+                    st.markdown(
+                        f"""
+                        <div class="ai-overview-section">
+                            <div class="ai-overview-content">{output_profile}</div>
+                        </div>
+                        """,
+                        unsafe_allow_html=True
+                    )
                     
-                    # Rinomina colonne per la visualizzazione
-                    rename_map = {
-                        "nome_stazione": "🏔️ Impianto",
-                        "Prezzo_skipass": "💶 Skipass (€)",
-                        "kmopen": "🛷 Km Aperti",
-                        "rapporto_euro_km": "💸 €/Km"
-                    }
-                    df_table = df_table.rename(columns=rename_map)
-                    
-                    # Formatta i valori
-                    if "💶 Skipass (€)" in df_table.columns:
-                        df_table["💶 Skipass (€)"] = df_table["💶 Skipass (€)"].round(2)
-                    if "🛷 Km Aperti" in df_table.columns:
-                        df_table["🛷 Km Aperti"] = df_table["🛷 Km Aperti"].round(1)
-                    if "💸 €/Km" in df_table.columns:
-                        df_table["💸 €/Km"] = df_table["💸 €/Km"].round(2)
-                    
-                    st.subheader("📊 Rapporto Qualità-Prezzo: Euro per Chilometro")
-                    st.markdown("""
-                    **Indice calcolato:**
-                    - **€/Km**: meno euro per chilometro di pista = migliore rapporto qualità-prezzo
-                    """)
-                    
-                    # Mostra tutte le stazioni (dovrebbero essere 7)
-                    st.dataframe(df_table, use_container_width=True, hide_index=True)
-                else:
-                    st.info("Dati insufficienti per calcolare il rapporto kmopen/costo skipass")
-            else:
-                st.info("Colonne 'kmopen' o 'Prezzo_skipass' non disponibili per l'analisi")
-        except Exception as e:
-            st.warning(f"Errore nel calcolo del rapporto: {e}")
-            st.write(f"Errore completo: {str(e)}")
+                    if isinstance(usage_profile, dict) and usage_profile.get("model"):
+                        st.caption(f"Modello: {usage_profile['model']}")
         
-        # 3) AI Overview – Low-Cost
-        try:
-            st.subheader("🤖 AI Overview – Low-Cost")
-            prompt_lowcost = build_lowcost_prompt(df_filtered_rec, best_name, livello, data_sel, df_ratio)
-            out, usage = generate_overview(prompt_lowcost, max_tokens=140)
-            st.write(out or "Nessun contenuto disponibile ora.")
-            if isinstance(usage, dict) and usage.get("model"):
-                st.caption(f"Modello: {usage['model']}")
         except Exception as e:
-            st.warning(f"Errore nell'AI Overview: {e}")
+            st.warning(f"Impossibile generare l'AI Overview per il profilo: {e}")
     
-    # --- Sezione finale: classifiche semplici per livello e profilo ---
-    try:
-        if df_with_indices is not None and not df_with_indices.empty:
-            st.markdown("---")
-            # Classifica per livello
-            st.subheader("Classifica e indici – Livello")
-            level_to_col = {"base": "indice_base", "medio": "indice_medio", "esperto": "indice_esperto"}
-            level_col = level_to_col.get(livello)
-            if level_col and level_col in df_with_indices.columns:
-                df_level_rank = (
-                    df_with_indices.groupby("nome_stazione")[level_col]
-                    .mean()
-                    .reset_index()
-                    .sort_values(level_col, ascending=False)
+    # Opening dates table
+    if livello == "nessuno" and profilo == "nessuno":
+        st.markdown('<h2 class="modern-subheader">📅 Date di apertura medie</h2>', unsafe_allow_html=True)
+        
+        try:
+            # Load opening dates data
+            df_opening = pd.read_csv("df_meteo_updated.csv")
+            
+            if "apertura_doy" in df_opening.columns:
+                # Convert day of year to date
+                df_opening["apertura_doy"] = pd.to_numeric(df_opening["apertura_doy"], errors="coerce")
+                df_opening = df_opening.dropna(subset=["apertura_doy"])
+                
+                # Convert to dates
+                df_opening["Apertura media"] = pd.to_datetime("2024-01-01") + pd.to_timedelta(df_opening["apertura_doy"] - 1, unit="D")
+                df_opening["Apertura media"] = df_opening["Apertura media"].dt.strftime("%d/%m")
+                
+                # Chiusura (assume 30 giorni dopo apertura)
+                df_opening["Chiusura media"] = pd.to_datetime("2024-01-01") + pd.to_timedelta(df_opening["apertura_doy"] + 29, unit="D")
+                df_opening["Chiusura media"] = df_opening["Chiusura media"].dt.strftime("%d/%m")
+                
+                # Sort and display
+                avg = df_opening.groupby("nome_stazione")["apertura_doy"].mean().reset_index()
+                avg = avg.sort_values("apertura_doy", ascending=True)
+                
+                table = avg[["nome_stazione", "Apertura media", "Chiusura media"]].rename(
+                    columns={"nome_stazione": "Impianto"}
                 )
-                fig_lvl = px.bar(
-                    df_level_rank,
-                    x="nome_stazione",
-                    y=level_col,
-                    title=f"Ranking (livello: {livello})",
-                    labels={"nome_stazione": "Impianto", level_col: "Indice livello"},
+                
+                st.info("Consulta la tabella seguente per sapere quando le piste da sci si vestono di bianco")
+                
+                # Use modern table styling
+                st.markdown(
+                    f"""
+                    <div class="modern-table">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr>
+                                    <th>Impianto</th>
+                                    <th>Apertura media</th>
+                                    <th>Chiusura media</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {''.join([f'<tr><td>{row["Impianto"]}</td><td>{row["Apertura media"]}</td><td>{row["Chiusura media"]}</td></tr>' for _, row in table.iterrows()])}
+                            </tbody>
+                        </table>
+                    </div>
+                    """,
+                    unsafe_allow_html=True
                 )
-                fig_lvl.update_layout(xaxis_tickangle=-45)
-                st.plotly_chart(fig_lvl, use_container_width=True)
-            else:
-                st.info("Seleziona un livello per vedere la classifica per livello.")
-
-            # Classifica per profilo
-            st.subheader("Classifica e indici – Profilo")
-            profile_to_col = {
-                "panoramico": "indice_panoramico",
-                "familiare": "indice_famigliare",
-                "festaiolo": "indice_festaiolo",
-                "lowcost": "indice_lowcost",
-            }
-            prof_col = profile_to_col.get(profilo_norm)
-            if prof_col and prof_col in df_with_indices.columns:
-                df_prof_rank = (
-                    df_with_indices.groupby("nome_stazione")[prof_col]
-                    .mean()
-                    .reset_index()
-                    .sort_values(prof_col, ascending=False)
-                )
-                fig_prof = px.bar(
-                    df_prof_rank,
-                    x="nome_stazione",
-                    y=prof_col,
-                    title=f"Ranking (profilo: {profilo_norm})",
-                    labels={"nome_stazione": "Impianto", prof_col: "Indice profilo"},
-                )
-                fig_prof.update_layout(xaxis_tickangle=-45)
-                st.plotly_chart(fig_prof, use_container_width=True)
-            else:
-                st.info("Seleziona un profilo per vedere la classifica per profilo.")
-    except Exception:
-        pass
-
-    st.caption("v2 – Stazione consigliata, overview AI e viste dedicate per livello")
-
+        
+        except Exception as e:
+            st.warning(f"Impossibile caricare le date di apertura: {e}")
 
 if __name__ == "__main__":
     main()
