@@ -847,12 +847,11 @@ def main():
         st.error(f"Errore nel calcolo degli indici: {e}")
         return
     
-    # Apply profile adjustment
-    if profilo != "nessuno":
-        df_kpis = apply_profile_adjustment(df_kpis, profilo)
+    # Apply profile adjustment to create indice_finale
+    df_kpis = apply_profile_adjustment(df_kpis, livello, profilo)
     
-    # Build ranking
-    df_ranking = build_ranking(df_kpis, livello, profilo)
+    # Build ranking using the indice_finale column
+    df_ranking = build_ranking(df_kpis, "indice_finale")
     
     if df_ranking.empty:
         st.warning("Nessuna stazione disponibile per i criteri selezionati.")
