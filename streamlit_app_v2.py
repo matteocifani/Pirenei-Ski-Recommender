@@ -1387,8 +1387,61 @@ def main():
             st.markdown('<h3 class="modern-section-title">🎿 Informazioni per esperti</h3>', unsafe_allow_html=True)
             st.info("**Livello esperto**: Piste nere, fuoripista, snowpark e condizioni estreme.")
 
+    # Opening dates table
+    if livello == "nessuno" and profilo == "nessuno":
+        st.markdown('<h2 class="modern-subheader">📅 Date di apertura medie</h2>', unsafe_allow_html=True)
+        
+        try:
+            # Load opening dates data
+            df_opening = pd.read_csv("df_meteo_updated.csv")
+            
+            if "apertura_doy" in df_opening.columns:
+                # Convert day of year to date
+                df_opening["apertura_doy"] = pd.to_numeric(df_opening["apertura_doy"], errors="coerce")
+                df_opening = df_opening.dropna(subset=["apertura_doy"])
+                
+                # Convert to dates
+                df_opening["Apertura media"] = pd.to_datetime("2024-01-01") + pd.to_timedelta(df_opening["apertura_doy"] - 1, unit="D")
+                df_opening["Apertura media"] = df_opening["Apertura media"].dt.strftime("%d/%m")
+                
+                # Chiusura (assume 30 giorni dopo apertura)
+                df_opening["Chiusura media"] = pd.to_datetime("2024-01-01") + pd.to_timedelta(df_opening["apertura_doy"] + 29, unit="D")
+                df_opening["Chiusura media"] = df_opening["Chiusura media"].dt.strftime("%d/%m")
+                
+                # Sort and display
+                avg = df_opening.groupby("nome_stazione")["apertura_doy"].mean().reset_index()
+                avg = avg.sort_values("apertura_doy", ascending=True)
+                
+                table = avg[["nome_stazione", "Apertura media", "Chiusura media"]].rename(
+                    columns={"nome_stazione": "Impianto"}
+                )
+                
+                st.info("Consulta la tabella seguente per sapere quando le piste da sci si vestono di bianco")
+                
+                # Use modern table styling
+                st.markdown(
+                    f"""
+                    <div class="modern-table">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr>
+                                    <th>Impianto</th>
+                                    <th>Apertura media</th>
+                                    <th>Chiusura media</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {''.join([f'<tr><td>{row["Impianto"]}</td><td>{row["Apertura media"]}</td><td>{row["Chiusura media"]}</td></tr>' for _, row in table.iterrows()])}
+                            </tbody>
+                        </table>
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+        
+        except Exception as e:
+            st.warning(f"Impossibile caricare le date di apertura: {e}")
 
-    
     # Main content sections
     if livello != "nessuno":
         # Approfondimenti
@@ -1805,7 +1858,7 @@ def main():
             st.warning(f"Impossibile caricare i dati valanghe: {e}")
     
     # Profile-specific AI Overview
-    if profilo != "nessuno" and livello != "nessuno":
+    if profilo != "nessuno":
         st.markdown('<h3 class="modern-section-title">🤖 AI Overview - Profilo specifico</h3>', unsafe_allow_html=True)
         
         # AI Overview per profili specifici (TEMPORANEAMENTE DISABILITATO)
