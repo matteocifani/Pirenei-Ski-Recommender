@@ -1376,16 +1376,621 @@ def main():
 
         # Level-specific information
         if livello == "base":
-            st.markdown('<h3 class="modern-section-title">🎿 Informazioni per principianti</h3>', unsafe_allow_html=True)
-            st.info("**Livello base**: Focus su piste verdi e blu, aree sicure per famiglie e principianti.")
+            st.markdown('<h3 class="modern-section-title">🎿 Per principianti: dove trovi più piste facili e condizioni stabili</h3>', unsafe_allow_html=True)
+            
+            # Mappa con consigliata evidenziata
+            st.markdown('<h4 class="modern-section-title">🗺️ Mappa delle stazioni (consigliata evidenziata)</h4>', unsafe_allow_html=True)
+            render_map_with_best(df_with_indices, best_name)
+
+            # Podio Top 3 (estetico, senza esporre il valore indice)
+            if not df_with_indices.empty and "indice_base" in df_with_indices.columns:
+                top3 = (df_with_indices.groupby("nome_stazione")["indice_base"].mean()
+                        .sort_values(ascending=False).head(3).reset_index())
+                if len(top3) > 0:
+                    names = top3["nome_stazione"].tolist()
+                    first = names[0] if len(names) > 0 else ""
+                    second = names[1] if len(names) > 1 else ""
+                    third = names[2] if len(names) > 2 else ""
+                    st.markdown('<h4 class="modern-section-title">🏆 Classifica Top 3</h4>', unsafe_allow_html=True)
+                    st.markdown("""
+                    <div class='podium-container'>
+                      <div class='podium-step second'>
+                        <div class='podium-platform second'>
+                          <div class='podium-medal'>🥈</div>
+                          <div class='podium-name'>%s</div>
+                        </div>
+                      </div>
+                      <div class='podium-step first'>
+                        <div class='podium-platform first'>
+                          <div class='podium-medal'>🥇</div>
+                          <div class='podium-name'>%s</div>
+                        </div>
+                      </div>
+                      <div class='podium-step third'>
+                        <div class='podium-platform third'>
+                          <div class='podium-medal'>🥉</div>
+                          <div class='podium-name'>%s</div>
+                        </div>
+                      </div>
+                    </div>
+                    """ % (second, first, third), unsafe_allow_html=True)
+            
+            # Probabilità meteo (±3 giorni su anni precedenti per date future)
+            meteo_data = get_historical_data_for_date(df_meteo, data_sel, days_range=3)
+            if not meteo_data.empty:
+                st.markdown('<h4 class="modern-section-title">🌤️ Probabilità condizioni meteo (storico ±3 giorni)</h4>', unsafe_allow_html=True)
+                # baseline ±15 giorni sugli anni precedenti
+                baseline = get_historical_data_for_date(df_meteo, data_sel, days_range=15)
+                col1, col2 = st.columns(2)
+                with col1:
+                    prob_nebbia = float(meteo_data.get("nebbia", 0).mean() * 100)
+                    baseline_nebbia = float((baseline.get("nebbia", 0).mean() * 100) if not baseline.empty else 0)
+                    fig_n = create_speedometer(prob_nebbia, baseline_nebbia, "Prob. Nebbia", "%")
+                    st.plotly_chart(fig_n, use_container_width=True)
+                with col2:
+                    prob_pioggia = float(meteo_data.get("pioggia", 0).mean() * 100)
+                    baseline_pioggia = float((baseline.get("pioggia", 0).mean() * 100) if not baseline.empty else 0)
+                    fig_p = create_speedometer(prob_pioggia, baseline_pioggia, "Prob. Pioggia", "%")
+                    st.plotly_chart(fig_p, use_container_width=True)
+                st.caption("Nota: probabilità calcolate sui dati storici per periodi simili; il delta confronta con la media degli anni precedenti nella finestra ±15 giorni.")
+            else:
+                st.warning("Dati meteo non disponibili per questa data")
+
+            # Barre impilate piste verdi/blu ordinate per indice_base
+            if not df_with_indices.empty and "indice_base" in df_with_indices.columns:
+                st.markdown('<h4 class="modern-section-title">🎿 Distribuzione piste verdi e blu</h4>', unsafe_allow_html=True)
+                piste_base = df_with_indices[["nome_stazione", "Piste_verdi", "Piste_blu", "indice_base"]].drop_duplicates()
+                piste_base = piste_base.sort_values("indice_base", ascending=False)
+                fig_piste_base = px.bar(
+                    piste_base,
+                    x="nome_stazione",
+                    y=["Piste_verdi", "Piste_blu"],
+                    title="Piste verdi e blu per stazione (ordinate per indice base)",
+                    color_discrete_map={"Piste_verdi": "#4CAF50", "Piste_blu": "#2196F3"}
+                )
+                fig_piste_base.update_layout(xaxis_tickangle=-45)
+                st.plotly_chart(fig_piste_base, use_container_width=True)
+            
+            # Sezione Festaiolo (profilo) – solo se selezionato
+            if profilo == "festaiolo":
+                st.markdown('<h4 class="modern-section-title">🎉 Profilo: Festaiolo</h4>', unsafe_allow_html=True)
+                # Grafico 1: km di sci notturno (asse X), impianti su Y
+                try:
+                    df_night = df_with_indices[["nome_stazione", "Scii_notte"]].drop_duplicates().fillna(0)
+                    if not df_night.empty:
+                        fig_night = px.bar(
+                            df_night.sort_values("Scii_notte", ascending=False),
+                            x="nome_stazione", y="Scii_notte",
+                            title="Km di sci notturno per impianto",
+                            labels={"Scii_notte": "Km sci notturno", "nome_stazione": "Impianto"}
+                        )
+                        st.plotly_chart(fig_night, use_container_width=True)
+                except Exception:
+                    pass
+
+            if profilo == "familiare":
+                st.markdown('<h4 class="modern-section-title">👨‍👩‍👧‍👦 Profilo: Familiare</h4>', unsafe_allow_html=True)
+                # 1) Numero aree bambini per impianto
+                try:
+                    if "Area_bambini" in df_with_indices.columns:
+                        df_kids = (
+                            df_with_indices[["nome_stazione", "Area_bambini"]]
+                            .drop_duplicates().fillna(0)
+                            .sort_values("Area_bambini", ascending=False)
+                        )
+                        fig_kids = px.bar(
+                            df_kids,
+                            x="nome_stazione", y="Area_bambini",
+                            title="Numero aree bambini per impianto",
+                            labels={"nome_stazione": "Impianto", "Area_bambini": "Aree bambini"}
+                        )
+                        fig_kids.update_layout(xaxis_tickangle=-45)
+                        st.plotly_chart(fig_kids, use_container_width=True)
+                    else:
+                        st.info("Dato non disponibile: 'Area_bambini'")
+                except Exception:
+                    pass
+
+                # 2) Prezzi medi per impianto (skipass, scuola, noleggio)
+                try:
+                    price_cols = [c for c in ["Prezzo_skipass", "Prezzo_scuola", "Prezzo_noleggio"] if c in df_with_indices.columns]
+                    if price_cols:
+                        df_price = (
+                            df_with_indices[["nome_stazione"] + price_cols]
+                            .drop_duplicates().fillna(0)
+                        )
+                        melted_p = df_price.melt("nome_stazione", value_vars=price_cols, var_name="Voce", value_name="Prezzo")
+                        fig_prices = px.bar(
+                            melted_p,
+                            x="Prezzo", y="nome_stazione", color="Voce",
+                            barmode="group",
+                            title="Prezzi medi per impianto (skipass, scuola, noleggio)",
+                            labels={"nome_stazione": "Impianto", "Prezzo": "€"}
+                        )
+                        st.plotly_chart(fig_prices, use_container_width=True)
+                    else:
+                        st.info("Dati prezzo non disponibili (skipass/scuola/noleggio)")
+                except Exception:
+                    pass
+                
+                # 3) AI Overview – Famiglia (TEMPORANEAMENTE DISABILITATO)
+                st.markdown('<h4 class="modern-section-title">🤖 AI Overview – Famiglia</h4>', unsafe_allow_html=True)
+                st.info("AI Overview temporaneamente disabilitato. Funzionalità in fase di ripristino.")
             
         elif livello == "medio":
-            st.markdown('<h3 class="modern-section-title">🎿 Informazioni per sciatori intermedi</h3>', unsafe_allow_html=True)
-            st.info("**Livello medio**: Mix di piste blu e rosse, con attenzione alla qualità della neve e alle condizioni meteo.")
+            st.markdown('<h3 class="modern-section-title">🎿 Per intermedi: equilibrio tra piste e sicurezza</h3>', unsafe_allow_html=True)
+            
+            # Mappa con consigliata evidenziata
+            st.markdown('<h4 class="modern-section-title">🗺️ Mappa delle stazioni (consigliata evidenziata)</h4>', unsafe_allow_html=True)
+            render_map_with_best(df_with_indices, best_name)
+
+            # Podio Top 3 per indice_medio
+            if "indice_medio" in df_with_indices.columns and not df_with_indices.empty:
+                top3m = (
+                    df_with_indices.groupby("nome_stazione")["indice_medio"].mean()
+                    .sort_values(ascending=False).head(3).reset_index()
+                )
+                if not top3m.empty:
+                    names = top3m["nome_stazione"].tolist()
+                    first = names[0] if len(names) > 0 else ""
+                    second = names[1] if len(names) > 1 else ""
+                    third = names[2] if len(names) > 2 else ""
+                    st.markdown('<h4 class="modern-section-title">🏆 Classifica Top 3</h4>', unsafe_allow_html=True)
+                    st.markdown(
+                        f"""
+                        <div class='podium-container'>
+                          <div class='podium-step second'>
+                            <div class='podium-platform second'>
+                              <div class='podium-medal'>🥈</div>
+                              <div class='podium-name'>{second}</div>
+                            </div>
+                          </div>
+                          <div class='podium-step first'>
+                            <div class='podium-platform first'>
+                              <div class='podium-medal'>🥇</div>
+                              <div class='podium-name'>{first}</div>
+                            </div>
+                          </div>
+                          <div class='podium-step third'>
+                            <div class='podium-platform third'>
+                              <div class='podium-medal'>🥉</div>
+                              <div class='podium-name'>{third}</div>
+                            </div>
+                          </div>
+                        </div>
+                        """,
+                        unsafe_allow_html=True,
+                    )
+
+            # Meteo compatto (5 mini-donut) per la stazione consigliata
+            try:
+                meteo_win = get_historical_data_for_date(df_meteo, data_sel, days_range=3)
+                if not meteo_win.empty:
+                    m_best = meteo_win[meteo_win.get("nome_stazione", "").astype(str) == best_name]
+                    if m_best.empty:
+                        m_best = meteo_win
+                    pioggia = float(m_best.get("pioggia", 0).mean() * 100)
+                    nebbia = float(m_best.get("nebbia", 0).mean() * 100)
+                    sole    = float(m_best.get("sole", 0).mean() * 100)
+                    vento   = float(m_best.get("vento", 0).mean() * 100)
+                    neve_pct = 0.0
+                    snow_win = get_historical_data_for_date(df_infonieve, data_sel, days_range=3)
+                    if not snow_win.empty:
+                        s_best = snow_win[snow_win.get("nome_stazione", "").astype(str) == best_name]
+                        if s_best.empty:
+                            s_best = snow_win
+                        cm = s_best.get("espesor_medio", 0).fillna(0)
+                        if not cm.empty:
+                            cmin, cmax = cm.min(), cm.max()
+                            neve_pct = float(((cm.mean() - cmin) / (cmax - cmin) * 100) if cmax > cmin else 0)
+
+                    def donut(value, label, color):
+                        val = max(0.0, min(100.0, value))
+                        rem = 100 - val
+                        fig = go.Figure(
+                            data=[go.Pie(values=[val, rem], hole=0.72, sort=False, direction='clockwise', marker_colors=[color, 'rgba(255,255,255,0.08)'], textinfo='none')]
+                        )
+                        fig.add_annotation(text=f"{val:.0f}%", x=0.5, y=0.5, showarrow=False, font=dict(size=22, color='#e6efff'))
+                        fig.update_layout(
+                            title=dict(text=label, font=dict(size=16), y=0.9),
+                            showlegend=False, margin=dict(l=0, r=0, t=50, b=10), height=220
+                        )
+                        return fig
+
+                    st.markdown('<h4 class="modern-section-title">🌤️ Meteo (storico ±3 giorni)</h4>', unsafe_allow_html=True)
+                    r1c1, r1c2, r1c3 = st.columns(3)
+                    with r1c1:
+                        st.plotly_chart(donut(pioggia, "Pioggia", "#60A5FA"), use_container_width=True)
+                    with r1c2:
+                        st.plotly_chart(donut(sole, "Sole", "#F59E0B"), use_container_width=True)
+                    with r1c3:
+                        st.plotly_chart(donut(nebbia, "Nebbia", "#94a3b8"), use_container_width=True)
+                    st.write("")
+                    r2c1, r2c2, r2c3 = st.columns([1,1,1])
+                    with r2c1:
+                        st.plotly_chart(donut(vento, "Vento", "#00C8FF"), use_container_width=True)
+                    with r2c2:
+                        st.plotly_chart(donut(neve_pct, "Neve", "#6EE7B7"), use_container_width=True)
+                    with r2c3:
+                        st.write("")
+            except Exception:
+                pass
+
+            # Barre: piste blu/rosse ordinate per indice_medio
+            if not df_with_indices.empty and "indice_medio" in df_with_indices.columns:
+                st.markdown('<h4 class="modern-section-title">🎿 Piste blu e rosse per stazione (ordinate per indice medio)</h4>', unsafe_allow_html=True)
+                piste = df_with_indices[["nome_stazione", "Piste_blu", "Piste_rosse", "indice_medio"]].drop_duplicates()
+                piste = piste.sort_values("indice_medio", ascending=False)
+                melted = piste.melt("nome_stazione", value_vars=["Piste_blu", "Piste_rosse"], var_name="Tipo", value_name="Numero")
+                fig = px.bar(
+                    melted,
+                    x="nome_stazione", y="Numero", color="Tipo", barmode="stack",
+                    color_discrete_map={"Piste_blu": "#60A5FA", "Piste_rosse": "#FB7185"},
+                )
+                fig.update_layout(xaxis_tickangle=-45)
+                st.plotly_chart(fig, use_container_width=True)
+            
+            # Sezione Festaiolo (profilo)
+            if profilo == "festaiolo":
+                st.markdown('<h4 class="modern-section-title">🎉 Profilo: Festaiolo</h4>', unsafe_allow_html=True)
+                try:
+                    df_night = df_with_indices[["nome_stazione", "Scii_notte"]].drop_duplicates().fillna(0)
+                    if not df_night.empty:
+                        fig_night = px.bar(
+                            df_night.sort_values("Scii_notte", ascending=False),
+                            x="nome_stazione", y="Scii_notte",
+                            title="Km di sci notturno per impianto",
+                            labels={"Scii_notte": "Km sci notturno", "nome_stazione": "Impianto"}
+                        )
+                        st.plotly_chart(fig_night, use_container_width=True)
+                except Exception:
+                    pass
+                try:
+                    cols = [c for c in ["Snowpark", "Superpipe"] if c in df_with_indices.columns]
+                    df_acts = df_with_indices[["nome_stazione"] + cols].drop_duplicates().fillna(0)
+                    if not df_acts.empty:
+                        melted = df_acts.melt("nome_stazione", value_vars=cols, var_name="Attività", value_name="Valore")
+                        fig_acts = px.bar(
+                            melted, x="nome_stazione", y="Valore", color="Attività",
+                            barmode="group", title="Snowpark e Superpipe"
+                        )
+                        st.plotly_chart(fig_acts, use_container_width=True)
+                except Exception:
+                    pass
+                # AI Overview – Festa (TEMPORANEAMENTE DISABILITATO)
+                st.markdown('<h4 class="modern-section-title">🤖 AI Overview – Festa</h4>', unsafe_allow_html=True)
+                st.info("AI Overview temporaneamente disabilitato. Funzionalità in fase di ripristino.")
+
+            # Sezione Familiare (profilo)
+            if profilo == "familiare":
+                st.markdown('<h4 class="modern-section-title">👨‍👩‍👧‍👦 Profilo: Familiare</h4>', unsafe_allow_html=True)
+                # 1) Numero aree bambini per impianto
+                try:
+                    if "Area_bambini" in df_with_indices.columns:
+                        df_kids = (
+                            df_with_indices[["nome_stazione", "Area_bambini"]]
+                            .drop_duplicates().fillna(0)
+                            .sort_values("Area_bambini", ascending=False)
+                        )
+                        fig_kids = px.bar(
+                            df_kids,
+                            x="nome_stazione", y="Area_bambini",
+                            title="Numero aree bambini per impianto",
+                            labels={"nome_stazione": "Impianto", "Area_bambini": "Aree bambini"}
+                        )
+                        fig_kids.update_layout(xaxis_tickangle=-45)
+                        st.plotly_chart(fig_kids, use_container_width=True)
+                    else:
+                        st.info("Dato non disponibile: 'Area_bambini'")
+                except Exception:
+                    pass
+
+                # 2) Prezzi medi per impianto (skipass, scuola, noleggio)
+                try:
+                    price_cols = [c for c in ["Prezzo_skipass", "Prezzo_scuola", "Prezzo_noleggio"] if c in df_with_indices.columns]
+                    if price_cols:
+                        df_price = (
+                            df_with_indices[["nome_stazione"] + price_cols]
+                            .drop_duplicates().fillna(0)
+                        )
+                        melted_p = df_price.melt("nome_stazione", value_vars=price_cols, var_name="Voce", value_name="Prezzo")
+                        fig_prices = px.bar(
+                            melted_p,
+                            x="Prezzo", y="nome_stazione", color="Voce",
+                            barmode="group",
+                            title="Prezzi medi per impianto (skipass, scuola, noleggio)",
+                            labels={"nome_stazione": "Impianto", "Prezzo": "€"}
+                        )
+                        st.plotly_chart(fig_prices, use_container_width=True)
+                    else:
+                        st.info("Dati prezzo non disponibili (skipass/scuola/noleggio)")
+                except Exception:
+                    pass
+
+                # 3) AI Overview – Famiglia (TEMPORANEAMENTE DISABILITATO)
+                st.markdown('<h4 class="modern-section-title">🤖 AI Overview – Famiglia</h4>', unsafe_allow_html=True)
+                st.info("AI Overview temporaneamente disabilitato. Funzionalità in fase di ripristino.")
             
         elif livello == "esperto":
-            st.markdown('<h3 class="modern-section-title">🎿 Informazioni per esperti</h3>', unsafe_allow_html=True)
-            st.info("**Livello esperto**: Piste nere, fuoripista, snowpark e condizioni estreme.")
+            st.markdown('<h3 class="modern-section-title">🎿 Per esperti: caratteristiche tecniche e chilometri</h3>', unsafe_allow_html=True)
+            
+            # Mappa con consigliata evidenziata
+            st.markdown('<h4 class="modern-section-title">🗺️ Mappa delle stazioni (consigliata evidenziata)</h4>', unsafe_allow_html=True)
+            render_map_with_best(df_with_indices, best_name)
+
+            # Podio Top 3 per indice_esperto
+            if not df_with_indices.empty and "indice_esperto" in df_with_indices.columns:
+                top3e = (
+                    df_with_indices.groupby("nome_stazione")["indice_esperto"].mean()
+                    .sort_values(ascending=False).head(3).reset_index()
+                )
+                if not top3e.empty:
+                    names = top3e["nome_stazione"].tolist()
+                    first = names[0] if len(names) > 0 else ""
+                    second = names[1] if len(names) > 1 else ""
+                    third = names[2] if len(names) > 2 else ""
+                    st.markdown('<h4 class="modern-section-title">🏆 Classifica Top 3</h4>', unsafe_allow_html=True)
+                    st.markdown(
+                        f"""
+                        <div class='podium-container'>
+                          <div class='podium-step second'>
+                            <div class='podium-platform second'>
+                              <div class='podium-medal'>🥈</div>
+                              <div class='podium-name'>{second}</div>
+                            </div>
+                          </div>
+                          <div class='podium-step first'>
+                            <div class='podium-platform first'>
+                              <div class='podium-medal'>🥇</div>
+                              <div class='podium-name'>{first}</div>
+                            </div>
+                          </div>
+                          <div class='podium-step third'>
+                            <div class='podium-platform third'>
+                              <div class='podium-medal'>🥉</div>
+                              <div class='podium-name'>{third}</div>
+                            </div>
+                          </div>
+                        </div>
+                        """,
+                        unsafe_allow_html=True,
+                    )
+
+            # Speedometer rischio valanghe (1-5) per la stazione consigliata (con delta vs baseline ±15g)
+            try:
+                brow = df_kpis[df_kpis["nome_stazione"] == best_name].iloc[0]
+                risk = float(brow.get("avalanche", 3.0))
+                # baseline: media danger_level_avg nella finestra ±15 giorni su anni precedenti
+                base_val = get_historical_data_for_date(df_valanghe, data_sel, days_range=15)
+                bstation = base_val[base_val.get("nome_stazione", "").astype(str) == best_name]
+                baseline = float(bstation.get("danger_level_avg", 0).mean()) if not bstation.empty else 0.0
+                # Due livelli: subheader esterno e delta in basso, numero centrato
+                d = risk - baseline
+                st.markdown('<h4 class="modern-section-title">⚠️ Rischio valanghe (1-5)</h4>', unsafe_allow_html=True)
+                fig_risk = create_speedometer(risk, baseline, "Rischio valanghe", "")
+                # Delta come annotation molto in basso
+                fig_risk.add_annotation(x=0.5, y=0.05, xref="paper", yref="paper",
+                                        text=f"Δ {d:+.2f} vs media ±15g", showarrow=False,
+                                        font=dict(size=12, color="#16a34a" if d < 0 else "#ef4444"))
+                fig_risk.update_layout(height=230, margin=dict(l=10, r=10, t=20, b=40))
+                st.plotly_chart(fig_risk, use_container_width=True)
+            except Exception:
+                pass
+
+            # KPI tecnici (stazione consigliata)
+            try:
+                top_best = df_with_indices[df_with_indices["nome_stazione"] == best_name]
+                if not top_best.empty:
+                    st.markdown('<h4 class="modern-section-title">🎯 KPI tecnici</h4>', unsafe_allow_html=True)
+                    vals = top_best[["Snowpark", "Area_gare", "Slalom", "Superpipe"]].fillna(0).mean()
+                    c1, c2, c3, c4 = st.columns(4)
+                    with c1:
+                        st.markdown(f"""<div class="kpi-card"><div class="kpi-label">Snowpark</div><div class="kpi-value">{vals.get('Snowpark',0):.0f}</div></div>""", unsafe_allow_html=True)
+                    with c2:
+                        st.markdown(f"""<div class="kpi-card"><div class="kpi-label">Area gare</div><div class="kpi-value">{vals.get('Area_gare',0):.0f}</div></div>""", unsafe_allow_html=True)
+                    with c3:
+                        st.markdown(f"""<div class="kpi-card"><div class="kpi-label">Slalom</div><div class="kpi-value">{vals.get('Slalom',0):.0f}</div></div>""", unsafe_allow_html=True)
+                    with c4:
+                        st.markdown(f"""<div class="kpi-card"><div class="kpi-label">Superpipe</div><div class="kpi-value">{vals.get('Superpipe',0):.0f}</div></div>""", unsafe_allow_html=True)
+            except Exception:
+                pass
+
+            # Quota max: grafico a barre (Top 10) con scala 2000-3000 m
+            try:
+                quota = (
+                    df_with_indices.groupby("nome_stazione")["Quota_max"].mean().dropna().sort_values(ascending=False).head(10).reset_index()
+                )
+                if not quota.empty:
+                    fig_quota = px.bar(quota, x="nome_stazione", y="Quota_max", title="Quota max per stazione", labels={"nome_stazione": "Stazione", "Quota_max": "Quota max (m)"})
+                    fig_quota.update_layout(xaxis_tickangle=-45, yaxis=dict(range=[2000, 2800]))
+                    st.plotly_chart(fig_quota, use_container_width=True)
+            except Exception:
+                pass
+
+            # Km totali: solo totali per le prime 8 stazioni
+            top_total = df_kpis.sort_values("km_total_est", ascending=False).head(8)
+            fig_bar_total = px.bar(top_total, x="nome_stazione", y="km_total_est", title="Km piste totali", labels={"nome_stazione": "Stazione", "km_total_est": "Km totali"})
+            fig_bar_total.update_layout(xaxis_tickangle=-45)
+            st.plotly_chart(fig_bar_total, use_container_width=True)
+
+            # Sezione Festaiolo (profilo)
+            if profilo == "festaiolo":
+                st.markdown('<h4 class="modern-section-title">🎉 Profilo: Festaiolo</h4>', unsafe_allow_html=True)
+                try:
+                    df_night = df_with_indices[["nome_stazione", "Scii_notte"]].drop_duplicates().fillna(0)
+                    if not df_night.empty:
+                        fig_night = px.bar(
+                            df_night.sort_values("Scii_notte", ascending=False),
+                            x="nome_stazione", y="Scii_notte",
+                            title="Km di sci notturno per impianto",
+                            labels={"Scii_notte": "Km sci notturno", "nome_stazione": "Impianto"}
+                        )
+                        st.plotly_chart(fig_night, use_container_width=True)
+                except Exception:
+                    pass
+                try:
+                    cols = [c for c in ["Snowpark", "Superpipe"] if c in df_with_indices.columns]
+                    df_acts = df_with_indices[["nome_stazione"] + cols].drop_duplicates().fillna(0)
+                    if not df_acts.empty:
+                        melted = df_acts.melt("nome_stazione", value_vars=cols, var_name="Attività", value_name="Valore")
+                        fig_acts = px.bar(
+                            melted, x="nome_stazione", y="Valore", color="Attività",
+                            barmode="group", title="Snowpark e Superpipe"
+                        )
+                        st.plotly_chart(fig_acts, use_container_width=True)
+                except Exception:
+                    pass
+                # AI Overview – Festa (TEMPORANEAMENTE DISABILITATO)
+                st.markdown('<h4 class="modern-section-title">🤖 AI Overview – Festa</h4>', unsafe_allow_html=True)
+                st.info("AI Overview temporaneamente disabilitato. Funzionalità in fase di ripristino.")
+
+            # Sezione Familiare (profilo)
+            if profilo == "familiare":
+                st.markdown('<h4 class="modern-section-title">👨‍👩‍👧‍👦 Profilo: Familiare</h4>', unsafe_allow_html=True)
+                # 1) Numero aree bambini per impianto
+                try:
+                    if "Area_bambini" in df_with_indices.columns:
+                        df_kids = (
+                            df_with_indices[["nome_stazione", "Area_bambini"]]
+                            .drop_duplicates().fillna(0)
+                            .sort_values("Area_bambini", ascending=False)
+                        )
+                        fig_kids = px.bar(
+                            df_kids,
+                            x="nome_stazione", y="Area_bambini",
+                            title="Numero aree bambini per impianto",
+                            labels={"nome_stazione": "Impianto", "Area_bambini": "Aree bambini"}
+                        )
+                        fig_kids.update_layout(xaxis_tickangle=-45)
+                        st.plotly_chart(fig_kids, use_container_width=True)
+                    else:
+                        st.info("Dato non disponibile: 'Area_bambini'")
+                except Exception:
+                    pass
+
+                # 2) Prezzi medi per impianto (skipass, scuola, noleggio)
+                try:
+                    price_cols = [c for c in ["Prezzo_skipass", "Prezzo_scuola", "Prezzo_noleggio"] if c in df_with_indices.columns]
+                    if price_cols:
+                        df_price = (
+                            df_with_indices[["nome_stazione"] + price_cols]
+                            .drop_duplicates().fillna(0)
+                        )
+                        melted_p = df_price.melt("nome_stazione", value_vars=price_cols, var_name="Voce", value_name="Prezzo")
+                        fig_prices = px.bar(
+                            melted_p,
+                            x="Prezzo", y="nome_stazione", color="Voce",
+                            barmode="group",
+                            title="Prezzi medi per impianto (skipass, scuola, noleggio)",
+                            labels={"nome_stazione": "Impianto", "Prezzo": "€"}
+                        )
+                        st.plotly_chart(fig_prices, use_container_width=True)
+                    else:
+                        st.info("Dati prezzo non disponibili (skipass/scuola/noleggio)")
+                except Exception:
+                    pass
+
+                # 3) AI Overview – Famiglia (TEMPORANEAMENTE DISABILITATO)
+                st.markdown('<h4 class="modern-section-title">🤖 AI Overview – Famiglia</h4>', unsafe_allow_html=True)
+                st.info("AI Overview temporaneamente disabilitato. Funzionalità in fase di ripristino.")
+
+    # Sezione Profilo Low-Cost (solo se selezionato, dopo tutti i livelli)
+    if profilo == "lowcost":
+        st.markdown("---")
+        st.markdown('<h3 class="modern-section-title">💰 Profilo: Low-Cost</h3>', unsafe_allow_html=True)
+        
+        # 1) Grafico a barre: costi di ski pass, scuola sci e noleggio
+        try:
+            price_cols = [c for c in ["Prezzo_skipass", "Prezzo_scuola", "Prezzo_noleggio"] if c in df_with_indices.columns]
+            
+            if price_cols:
+                df_price_lowcost = (
+                    df_with_indices[["nome_stazione"] + price_cols]
+                    .drop_duplicates().fillna(0)
+                )
+                # Ordina per prezzo medio totale
+                df_price_lowcost["prezzo_medio"] = df_price_lowcost[price_cols].mean(axis=1)
+                df_price_lowcost = df_price_lowcost.sort_values("prezzo_medio", ascending=True)
+                
+                melted_prices = df_price_lowcost.melt("nome_stazione", value_vars=price_cols, var_name="Voce", value_name="Prezzo")
+                fig_prices_lowcost = px.bar(
+                    melted_prices,
+                    x="nome_stazione", y="Prezzo", color="Voce",
+                    barmode="group",
+                    title="💰 Costi per impianto (skipass, scuola, noleggio) - Ordine crescente per prezzo medio",
+                    labels={"nome_stazione": "Impianto", "Prezzo": "€", "Voce": "Tipo costo"},
+                    color_discrete_map={"Prezzo_skipass": "#FF6B6B", "Prezzo_scuola": "#4ECDC4", "Prezzo_noleggio": "#45B7D1"}
+                )
+                fig_prices_lowcost.update_layout(xaxis_tickangle=-45)
+                st.plotly_chart(fig_prices_lowcost, use_container_width=True)
+            else:
+                st.info("Dati prezzo non disponibili per l'analisi low-cost")
+        except Exception as e:
+            st.warning(f"Errore nella visualizzazione prezzi: {e}")
+        
+        # 2) Tabella rapporto kmopen/costo skipass
+        try:
+            if not df_with_indices.empty and "kmopen" in df_with_indices.columns and "Prezzo_skipass" in df_with_indices.columns:
+                # Raggruppa per stazione e calcola le medie per avere una riga per stazione
+                df_ratio = (
+                    df_with_indices.groupby("nome_stazione")
+                    .agg({
+                        "kmopen": "mean",
+                        "Prezzo_skipass": "mean"
+                    })
+                    .reset_index()
+                    .dropna()
+                )
+                
+                if not df_ratio.empty:
+                    # Calcola il rapporto euro/km (costo per chilometro di pista)
+                    df_ratio["rapporto_euro_km"] = np.where(
+                        df_ratio["kmopen"] > 0,
+                        df_ratio["Prezzo_skipass"] / df_ratio["kmopen"],
+                        0
+                    )
+                    
+                    # Ordina per rapporto migliore (meno euro per km = migliore rapporto)
+                    df_ratio = df_ratio.sort_values("rapporto_euro_km", ascending=True)
+                    
+                    # Prepara tabella finale
+                    df_table = df_ratio[["nome_stazione", "Prezzo_skipass", "kmopen", "rapporto_euro_km"]].copy()
+                    
+                    # Rinomina colonne per la visualizzazione
+                    rename_map = {
+                        "nome_stazione": "🏔️ Impianto",
+                        "Prezzo_skipass": "💶 Skipass (€)",
+                        "kmopen": "🛷 Km Aperti",
+                        "rapporto_euro_km": "💸 €/Km"
+                    }
+                    df_table = df_table.rename(columns=rename_map)
+                    
+                    # Formatta i valori
+                    if "💶 Skipass (€)" in df_table.columns:
+                        df_table["💶 Skipass (€)"] = df_table["💶 Skipass (€)"].round(2)
+                    if "🛷 Km Aperti" in df_table.columns:
+                        df_table["🛷 Km Aperti"] = df_table["🛷 Km Aperti"].round(1)
+                    if "💸 €/Km" in df_table.columns:
+                        df_table["💸 €/Km"] = df_table["💸 €/Km"].round(2)
+                    
+                    st.markdown('<h4 class="modern-section-title">📊 Rapporto Qualità-Prezzo: Euro per Chilometro</h4>', unsafe_allow_html=True)
+                    st.markdown("""
+                    **Indice calcolato:**
+                    - **€/Km**: meno euro per chilometro di pista = migliore rapporto qualità-prezzo
+                    """)
+                    
+                    # Mostra tutte le stazioni
+                    st.dataframe(df_table, use_container_width=True, hide_index=True)
+                else:
+                    st.info("Dati insufficienti per calcolare il rapporto kmopen/costo skipass")
+            else:
+                st.info("Colonne 'kmopen' o 'Prezzo_skipass' non disponibili per l'analisi")
+        except Exception as e:
+            st.warning(f"Errore nel calcolo del rapporto: {e}")
+        
+        # 3) AI Overview – Low-Cost (TEMPORANEAMENTE DISABILITATO)
+        st.markdown('<h4 class="modern-section-title">🤖 AI Overview – Low-Cost</h4>', unsafe_allow_html=True)
+        st.info("AI Overview temporaneamente disabilitato. Funzionalità in fase di ripristino.")
 
     # Opening dates table
     if livello == "nessuno" and profilo == "nessuno":
