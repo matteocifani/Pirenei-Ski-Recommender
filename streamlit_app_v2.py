@@ -14,7 +14,8 @@ from sklearn.linear_model import LinearRegression
 from app.data_loader import load_datasets
 from app.prediction import compute_indices, get_historical_data_for_date
 from app.scoring import apply_profile_adjustment, build_ranking
-from app.llm import generate_overview
+# LLM temporaneamente disabilitato
+# from app.llm import generate_overview
 from app.config import SUPPORTED_PROFILES
 
 # Modern UI Configuration
@@ -29,6 +30,7 @@ st.set_page_config(
 st.markdown("""
 <style>
 /* Modern Design System - Light/Dark Mode Compatible */
+html { scroll-behavior: smooth; }
 :root {
     /* Color Palette */
     --primary: #007AFF;
@@ -109,13 +111,14 @@ st.markdown("""
 
 /* Hero Section */
 .hero-section {
-    background: var(--gradient-primary);
+    background: var(--bg-primary);
+    border: 1px solid var(--border-light);
     border-radius: 20px;
     padding: 32px;
-    margin: 24px 0;
+    margin: 28px 0 22px 0;
     text-align: center;
-    color: white;
-    box-shadow: var(--glow-primary);
+    color: var(--text-primary);
+    box-shadow: var(--shadow-md);
 }
 
 .hero-title {
@@ -149,6 +152,11 @@ st.markdown("""
     transition: all 0.3s ease;
     position: relative;
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 140px;
 }
 
 .kpi-card::before {
@@ -157,8 +165,10 @@ st.markdown("""
     top: 0;
     left: 0;
     right: 0;
-    height: 4px;
-    background: var(--gradient-primary);
+    height: 2px;
+    background: var(--border-light);
+    opacity: 0;
+    transition: opacity var(--transition-normal);
 }
 
 .kpi-card:hover {
@@ -166,12 +176,15 @@ st.markdown("""
     box-shadow: var(--shadow-lg);
     border-color: var(--primary);
 }
+.kpi-card:hover::before {
+    opacity: 1;
+}
 
 .kpi-value {
     font-size: 2.5rem;
     font-weight: 800;
-    color: var(--primary);
-    margin: 16px 0 8px 0;
+    color: var(--text-primary);
+    margin: 12px 0 6px 0;
     letter-spacing: -0.02em;
 }
 
@@ -209,30 +222,226 @@ st.markdown("""
     letter-spacing: 0.05em;
 }
 
-/* AI Overview Section */
+/* AI Overview Section (Apple Intelligence-inspired) */
 .ai-overview-section {
-    background: linear-gradient(135deg, rgba(0, 122, 255, 0.05), rgba(88, 86, 214, 0.05));
-    border: 1px solid rgba(0, 122, 255, 0.1);
+    background: var(--bg-primary);
+    border: 2px solid transparent;
     border-radius: 20px;
-    padding: 28px;
-    margin: 24px 0;
+    padding: 24px 28px;
+    margin: 20px 0 28px 0;
     position: relative;
 }
 
-.ai-overview-section::before {
-    content: '✨';
+/* Extended frosted glass effect for more elements */
+.frosted-glass {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.modern-card.frosted {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Enhanced floating AI dock with frosted glass */
+.ai-dock {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 50px;
+    padding: 12px 24px;
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+    transition: all 0.3s ease;
+}
+
+.ai-dock:hover {
+    background: rgba(255, 255, 255, 0.15);
+    transform: translateX(-50%) translateY(-2px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+}
+
+.ai-dock a {
+    color: var(--text-primary);
+    text-decoration: none;
+    padding: 8px 16px;
+    border-radius: 25px;
+    transition: all 0.3s ease;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.ai-dock a:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.05);
+}
+
+/* Animated edge glow border - inspired by reference image */
+.ai-overview-section::after {
+    content: '';
     position: absolute;
-    top: -12px;
-    left: 24px;
-    background: var(--bg-primary);
-    padding: 0 12px;
-    font-size: 1.2rem;
+    inset: -2px;
+    z-index: -1;
+    border-radius: 22px;
+    background: conic-gradient(
+        from 0deg,
+        #3b82f6,
+        #7c3aed,
+        #ec4899,
+        #ef4444,
+        #f59e0b,
+        #facc15,
+        #3b82f6
+    );
+    filter: blur(3px);
+    opacity: 0.7;
+    animation: aiGlow 8s linear infinite;
+}
+
+/* Enhanced edge glow with breathing effect */
+.ai-overview-section::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    z-index: -1;
+    border-radius: 21px;
+    background: linear-gradient(90deg, 
+        #3b82f6, #7c3aed, #ec4899, #ef4444, #f59e0b, #facc15, #3b82f6
+    );
+    background-size: 200% 100%;
+    animation: edgeGlow 4s ease-in-out infinite;
+    opacity: 0.9;
+}
+
+/* Additional breathing glow effect */
+.ai-overview-section::after {
+    animation: breathingGlow 3s ease-in-out infinite;
+}
+
+@keyframes breathingGlow {
+    0%, 100% { 
+        opacity: 0.6;
+        filter: blur(3px) brightness(1);
+    }
+    50% { 
+        opacity: 0.9;
+        filter: blur(2px) brightness(1.2);
+    }
+}
+
+@keyframes aiGlow {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+@keyframes edgeGlow {
+    0% { 
+        background-position: 0% 50%;
+        opacity: 0.7;
+        filter: blur(2px);
+    }
+    25% {
+        opacity: 1;
+        filter: blur(1px);
+    }
+    50% { 
+        background-position: 100% 50%;
+        opacity: 0.9;
+        filter: blur(3px);
+    }
+    75% {
+        opacity: 1;
+        filter: blur(1px);
+    }
+    100% { 
+        background-position: 0% 50%;
+        opacity: 0.7;
+        filter: blur(2px);
+    }
+}
+
+/* Scanning light effect along the border */
+.ai-overview-section::before {
+    animation: edgeGlow 4s ease-in-out infinite, scanningLight 2s ease-in-out infinite;
+}
+
+@keyframes scanningLight {
+    0% { 
+        background: linear-gradient(90deg, 
+            #3b82f6 0%, #7c3aed 20%, #ec4899 40%, #ef4444 60%, #f59e0b 80%, #facc15 100%
+        );
+        background-size: 200% 100%;
+        background-position: 0% 50%;
+    }
+    50% { 
+        background: linear-gradient(90deg, 
+            #facc15 0%, #3b82f6 20%, #7c3aed 40%, #ec4899 60%, #ef4444 80%, #f59e0b 100%
+        );
+        background-size: 200% 100%;
+        background-position: 100% 50%;
+    }
+    100% { 
+        background: linear-gradient(90deg, 
+            #3b82f6 0%, #7c3aed 20%, #ec4899 40%, #ef4444 60%, #f59e0b 80%, #facc15 100%
+        );
+        background-size: 200% 100%;
+        background-position: 0% 50%;
+    }
 }
 
 .ai-overview-content {
     color: var(--text-primary);
-    line-height: 1.6;
-    font-size: 1.1rem;
+    line-height: 1.65;
+    font-size: 1rem;
+}
+
+/* Subtle pulsing effect for the entire AI box - ONLY BORDER */
+.ai-overview-section {
+    /* No animation on the content, only on border */
+}
+
+/* Floating AI Dock */
+.ai-dock {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(20,20,22,0.6);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid var(--border-light);
+    border-radius: 16px;
+    padding: 10px 14px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    z-index: 9999;
+}
+
+@media (prefers-color-scheme: light) {
+  .ai-dock { background: rgba(255,255,255,0.75); }
+}
+
+.ai-dock a, .ai-dock span {
+    color: var(--text-primary);
+    text-decoration: none;
+    font-weight: 600;
+    padding: 8px 12px;
+    border-radius: 10px;
+}
+
+.ai-dock a:hover {
+    background: var(--bg-secondary);
 }
 
 /* Modern Buttons */
@@ -311,7 +520,7 @@ st.markdown("""
 .podium-2 {
     background: var(--gradient-secondary);
     height: 100px;
-    width: 100px;
+    width: 110px;
     border-radius: 16px;
     display: flex;
     flex-direction: column;
@@ -324,7 +533,7 @@ st.markdown("""
 .podium-3 {
     background: var(--gradient-success);
     height: 80px;
-    width: 80px;
+    width: 110px;
     border-radius: 16px;
     display: flex;
     flex-direction: column;
@@ -378,6 +587,20 @@ st.markdown("""
     border-radius: 12px;
 }
 
+/* Fix for 100% blue bars */
+.js-plotly-plot .plotly .bglayer rect {
+    fill: transparent !important;
+}
+
+.js-plotly-plot .plotly .bar {
+    opacity: 0.8 !important;
+}
+
+/* Ensure bars show actual values, not 100% */
+.js-plotly-plot .plotly .bar path {
+    fill-opacity: 0.8 !important;
+}
+
 /* Success/Info/Warning/Error Messages */
 .stSuccess {
     background: rgba(52, 199, 89, 0.1);
@@ -412,6 +635,13 @@ st.markdown("""
 
 def aggregate_station_kpis(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
+    
+    # Ensure required columns exist with fallbacks
+    if "kmtotal" not in df.columns:
+        df["kmtotal"] = 0
+    if "kmopen" not in df.columns:
+        df["kmopen"] = 0
+        
     if "kmtotal" in df.columns:
         df["pct_open"] = np.where(df["kmtotal"] > 0, df.get("kmopen", 0) / df["kmtotal"], np.nan)
     else:
@@ -420,16 +650,23 @@ def aggregate_station_kpis(df: pd.DataFrame) -> pd.DataFrame:
         df["is_open"] = (df["kmopen"].fillna(0) > 0).astype(float)
     else:
         df["is_open"] = 0.0
+        
     agg_spec = {
         "kmopen": ("kmopen", "mean"),
         "kmtotal": ("kmtotal", "mean"),
         "pct_open": ("pct_open", "mean"),
         "is_open": ("is_open", "mean"),
-        "danger_level_avg": ("danger_level_avg", "mean"),
-        "vento": ("vento", "mean"),
-        "nebbia": ("nebbia", "mean"),
-        "espesor_medio": ("espesor_medio", "mean"),
     }
+    
+    # Add optional columns only if they exist
+    if "danger_level_avg" in df.columns:
+        agg_spec["danger_level_avg"] = ("danger_level_avg", "mean")
+    if "vento" in df.columns:
+        agg_spec["vento"] = ("vento", "mean")
+    if "nebbia" in df.columns:
+        agg_spec["nebbia"] = ("nebbia", "mean")
+    if "espesor_medio" in df.columns:
+        agg_spec["espesor_medio"] = ("espesor_medio", "mean")
     if "sole" in df.columns:
         agg_spec["sole"] = ("sole", "mean")
     if "pioggia" in df.columns:
@@ -443,10 +680,15 @@ def aggregate_station_kpis(df: pd.DataFrame) -> pd.DataFrame:
             "kmopen": "km_open_est",
             "kmtotal": "km_total_est",
             "is_open": "open_prob",
-            "danger_level_avg": "avalanche",
-            "espesor_medio": "neve_cm",
         }
     )
+    
+    # Add missing columns with default values
+    if "avalanche" not in agg.columns:
+        agg["avalanche"] = 0
+    if "neve_cm" not in agg.columns:
+        agg["neve_cm"] = 0
+        
     return agg.fillna(0)
 
 
@@ -727,9 +969,15 @@ def build_local_overview(df_kpis: pd.DataFrame, best_name: str) -> str:
     return f"{best_name} è la scelta più pratica: {txt}."
 
 
+# LLM Overview temporaneamente disabilitato
+# @st.cache_data(ttl=3600, show_spinner=False)
+# def _llm_overview_cached(prompt: str, max_tokens: int) -> tuple[str, dict]:
+#     return generate_overview(prompt, max_tokens)
+
 @st.cache_data(ttl=3600, show_spinner=False)
 def _llm_overview_cached(prompt: str, max_tokens: int) -> tuple[str, dict]:
-    return generate_overview(prompt, max_tokens)
+    # Testo temporaneo al posto dell'LLM
+    return "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum", {}
 
 
 def render_map_with_best(df_coords: pd.DataFrame, best_name: str, tooltip_km: bool = False):
@@ -825,24 +1073,23 @@ def main():
         # Profile selector
         profilo = st.selectbox(
             "👥 Profilo utente",
-            options=["nessuno"] + list(SUPPORTED_PROFILES),
+            options=SUPPORTED_PROFILES,
             index=0
         )
         
-        st.markdown('<div class="modern-card">', unsafe_allow_html=True)
         st.markdown("**💡 Suggerimento:** Seleziona un livello e un profilo per ricevere raccomandazioni personalizzate basate su AI.")
-        st.markdown('</div>', unsafe_allow_html=True)
     
     # Load data
     try:
-        df_meteo, df_infonieve, df_recensioni, df_valanghe = load_datasets()
+        # Order from data_loader: (infonieve, valanghe, meteo, recensioni)
+        df_infonieve, df_valanghe, df_meteo, df_recensioni = load_datasets()
     except Exception as e:
         st.error(f"Errore nel caricamento dei dati: {e}")
         return
     
     # Compute indices
     try:
-        df_kpis = compute_indices(df_meteo, df_infonieve, df_recensioni, df_valanghe, data_sel)
+        df_kpis = compute_indices(df_infonieve, df_valanghe, df_meteo, df_recensioni, data_sel)
     except Exception as e:
         st.error(f"Errore nel calcolo degli indici: {e}")
         return
@@ -861,13 +1108,69 @@ def main():
     best_name = df_ranking.iloc[0]["nome_stazione"]
     best_row = df_kpis[df_kpis["nome_stazione"] == best_name].iloc[0]
     
+    # Show general information when no filters are selected
+    if livello == "nessuno" and profilo == "nessuno":
+        st.markdown('<h2 class="modern-subheader">📊 Panoramica generale</h2>', unsafe_allow_html=True)
+        
+        # Show basic stats for all stations
+        if not df_kpis.empty:
+            col1, col2, col3, col4 = st.columns(4)
+            
+            with col1:
+                total_stations = len(df_kpis)
+                st.markdown(
+                    f"""
+                    <div class="kpi-card">
+                        <div class="kpi-label">Stazioni totali</div>
+                        <div class="kpi-value">{total_stations}</div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+            
+            with col2:
+                avg_quota = df_kpis["Quota_max"].mean() if "Quota_max" in df_kpis.columns else 0
+                st.markdown(
+                    f"""
+                    <div class="kpi-card">
+                        <div class="kpi-label">Quota media</div>
+                        <div class="kpi-value">{avg_quota:.0f}m</div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+            
+            with col3:
+                avg_km = df_kpis["kmtotal"].mean() if "kmtotal" in df_kpis.columns else 0
+                st.markdown(
+                    f"""
+                    <div class="kpi-card">
+                        <div class="kpi-label">Km totali medi</div>
+                        <div class="kpi-value">{avg_km:.0f} km</div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+            
+            with col4:
+                open_stations = df_kpis["kmopen"].sum() if "kmopen" in df_kpis.columns else 0
+                st.markdown(
+                    f"""
+                    <div class="kpi-card">
+                        <div class="kpi-label">Km aperti totali</div>
+                        <div class="kpi-value">{open_stations:.0f} km</div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+    
     # Hero Section - Stazione consigliata
     if not (livello == "nessuno" and profilo == "nessuno"):
         st.markdown(
             f"""
             <div class="hero-section">
-                <h1 class="hero-title">🎯 {best_name}</h1>
-                <p class="hero-subtitle">Stazione consigliata per il tuo profilo</p>
+                <p class="hero-subtitle">Stazione consigliata per il tuo livello</p>
+                <h1 class="hero-title">{best_name}</h1>
             </div>
             """,
             unsafe_allow_html=True
@@ -880,18 +1183,20 @@ def main():
         col1, col2, col3 = st.columns(3)
         
         with col1:
+            km_open_val = float(best_row.get("km_open_est", best_row.get("kmopen", 0) or 0))
             st.markdown(
                 f"""
                 <div class="kpi-card">
                     <div class="kpi-label">Km piste aperte stimati</div>
-                    <div class="kpi-value">{best_row.km_open_est:.0f} km</div>
+                    <div class="kpi-value">{km_open_val:.0f} km</div>
                 </div>
                 """,
                 unsafe_allow_html=True
             )
         
         with col2:
-            pct = best_row.pct_open * 100 if best_row.pct_open == best_row.pct_open else 0
+            pct_open_val = best_row.get("pct_open", np.nan)
+            pct = float(pct_open_val) * 100 if pd.notna(pct_open_val) else 0
             st.markdown(
                 f"""
                 <div class="kpi-card">
@@ -903,11 +1208,12 @@ def main():
             )
         
         with col3:
+            open_prob_val = float(best_row.get("open_prob", best_row.get("is_open", 0) or 0)) * 100
             st.markdown(
                 f"""
                 <div class="kpi-card">
                     <div class="kpi-label">Probabilità impianto aperto</div>
-                    <div class="kpi-value">{best_row.open_prob*100:.0f}%</div>
+                    <div class="kpi-value">{open_prob_val:.0f}%</div>
                 </div>
                 """,
                 unsafe_allow_html=True
@@ -917,27 +1223,67 @@ def main():
     if livello != "nessuno":
         st.markdown('<h2 class="modern-subheader">✨ AI Overview</h2>', unsafe_allow_html=True)
         
-        try:
-            prompt = build_llm_prompt(df_kpis, best_name, livello, profilo, data_sel)
-            with st.spinner("Generazione riepilogo AI..."):
-                output, usage = generate_overview(prompt, max_tokens=160)
+        # AI Overview (TEMPORANEAMENTE DISABILITATO)
+        # try:
+        #     prompt = build_llm_prompt(df_kpis, best_name, livello, profilo, data_sel)
+        #     with st.spinner("Generazione riepilogo AI..."):
+        #         output, usage = generate_overview(prompt, max_tokens=160)
+        #     
+        #     if output:
+        #         st.markdown(
+        #             f"""
+        #             <div class="ai-overview-section">
+        #             <div class="ai-overview-content">{output}</div>
+        #             </div>
+        #             """,
+        #             unsafe_allow_html=True
+        #             )
+        #             
+        #             if isinstance(usage, dict) and usage.get("model"):
+        #             st.caption(f"Modello: {usage['model']}")
+        #     else:
+        #         st.error("Nessuna risposta dal modello.")
+        # except Exception as e:
+        #     st.error(f"LLM non disponibile: {e}")
+        
+        # Testo temporaneo al posto dell'LLM
+        output = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum"
+        usage = {}
+        
+        st.markdown(
+            f"""
+            <div class="ai-overview-section">
+                <div class="ai-overview-content">{output}</div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+        # Level-specific information
+        if livello == "base":
+            st.markdown('<h3 class="modern-section-title">🎿 Informazioni per principianti</h3>', unsafe_allow_html=True)
+            st.info("**Livello base**: Focus su piste verdi e blu, aree sicure per famiglie e principianti.")
             
-            if output:
-                st.markdown(
-                    f"""
-                    <div class="ai-overview-section">
-                        <div class="ai-overview-content">{output}</div>
-                    </div>
-                    """,
-                    unsafe_allow_html=True
-                )
-                
-                if isinstance(usage, dict) and usage.get("model"):
-                    st.caption(f"Modello: {usage['model']}")
-            else:
-                st.error("Nessuna risposta dal modello.")
-        except Exception as e:
-            st.error(f"LLM non disponibile: {e}")
+        elif livello == "medio":
+            st.markdown('<h3 class="modern-section-title">🎿 Informazioni per sciatori intermedi</h3>', unsafe_allow_html=True)
+            st.info("**Livello medio**: Mix di piste blu e rosse, con attenzione alla qualità della neve e alle condizioni meteo.")
+            
+        elif livello == "esperto":
+            st.markdown('<h3 class="modern-section-title">🎿 Informazioni per esperti</h3>', unsafe_allow_html=True)
+            st.info("**Livello esperto**: Piste nere, fuoripista, snowpark e condizioni estreme.")
+
+        # Floating Filter Dock (replacing AI dock)
+        st.markdown(
+            """
+            <div class="ai-dock">
+                <span>⚙️ Filtri</span>
+                <a href="#" onclick="document.querySelector('[data-testid=\'stDateInput\']')?.scrollIntoView({behavior: 'smooth'}); return false;">📅 Data</a>
+                <a href="#" onclick="document.querySelector('[data-testid=\'stSelectbox\']')?.scrollIntoView({behavior: 'smooth'}); return false;">🎯 Livello</a>
+                <a href="#" onclick="document.querySelectorAll('[data-testid=\'stSelectbox\']')[1]?.scrollIntoView({behavior: 'smooth'}); return false;">👥 Profilo</a>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
     
     # Main content sections
     if livello != "nessuno":
@@ -945,17 +1291,18 @@ def main():
         st.markdown('<h2 class="modern-subheader">📊 Approfondimenti</h2>', unsafe_allow_html=True)
         
         # Top stations by km open
-        top_km = df_kpis.nlargest(8, "km_open_est")
-        if not top_km.empty:
-            fig_km = px.bar(
-                top_km, 
-                x="nome_stazione", 
-                y="km_open_est", 
-                title="Km piste aperte per stazione",
-                labels={"nome_stazione": "Stazione", "km_open_est": "Km aperti"}
-            )
-            fig_km.update_layout(xaxis_tickangle=-45)
-            st.plotly_chart(fig_km, use_container_width=True)
+        if "km_open_est" in df_kpis.columns:
+            top_km = df_kpis.nlargest(8, "km_open_est")
+            if not top_km.empty:
+                fig_km = px.bar(
+                    top_km, 
+                    x="nome_stazione", 
+                    y="km_open_est", 
+                    title="Km piste aperte per stazione",
+                    labels={"nome_stazione": "Stazione", "km_open_est": "Km aperti"}
+                )
+                fig_km.update_layout(xaxis_tickangle=-45)
+                st.plotly_chart(fig_km, use_container_width=True)
         
         # Quota max per stazione
         quota = df_kpis[["nome_stazione", "Quota_max"]].dropna()
@@ -973,18 +1320,19 @@ def main():
             st.plotly_chart(fig_quota, use_container_width=True)
         
         # Km totali
-        top_total = df_kpis.sort_values("km_total_est", ascending=False).head(8)
-        fig_bar_total = px.bar(
-            top_total, 
-            x="nome_stazione", 
-            y="km_total_est", 
-            title="Km piste totali", 
-            labels={"nome_stazione": "Stazione", "km_total_est": "Km totali"}
-        )
-        fig_bar_total.update_layout(xaxis_tickangle=-45)
-        # Aggiungi i valori sulle barre
-        fig_bar_total.update_traces(texttemplate='%{y:.0f} km', textposition='outside')
-        st.plotly_chart(fig_bar_total, use_container_width=True)
+        if "km_total_est" in df_kpis.columns:
+            top_total = df_kpis.sort_values("km_total_est", ascending=False).head(8)
+            fig_bar_total = px.bar(
+                top_total, 
+                x="nome_stazione", 
+                y="km_total_est", 
+                title="Km piste totali", 
+                labels={"nome_stazione": "Stazione", "km_total_est": "Km totali"}
+            )
+            fig_bar_total.update_layout(xaxis_tickangle=-45)
+            # Aggiungi i valori sulle barre
+            fig_bar_total.update_traces(texttemplate='%{y:.0f} km', textposition='outside')
+            st.plotly_chart(fig_bar_total, use_container_width=True)
         
         # Prezzi medi per impianto
         try:
@@ -1004,8 +1352,8 @@ def main():
                 melted_p = df_price_renamed.melt("nome_stazione", value_vars=list(name_mapping.values()), var_name="Voce", value_name="Prezzo")
                 fig_prices = px.bar(
                     melted_p,
-                    x="Prezzo", 
-                    y="nome_stazione", 
+                    x="nome_stazione", 
+                    y="Prezzo", 
                     color="Voce",
                     barmode="group",
                     title="Prezzi medi per impianto (skipass, scuola, noleggio)",
@@ -1015,12 +1363,18 @@ def main():
         except Exception:
             pass
         
+
+        
         # KPI tecnici
         if "Snowpark" in df_kpis.columns:
             st.markdown('<h3 class="modern-section-title">KPI tecnici</h3>', unsafe_allow_html=True)
             
-            top_best = df_kpis.nlargest(5, "km_open_est")
-            vals = top_best[["Snowpark", "Area_gare", "Slalom", "Superpipe"]].fillna(0).mean()
+            top_best = df_kpis.nlargest(5, "km_open_est") if "km_open_est" in df_kpis.columns else df_kpis.head(5)
+            tech_cols = [col for col in ["Snowpark", "Area_gare", "Slalom", "Superpipe"] if col in top_best.columns]
+            if tech_cols:
+                vals = top_best[tech_cols].fillna(0).mean()
+            else:
+                vals = pd.Series([0, 0, 0, 0], index=["Snowpark", "Area_gare", "Slalom", "Superpipe"])
             
             col1, col2, col3, col4 = st.columns(4)
             
@@ -1072,7 +1426,10 @@ def main():
         st.markdown('<h3 class="modern-section-title">🗺️ Mappa</h3>', unsafe_allow_html=True)
         
         # Prepare map data
-        map_data = df_kpis[["nome_stazione", "lat", "lon", "km_open_est"]].dropna()
+        map_cols = ["nome_stazione", "lat", "lon"]
+        if "km_open_est" in df_kpis.columns:
+            map_cols.append("km_open_est")
+        map_data = df_kpis[map_cols].dropna()
         if not map_data.empty:
             map_data["highlight"] = (map_data["nome_stazione"] == best_name).astype(int)
             map_data["radius"] = np.where(map_data["highlight"] == 1, 15000, 8000)
@@ -1128,7 +1485,7 @@ def main():
             deck = pdk.Deck(
                 layers=layers,
                 initial_view_state=view_state,
-                tooltip={"text": "{nome_stazione}\nKm aperti: {km_open_est}"}
+                tooltip={"text": "{nome_stazione}\nKm aperti: {km_open_est}" if "km_open_est" in map_data.columns else "{nome_stazione}"}
             )
             
             st.pydeck_chart(deck, use_container_width=True)
@@ -1259,7 +1616,7 @@ def main():
         
         # Get historical data
         try:
-            historical_data = get_historical_data_for_date(data_sel, df_meteo)
+            historical_data = get_historical_data_for_date(df_meteo, data_sel)
             
             if not historical_data.empty:
                 # Create speedometer charts
@@ -1320,7 +1677,7 @@ def main():
         
         try:
             # Get historical avalanche data
-            historical_avalanche = get_historical_data_for_date(data_sel, df_valanghe)
+            historical_avalanche = get_historical_data_for_date(df_valanghe, data_sel)
             
             if not historical_avalanche.empty:
                 risk = historical_avalanche["danger_level_avg"].mean()
@@ -1337,7 +1694,7 @@ def main():
                 fig_risk.update_layout(height=230, margin=dict(l=10, r=10, t=20, b=40))
                 st.plotly_chart(fig_risk, use_container_width=True)
                 
-                st.info("L'indice di valanghe, conosciuto come Scala Europea del Pericolo di Valanghe, è uno strumento a 5 livelli utilizzato per valutare e comunicare il rischio di valanghe (0=basso, 5=molto alto)")
+                st.markdown("L’indice di valanghe, conosciuto come Scala Europea del Pericolo di Valanghe, è uno strumento a 5 livelli utilizzato per valutare e comunicare il rischio di valanghe (0=basso, 5=molto alto)")
         
         except Exception as e:
             st.warning(f"Impossibile caricare i dati valanghe: {e}")
@@ -1346,68 +1703,109 @@ def main():
     if profilo != "nessuno" and livello != "nessuno":
         st.markdown('<h3 class="modern-section-title">🤖 AI Overview - Profilo specifico</h3>', unsafe_allow_html=True)
         
-        try:
-            if profilo == "festaiolo":
-                prompt_profile = build_festaiolo_prompt(df_recensioni, best_name, livello, data_sel)
-                output_profile, usage_profile = generate_overview(prompt_profile, max_tokens=140)
-                
-                if output_profile:
-                    st.markdown(
-                        f"""
-                        <div class="ai-overview-section">
-                            <div class="ai-overview-content">{output_profile}</div>
-                        </div>
-                        """,
-                        unsafe_allow_html=True
-                    )
-                    
-                    if isinstance(usage_profile, dict) and usage_profile.get("model"):
-                        st.caption(f"Modello: {usage_profile['model']}")
-            
-            elif profilo == "familiare":
-                # Show specific data for recommended station
-                if "Area_bambini" in df_kpis.columns:
-                    best_station_data = df_kpis[df_kpis["nome_stazione"] == best_name]
-                    if not best_station_data.empty:
-                        area_bambini = best_station_data["Area_bambini"].iloc[0]
-                        if pd.notna(area_bambini) and area_bambini > 0:
-                            st.info(f"🎯 **{best_name}** ha **{int(area_bambini)} aree bambini** aperte per i tuoi piccoli!")
-                
-                prompt_profile = build_familiare_prompt(df_recensioni, best_name, livello, data_sel)
-                output_profile, usage_profile = generate_overview(prompt_profile, max_tokens=140)
-                
-                if output_profile:
-                    st.markdown(
-                        f"""
-                        <div class="ai-overview-section">
-                            <div class="ai-overview-content">{output_profile}</div>
-                        </div>
-                        """,
-                        unsafe_allow_html=True
-                    )
-                    
-                    if isinstance(usage_profile, dict) and usage_profile.get("model"):
-                        st.caption(f"Modello: {usage_profile['model']}")
-            
-            elif profilo == "lowcost":
-                prompt_profile = build_lowcost_prompt(df_recensioni, best_name, livello, data_sel)
-                output_profile, usage_profile = generate_overview(prompt_profile, max_tokens=140)
-                
-                if output_profile:
-                    st.markdown(
-                        f"""
-                        <div class="ai-overview-section">
-                            <div class="ai-overview-content">{output_profile}</div>
-                        </div>
-                        """,
-                        unsafe_allow_html=True
-                    )
-                    
-                    if isinstance(usage_profile, dict) and usage_profile.get("model"):
-                        st.caption(f"Modello: {usage_profile['model']}")
+        # AI Overview per profili specifici (TEMPORANEAMENTE DISABILITATO)
+        # try:
+        #     if profilo == "festaiolo":
+        #         prompt_profile = build_festaiolo_prompt(df_recensioni, best_name, livello, data_sel)
+        #         output_profile, usage_profile = generate_overview(prompt_profile, max_tokens=140)
+        #         
+        #         if output_profile:
+        #             st.markdown(
+        #             f"""
+        #             <div class="ai-overview-section">
+        #             <div class="ai-overview-content">{output_profile}</div>
+        #             </div>
+        #             """,
+        #             unsafe_allow_html=True
+        #             )
+        #             
+        #             if isinstance(usage_profile, dict) and usage_profile.get("model"):
+        #             st.caption(f"Modello: {usage_profile['model']}")
+        #     
+        #     elif profilo == "familiare":
+        #         # Show specific data for recommended station
+        #         if "Area_bambini" in df_kpis.columns:
+        #             best_station_data = df_kpis[df_kpis["nome_stazione"] == best_name]
+        #             if not best_station_data.empty:
+        #             area_bambini = best_station_data["Area_bambini"].iloc[0]
+        #             if pd.notna(area_bambini) and area_bambini > 0:
+        #             st.info(f"🎯 **{best_name}** ha **{int(area_bambini)} aree bambini** aperte per i tuoi piccoli!")
+        #         
+        #         prompt_profile = build_familiare_prompt(df_recensioni, best_name, livello, data_sel)
+        #         output_profile, usage_profile = generate_overview(prompt_profile, max_tokens=140)
+        #         
+        #         if output_profile:
+        #             st.markdown(
+        #             f"""
+        #             <div class="ai-overview-content">{output_profile}</div>
+        #             </div>
+        #             """,
+        #             unsafe_allow_html=True
+        #             )
+        #             
+        #             if isinstance(usage_profile, dict) and usage_profile.get("model"):
+        #             st.caption(f"Modello: {usage_profile['model']}")
+        #     
+        #     elif profilo == "lowcost":
+        #         prompt_profile = build_lowcost_prompt(df_recensioni, best_name, livello, data_sel)
+        #         output_profile, usage_profile = generate_overview(prompt_profile, max_tokens=140)
+        #         
+        #         if output_profile:
+        #             st.markdown(
+        #             f"""
+        #             <div class="ai-overview-section">
+        #             <div class="ai-overview-content">{output_profile}</div>
+        #             </div>
+        #             """,
+        #             unsafe_allow_html=True
+        #             )
+        #             
+        #         if isinstance(usage_profile, dict) and usage_profile.get("model"):
+        #             st.caption(f"Modello: {usage_profile['model']}")
+        # 
+        # except Exception as e:
+        #     st.warning(f"Impossibile generare l'AI Overview per il profilo: {e}")
         
-        except Exception as e:
-            st.warning(f"Impossibile generare l'AI Overview per il profilo: {e}")
+        # Testo temporaneo al posto dell'LLM per profili specifici
+        if profilo == "familiare":
+            # Show specific data for recommended station
+            if "Area_bambini" in df_kpis.columns:
+                best_station_data = df_kpis[df_kpis["nome_stazione"] == best_name]
+                if not best_station_data.empty:
+                    area_bambini = best_station_data["Area_bambini"].iloc[0]
+                    if pd.notna(area_bambini) and area_bambini > 0:
+                        st.info(f"🎯 **{best_name}** ha **{int(area_bambini)} aree bambini** aperte per i tuoi piccoli!")
+        
+
+        
+        # Profile-specific information
+        if profilo == "festaiolo":
+            st.markdown('<h4 class="modern-section-title">🎉 Profilo Festaiolo</h4>', unsafe_allow_html=True)
+            st.info("**Focus**: Snowpark, sci notturno, ristoranti e vita notturna. Perfetto per chi vuole divertirsi oltre allo sci!")
+            
+        elif profilo == "familiare":
+            st.markdown('<h4 class="modern-section-title">👨‍👩‍👧‍👦 Profilo Familiare</h4>', unsafe_allow_html=True)
+            st.info("**Focus**: Aree bambini, piste sicure, ristoranti family-friendly e servizi per famiglie.")
+            
+        elif profilo == "lowcost":
+            st.markdown('<h4 class="modern-section-title">💰 Profilo Low-Cost</h4>', unsafe_allow_html=True)
+            st.info("**Focus**: Prezzi contenuti, skipass economici, opzioni di alloggio convenienti.")
+            
+        elif profilo == "panoramico":
+            st.markdown('<h4 class="modern-section-title">🏔️ Profilo Panoramico</h4>', unsafe_allow_html=True)
+            st.info("**Focus**: Viste mozzafiato, piste panoramiche, fotografie e relax.")
+        
+        # Testo Lorem ipsum per tutti i profili
+        output_profile = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum"
+        
+        st.markdown(
+            f"""
+            <div class="ai-overview-section">
+                <div class="ai-overview-content">{output_profile}</div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
     
     # Opening dates table
     if livello == "nessuno" and profilo == "nessuno":
