@@ -1065,44 +1065,26 @@ def main():
         )
         
         if k_row is not None:
-            col1, col2, col3 = st.columns(3)
-            
-            with col1:
-                km_open_val = float(k_row.get("km_open_est", k_row.get("kmopen", 0) or 0))
-                st.markdown(
-                    f"""
+            # KPI Grid con layout centrato
+            st.markdown(
+                f"""
+                <div class="kpi-grid">
                     <div class="kpi-card">
                         <div class="kpi-label">Km piste aperte stimati</div>
-                        <div class="kpi-value">{km_open_val:.0f} km</div>
+                        <div class="kpi-value">{float(k_row.get("km_open_est", k_row.get("kmopen", 0) or 0)):.0f} km</div>
                     </div>
-                    """,
-                    unsafe_allow_html=True
-                )
-            
-            with col2:
-                pct_open_val = k_row.get("pct_open", np.nan)
-                pct = float(pct_open_val) * 100 if pd.notna(pct_open_val) else 0
-                st.markdown(
-                    f"""
                     <div class="kpi-card">
                         <div class="kpi-label">% piste aperte (stima)</div>
-                        <div class="kpi-value">{pct:.0f}%</div>
+                        <div class="kpi-value">{float(k_row.get("pct_open", 0) or 0) * 100:.0f}%</div>
                     </div>
-                    """,
-                    unsafe_allow_html=True
-                )
-            
-            with col3:
-                open_prob_val = float(k_row.get("open_prob", k_row.get("is_open", 0) or 0)) * 100
-                st.markdown(
-                    f"""
                     <div class="kpi-card">
                         <div class="kpi-label">Probabilità impianto aperto</div>
-                        <div class="kpi-value">{open_prob_val:.0f}%</div>
+                        <div class="kpi-value">{float(k_row.get("open_prob", k_row.get("is_open", 0) or 0)) * 100:.0f}%</div>
                     </div>
-                    """,
-                    unsafe_allow_html=True
-                )
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
     # end header cards
 
     # Map with highlight (solo per livelli diversi da "nessuno"; per "nessuno" la mostriamo più sotto)
