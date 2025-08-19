@@ -1169,6 +1169,9 @@ def main():
     best_name = df_ranking.iloc[0]["nome_stazione"]
     best_row = df_kpis[df_kpis["nome_stazione"] == best_name].iloc[0]
     
+    # Create df_with_indices for level-specific content
+    df_with_indices = df_ranking.copy()
+    
     # Show general information when no filters are selected
     if livello == "nessuno" and profilo == "nessuno":
         st.markdown('<h2 class="modern-subheader">📊 Panoramica generale</h2>', unsafe_allow_html=True)
@@ -2258,7 +2261,6 @@ def main():
         st.markdown('<h2 class="modern-subheader">🏆 Classifica Top 3</h2>', unsafe_allow_html=True)
         
         # Get top 3 by expert index
-        df_with_indices = df_ranking.copy()
         if "indice_esperto" in df_with_indices.columns:
             top_3 = df_with_indices.nlargest(3, "indice_esperto")
             
@@ -2318,7 +2320,6 @@ def main():
         st.markdown('<h2 class="modern-subheader">🏆 Classifica Top 3</h2>', unsafe_allow_html=True)
         
         # Get top 3 by base index
-        df_with_indices = df_ranking.copy()
         if "indice_base" in df_with_indices.columns:
             top_3 = df_with_indices.nlargest(3, "indice_base")
             
