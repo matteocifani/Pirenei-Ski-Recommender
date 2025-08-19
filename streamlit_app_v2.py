@@ -187,6 +187,22 @@ st.markdown("""
     overflow: hidden;
 }
 
+.hero-section::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(59, 130, 246, 0.03) 0%, transparent 70%);
+    animation: float 6s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    50% { transform: translateY(-20px) rotate(180deg); }
+}
+
 .hero-title {
     font-size: 2.5rem;
     font-weight: 800;
@@ -395,6 +411,49 @@ st.markdown("""
     background: var(--bg-secondary);
 }
 
+/* Floating Filter Dock */
+.ai-dock {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: var(--bg-overlay);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-xl);
+    padding: var(--space-md);
+    box-shadow: var(--shadow-xl);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    min-width: 120px;
+}
+
+.ai-dock span {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    text-align: center;
+    padding-bottom: var(--space-xs);
+    border-bottom: 1px solid var(--border-light);
+}
+
+.ai-dock a {
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 0.75rem;
+    padding: var(--space-xs) var(--space-sm);
+    border-radius: var(--radius-sm);
+    transition: all var(--transition-fast);
+    text-align: center;
+}
+
+.ai-dock a:hover {
+    color: var(--primary-500);
+    background: var(--primary-50);
+    transform: translateY(-1px);
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .podium-container {
@@ -412,6 +471,13 @@ st.markdown("""
     
     .hero-title {
         font-size: 2rem;
+    }
+    
+    .ai-dock {
+        position: fixed;
+        top: 10px;
+        right: 10px;
+        min-width: 100px;
     }
 }
 
@@ -869,6 +935,19 @@ def main():
     profilo = st.sidebar.selectbox("Profilo (opzionale)", SUPPORTED_PROFILES, index=0)
     profilo_norm = str(profilo).strip().lower()
 
+    # Floating Filter Dock (always visible)
+    st.markdown(
+        """
+        <div class="ai-dock">
+            <span>⚙️ Filtri</span>
+            <a href="#" onclick="document.querySelector('[data-testid=\'stDateInput\']')?.scrollIntoView({behavior: 'smooth'}); return false;">📅 Data</a>
+            <a href="#" onclick="document.querySelector('[data-testid=\'stSelectbox\']')?.scrollIntoView({behavior: 'smooth'}); return false;">🎯 Livello</a>
+            <a href="#" onclick="document.querySelectorAll('[data-testid=\'stSelectbox\']')[1]?.scrollIntoView({behavior: 'smooth'}); return false;">👥 Profilo</a>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
     # Considera sempre tutte le stazioni
     df_filtered_infonieve = df_infonieve.copy()
     df_filtered_val = df_valanghe.copy()
@@ -965,27 +1044,44 @@ def main():
 
     # Mostra raccomandazione solo se almeno un filtro è selezionato
     if not (livello == "nessuno" and profilo == "nessuno"):
-        st.markdown('<h2 class="modern-subheader">✅ Stazione consigliata per il tuo livello</h2>', unsafe_allow_html=True)
-        st.markdown(f'<h1 class="hero-title">{best_name}</h1>', unsafe_allow_html=True)
+        # Hero Section - Stazione consigliata
+        st.markdown(
+            f"""
+            <div class="hero-section">
+                <p class="hero-subtitle">Stazione consigliata per il tuo livello</p>
+                <h1 class="hero-title">{best_name}</h1>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+        
+        # KPI Grid
+        st.markdown('<h2 class="modern-subheader">📊 Indicatori chiave</h2>', unsafe_allow_html=True)
+        
         k_row = (
             df_kpis[df_kpis["nome_stazione"] == best_name].iloc[0]
             if not df_kpis.empty
             else None
         )
+        
         if k_row is not None:
             col1, col2, col3 = st.columns(3)
+            
             with col1:
+                km_open_val = float(k_row.get("km_open_est", k_row.get("kmopen", 0) or 0))
                 st.markdown(
                     f"""
                     <div class="kpi-card">
                         <div class="kpi-label">Km piste aperte stimati</div>
-                        <div class="kpi-value">{k_row.km_open_est:.0f} km</div>
+                        <div class="kpi-value">{km_open_val:.0f} km</div>
                     </div>
                     """,
-                    unsafe_allow_html=True,
+                    unsafe_allow_html=True
                 )
+            
             with col2:
-                pct = k_row.pct_open * 100 if k_row.pct_open == k_row.pct_open else 0
+                pct_open_val = k_row.get("pct_open", np.nan)
+                pct = float(pct_open_val) * 100 if pd.notna(pct_open_val) else 0
                 st.markdown(
                     f"""
                     <div class="kpi-card">
@@ -993,17 +1089,19 @@ def main():
                         <div class="kpi-value">{pct:.0f}%</div>
                     </div>
                     """,
-                    unsafe_allow_html=True,
+                    unsafe_allow_html=True
                 )
+            
             with col3:
+                open_prob_val = float(k_row.get("open_prob", k_row.get("is_open", 0) or 0)) * 100
                 st.markdown(
                     f"""
                     <div class="kpi-card">
                         <div class="kpi-label">Probabilità impianto aperto</div>
-                        <div class="kpi-value">{k_row.open_prob*100:.0f}%</div>
+                        <div class="kpi-value">{open_prob_val:.0f}%</div>
                     </div>
                     """,
-                    unsafe_allow_html=True,
+                    unsafe_allow_html=True
                 )
     # end header cards
 
@@ -1627,15 +1725,53 @@ def main():
             if not top_best.empty:
                 st.markdown('<h4 class="modern-section-title">🎯 KPI tecnici</h4>', unsafe_allow_html=True)
                 vals = top_best[["Snowpark", "Area_gare", "Slalom", "Superpipe"]].fillna(0).mean()
-                c1, c2, c3, c4 = st.columns(4)
-                with c1:
-                    st.markdown(f"""<div class="kpi-card"><div class="kpi-label">Snowpark</div><div class="kpi-value">{vals.get('Snowpark',0):.0f}</div></div>""", unsafe_allow_html=True)
-                with c2:
-                    st.markdown(f"""<div class="kpi-card"><div class="kpi-label">Area gare</div><div class="kpi-value">{vals.get('Area_gare',0):.0f}</div></div>""", unsafe_allow_html=True)
-                with c3:
-                    st.markdown(f"""<div class="kpi-card"><div class="kpi-label">Slalom</div><div class="kpi-value">{vals.get('Slalom',0):.0f}</div></div>""", unsafe_allow_html=True)
-                with c4:
-                    st.markdown(f"""<div class="kpi-card"><div class="kpi-label">Superpipe</div><div class="kpi-value">{vals.get('Superpipe',0):.0f}</div></div>""", unsafe_allow_html=True)
+                
+                # KPI Grid per KPI tecnici
+                col1, col2, col3, col4 = st.columns(4)
+                
+                with col1:
+                    st.markdown(
+                        f"""
+                        <div class="kpi-card">
+                            <div class="kpi-label">Snowpark</div>
+                            <div class="kpi-value">{vals.get('Snowpark',0):.0f}</div>
+                        </div>
+                        """,
+                        unsafe_allow_html=True
+                    )
+                
+                with col2:
+                    st.markdown(
+                        f"""
+                        <div class="kpi-card">
+                            <div class="kpi-label">Area gare</div>
+                            <div class="kpi-value">{vals.get('Area_gare',0):.0f}</div>
+                        </div>
+                        """,
+                        unsafe_allow_html=True
+                    )
+                
+                with col3:
+                    st.markdown(
+                        f"""
+                        <div class="kpi-card">
+                            <div class="kpi-label">Slalom</div>
+                            <div class="kpi-value">{vals.get('Slalom',0):.0f}</div>
+                        </div>
+                        """,
+                        unsafe_allow_html=True
+                    )
+                
+                with col4:
+                    st.markdown(
+                        f"""
+                        <div class="kpi-card">
+                            <div class="kpi-label">Superpipe</div>
+                            <div class="kpi-value">{vals.get('Superpipe',0):.0f}</div>
+                        </div>
+                        """,
+                        unsafe_allow_html=True
+                    )
         except Exception:
             pass
 
