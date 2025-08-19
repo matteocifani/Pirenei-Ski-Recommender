@@ -405,9 +405,53 @@ html { scroll-behavior: smooth; }
     font-size: 1rem;
 }
 
-/* Subtle pulsing effect for the entire AI box - ONLY BORDER */
+/* AI Overview Border Animation - ONLY BORDER */
 .ai-overview-section {
-    /* No animation on the content, only on border */
+    position: relative;
+    /* No animation on content */
+}
+
+.ai-overview-section::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: conic-gradient(
+        #3b82f6 0deg,
+        #7c3aed 60deg,
+        #ec4899 120deg,
+        #ef4444 180deg,
+        #f59e0b 240deg,
+        #facc15 300deg,
+        #3b82f6 360deg
+    );
+    border-radius: 16px;
+    z-index: -1;
+    animation: borderRotate 4s linear infinite;
+}
+
+.ai-overview-section::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--bg-card);
+    border-radius: 14px;
+    z-index: 0;
+}
+
+.ai-overview-content {
+    position: relative;
+    z-index: 1;
+}
+
+@keyframes borderRotate {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
 
 /* Floating AI Dock */
@@ -587,19 +631,7 @@ html { scroll-behavior: smooth; }
     border-radius: 12px;
 }
 
-/* Fix for 100% blue bars */
-.js-plotly-plot .plotly .bglayer rect {
-    fill: transparent !important;
-}
 
-.js-plotly-plot .plotly .bar {
-    opacity: 0.8 !important;
-}
-
-/* Ensure bars show actual values, not 100% */
-.js-plotly-plot .plotly .bar path {
-    fill-opacity: 0.8 !important;
-}
 
 /* Success/Info/Warning/Error Messages */
 .stSuccess {
@@ -1079,6 +1111,19 @@ def main():
         
         st.markdown("**💡 Suggerimento:** Seleziona un livello e un profilo per ricevere raccomandazioni personalizzate basate su AI.")
     
+    # Floating Filter Dock (always visible)
+    st.markdown(
+        """
+        <div class="ai-dock">
+            <span>⚙️ Filtri</span>
+            <a href="#" onclick="document.querySelector('[data-testid=\'stDateInput\']')?.scrollIntoView({behavior: 'smooth'}); return false;">📅 Data</a>
+            <a href="#" onclick="document.querySelector('[data-testid=\'stSelectbox\']')?.scrollIntoView({behavior: 'smooth'}); return false;">🎯 Livello</a>
+            <a href="#" onclick="document.querySelectorAll('[data-testid=\'stSelectbox\']')[1]?.scrollIntoView({behavior: 'smooth'}); return false;">👥 Profilo</a>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    
     # Load data
     try:
         # Order from data_loader: (infonieve, valanghe, meteo, recensioni)
@@ -1342,18 +1387,7 @@ def main():
             st.markdown('<h3 class="modern-section-title">🎿 Informazioni per esperti</h3>', unsafe_allow_html=True)
             st.info("**Livello esperto**: Piste nere, fuoripista, snowpark e condizioni estreme.")
 
-        # Floating Filter Dock (replacing AI dock)
-        st.markdown(
-            """
-            <div class="ai-dock">
-                <span>⚙️ Filtri</span>
-                <a href="#" onclick="document.querySelector('[data-testid=\'stDateInput\']')?.scrollIntoView({behavior: 'smooth'}); return false;">📅 Data</a>
-                <a href="#" onclick="document.querySelector('[data-testid=\'stSelectbox\']')?.scrollIntoView({behavior: 'smooth'}); return false;">🎯 Livello</a>
-                <a href="#" onclick="document.querySelectorAll('[data-testid=\'stSelectbox\']')[1]?.scrollIntoView({behavior: 'smooth'}); return false;">👥 Profilo</a>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
+
     
     # Main content sections
     if livello != "nessuno":
@@ -1878,60 +1912,7 @@ def main():
             unsafe_allow_html=True
         )
     
-    # Opening dates table
-    if livello == "nessuno" and profilo == "nessuno":
-        st.markdown('<h2 class="modern-subheader">📅 Date di apertura medie</h2>', unsafe_allow_html=True)
-        
-        try:
-            # Load opening dates data
-            df_opening = pd.read_csv("df_meteo_updated.csv")
-            
-            if "apertura_doy" in df_opening.columns:
-                # Convert day of year to date
-                df_opening["apertura_doy"] = pd.to_numeric(df_opening["apertura_doy"], errors="coerce")
-                df_opening = df_opening.dropna(subset=["apertura_doy"])
-                
-                # Convert to dates
-                df_opening["Apertura media"] = pd.to_datetime("2024-01-01") + pd.to_timedelta(df_opening["apertura_doy"] - 1, unit="D")
-                df_opening["Apertura media"] = df_opening["Apertura media"].dt.strftime("%d/%m")
-                
-                # Chiusura (assume 30 giorni dopo apertura)
-                df_opening["Chiusura media"] = pd.to_datetime("2024-01-01") + pd.to_timedelta(df_opening["apertura_doy"] + 29, unit="D")
-                df_opening["Chiusura media"] = df_opening["Chiusura media"].dt.strftime("%d/%m")
-                
-                # Sort and display
-                avg = df_opening.groupby("nome_stazione")["apertura_doy"].mean().reset_index()
-                avg = avg.sort_values("apertura_doy", ascending=True)
-                
-                table = avg[["nome_stazione", "Apertura media", "Chiusura media"]].rename(
-                    columns={"nome_stazione": "Impianto"}
-                )
-                
-                st.info("Consulta la tabella seguente per sapere quando le piste da sci si vestono di bianco")
-                
-                # Use modern table styling
-                st.markdown(
-                    f"""
-                    <div class="modern-table">
-                        <table style="width: 100%; border-collapse: collapse;">
-                            <thead>
-                                <tr>
-                                    <th>Impianto</th>
-                                    <th>Apertura media</th>
-                                    <th>Chiusura media</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {''.join([f'<tr><td>{row["Impianto"]}</td><td>{row["Apertura media"]}</td><td>{row["Chiusura media"]}</td></tr>' for _, row in table.iterrows()])}
-                            </tbody>
-                        </table>
-                    </div>
-                    """,
-                    unsafe_allow_html=True
-                )
-        
-        except Exception as e:
-            st.warning(f"Impossibile caricare le date di apertura: {e}")
+
 
 if __name__ == "__main__":
     main()
