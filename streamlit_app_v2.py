@@ -1069,36 +1069,42 @@ def main():
     # AI overview: disattivata quando livello == "nessuno"
     if livello != "nessuno":
         st.markdown('<h2 class="modern-subheader">✨ AI overview</h2>', unsafe_allow_html=True)
-        api_key_present = True
-        try:
-            if not api_key_present:
-                st.info("Configura OPENROUTER_API_KEY per abilitare l'overview AI.")
-            else:
-                prompt = build_llm_prompt(df_kpis, best_name, livello, profilo, data_sel)
-                with st.spinner("Generazione riepilogo AI..."):
-                    output, usage = generate_overview(prompt, max_tokens=160)
-                model_used = usage.get("model") if isinstance(usage, dict) else None
-                if isinstance(usage, dict) and usage.get("error"):
-                    error_msg = usage['error']
-                    if "401" in str(error_msg) or "User not found" in str(error_msg):
-                        st.warning("🔑 Chiave API OpenRouter non valida o scaduta. Aggiorna la chiave per abilitare l'AI overview.")
-                        st.info("💡 Vai su https://openrouter.ai/ per generare una nuova chiave API gratuita.")
-                    else:
-                        st.error(f"Errore modello: {error_msg}")
-                    if model_used:
-                        st.caption(f"Modello: {model_used}")
-                elif output:
-                    st.markdown("""
-                    <div class="ai-overview-section">
-                        <div class="ai-overview-content">{output}</div>
-                    </div>
-                    """.format(output=output), unsafe_allow_html=True)
-                    if model_used:
-                        st.caption(f"Modello: {model_used}")
-                else:
-                    st.error("Nessuna risposta dal modello.")
-        except Exception as e:
-            st.error(f"LLM non disponibile: {e}")
+        
+        # AI Overview (TEMPORANEAMENTE DISABILITATO)
+        # try:
+        #     prompt = build_llm_prompt(df_kpis, best_name, livello, profilo, data_sel)
+        #     with st.spinner("Generazione riepilogo AI..."):
+        #         output, usage = generate_overview(prompt, max_tokens=160)
+        #     
+        #     if output:
+        #         st.markdown(
+        #             f"""
+        #             <div class="ai-overview-section">
+        #             <div class="ai-overview-content">{output}</div>
+        #             </div>
+        #             """,
+        #             unsafe_allow_html=True
+        #             )
+        #             
+        #             if isinstance(usage, dict) and usage.get("model"):
+        #             st.caption(f"Modello: {usage['model']}")
+        #     else:
+        #         st.error("Nessuna risposta dal modello.")
+        # except Exception as e:
+        #     st.error(f"LLM non disponibile: {e}")
+        
+        # Testo temporaneo al posto dell'LLM
+        output = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum"
+        usage = {}
+        
+        st.markdown(
+            f"""
+            <div class="ai-overview-section">
+                <div class="ai-overview-content">{output}</div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
 
     st.markdown("---")
     # Level-specific visualizations (no raw index shown)
@@ -1269,18 +1275,17 @@ def main():
             except Exception:
                 pass
 
-            # 3) AI Overview – Famiglia
+            # 3) AI Overview – Famiglia (TEMPORANEAMENTE DISABILITATO)
             try:
                 st.markdown('<h4 class="modern-section-title">🤖 AI Overview – Famiglia</h4>', unsafe_allow_html=True)
-                prompt_family = build_familiare_prompt(df_filtered_rec, best_name, livello, data_sel)
-                out, usage = generate_overview(prompt_family, max_tokens=140)
+                # prompt_family = build_familiare_prompt(df_filtered_rec, best_name, livello, data_sel)
+                # out, usage = generate_overview(prompt_family, max_tokens=140)
+                out = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat."
                 st.markdown("""
                 <div class="ai-overview-section">
                     <div class="ai-overview-content">{output}</div>
                 </div>
-                """.format(output=out or "Nessun contenuto disponibile ora."), unsafe_allow_html=True)
-                if isinstance(usage, dict) and usage.get("model"):
-                    st.caption(f"Modello: {usage['model']}")
+                """.format(output=out), unsafe_allow_html=True)
             except Exception:
                 pass
             # RIMOSSI: Snowpark/Superpipe e AI Overview – Festa (solo per profilo festaiolo)
@@ -1464,12 +1469,15 @@ def main():
             except Exception:
                 pass
             try:
-                prompt_f = build_festaiolo_prompt(df_filtered_rec, best_name, livello, data_sel)
-                st.subheader("AI Overview – Festa")
-                out, usage = generate_overview(prompt_f, max_tokens=140)
-                st.write(out or "Nessun contenuto disponibile ora.")
-                if isinstance(usage, dict) and usage.get("model"):
-                    st.caption(f"Modello: {usage['model']}")
+                # prompt_f = build_festaiolo_prompt(df_filtered_rec, best_name, livello, data_sel)
+                st.markdown('<h4 class="modern-section-title">🤖 AI Overview – Festa</h4>', unsafe_allow_html=True)
+                # out, usage = generate_overview(prompt_f, max_tokens=140)
+                out = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat."
+                st.markdown("""
+                <div class="ai-overview-section">
+                    <div class="ai-overview-content">{output}</div>
+                </div>
+                """.format(output=out), unsafe_allow_html=True)
             except Exception:
                 pass
 
@@ -1521,12 +1529,15 @@ def main():
 
             # 3) AI Overview – Famiglia
             try:
-                st.subheader("AI Overview – Famiglia")
-                prompt_family = build_familiare_prompt(df_filtered_rec, best_name, livello, data_sel)
-                out, usage = generate_overview(prompt_family, max_tokens=140)
-                st.write(out or "Nessun contenuto disponibile ora.")
-                if isinstance(usage, dict) and usage.get("model"):
-                    st.caption(f"Modello: {usage['model']}")
+                st.markdown('<h4 class="modern-section-title">🤖 AI Overview – Famiglia</h4>', unsafe_allow_html=True)
+                # prompt_family = build_familiare_prompt(df_filtered_rec, best_name, livello, data_sel)
+                # out, usage = generate_overview(prompt_family, max_tokens=140)
+                out = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat."
+                st.markdown("""
+                <div class="ai-overview-section">
+                    <div class="ai-overview-content">{output}</div>
+                </div>
+                """.format(output=out), unsafe_allow_html=True)
             except Exception:
                 pass
 
@@ -1673,12 +1684,15 @@ def main():
             except Exception:
                 pass
             try:
-                prompt_f = build_festaiolo_prompt(df_filtered_rec, best_name, livello, data_sel)
-                st.subheader("AI Overview – Festa")
-                out, usage = generate_overview(prompt_f, max_tokens=140)
-                st.write(out or "Nessun contenuto disponibile ora.")
-                if isinstance(usage, dict) and usage.get("model"):
-                    st.caption(f"Modello: {usage['model']}")
+                # prompt_f = build_festaiolo_prompt(df_filtered_rec, best_name, livello, data_sel)
+                st.markdown('<h4 class="modern-section-title">🤖 AI Overview – Festa</h4>', unsafe_allow_html=True)
+                # out, usage = generate_overview(prompt_f, max_tokens=140)
+                out = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat."
+                st.markdown("""
+                <div class="ai-overview-section">
+                    <div class="ai-overview-content">{output}</div>
+                </div>
+                """.format(output=out), unsafe_allow_html=True)
             except Exception:
                 pass
 
@@ -1730,12 +1744,15 @@ def main():
 
             # 3) AI Overview – Famiglia
             try:
-                st.subheader("AI Overview – Famiglia")
-                prompt_family = build_familiare_prompt(df_filtered_rec, best_name, livello, data_sel)
-                out, usage = generate_overview(prompt_family, max_tokens=140)
-                st.write(out or "Nessun contenuto disponibile ora.")
-                if isinstance(usage, dict) and usage.get("model"):
-                    st.caption(f"Modello: {usage['model']}")
+                st.markdown('<h4 class="modern-section-title">🤖 AI Overview – Famiglia</h4>', unsafe_allow_html=True)
+                # prompt_family = build_familiare_prompt(df_filtered_rec, best_name, livello, data_sel)
+                # out, usage = generate_overview(prompt_family, max_tokens=140)
+                out = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat."
+                st.markdown("""
+                <div class="ai-overview-section">
+                    <div class="ai-overview-content">{output}</div>
+                </div>
+                """.format(output=out), unsafe_allow_html=True)
             except Exception:
                 pass
 
@@ -2009,14 +2026,17 @@ def main():
             st.warning(f"Errore nel calcolo del rapporto: {e}")
             st.write(f"Errore completo: {str(e)}")
         
-        # 3) AI Overview – Low-Cost
+        # 3) AI Overview – Low-Cost (TEMPORANEAMENTE DISABILITATO)
         try:
-            st.subheader("🤖 AI Overview – Low-Cost")
-            prompt_lowcost = build_lowcost_prompt(df_filtered_rec, best_name, livello, data_sel, df_ratio)
-            out, usage = generate_overview(prompt_lowcost, max_tokens=140)
-            st.write(out or "Nessun contenuto disponibile ora.")
-            if isinstance(usage, dict) and usage.get("model"):
-                st.caption(f"Modello: {usage['model']}")
+            st.markdown('<h4 class="modern-section-title">🤖 AI Overview – Low-Cost</h4>', unsafe_allow_html=True)
+            # prompt_lowcost = build_lowcost_prompt(df_filtered_rec, best_name, livello, data_sel, df_ratio)
+            # out, usage = generate_overview(prompt_lowcost, max_tokens=140)
+            out = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat."
+            st.markdown("""
+            <div class="ai-overview-section">
+                <div class="ai-overview-content">{output}</div>
+            </div>
+            """.format(output=out), unsafe_allow_html=True)
         except Exception as e:
             st.warning(f"Errore nell'AI Overview: {e}")
     
