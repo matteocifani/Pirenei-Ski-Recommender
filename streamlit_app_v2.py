@@ -190,17 +190,12 @@ st.markdown("""
 .hero-section::before {
     content: '';
     position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: radial-gradient(circle, rgba(59, 130, 246, 0.03) 0%, transparent 70%);
-    animation: float 6s ease-in-out infinite;
-}
-
-@keyframes float {
-    0%, 100% { transform: translateY(0px) rotate(0deg); }
-    50% { transform: translateY(-20px) rotate(180deg); }
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.02) 0%, rgba(147, 51, 234, 0.02) 100%);
+    opacity: 0.6;
 }
 
 .hero-title {
@@ -411,47 +406,50 @@ st.markdown("""
     background: var(--bg-secondary);
 }
 
-/* Floating Filter Dock */
-.ai-dock {
+/* KPI Grid */
+.kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: var(--space-lg);
+    margin: var(--space-lg) 0;
+}
+
+/* Floating Filter Dock Bottom */
+.ai-dock-bottom {
     position: fixed;
-    top: 20px;
-    right: 20px;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
     background: var(--bg-overlay);
     backdrop-filter: blur(20px);
     border: 1px solid var(--border-light);
     border-radius: var(--radius-xl);
-    padding: var(--space-md);
+    padding: var(--space-md) var(--space-lg);
     box-shadow: var(--shadow-xl);
     z-index: 1000;
     display: flex;
-    flex-direction: column;
-    gap: var(--space-sm);
-    min-width: 120px;
+    gap: var(--space-lg);
+    align-items: center;
+    min-width: 300px;
+    justify-content: center;
 }
 
-.ai-dock span {
-    font-weight: 600;
-    color: var(--text-primary);
-    font-size: 0.875rem;
-    text-align: center;
-    padding-bottom: var(--space-xs);
-    border-bottom: 1px solid var(--border-light);
-}
-
-.ai-dock a {
+.ai-dock-bottom a {
     color: var(--text-secondary);
     text-decoration: none;
-    font-size: 0.75rem;
-    padding: var(--space-xs) var(--space-sm);
-    border-radius: var(--radius-sm);
+    font-size: 0.875rem;
+    font-weight: 500;
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-md);
     transition: all var(--transition-fast);
-    text-align: center;
+    white-space: nowrap;
 }
 
-.ai-dock a:hover {
+.ai-dock-bottom a:hover {
     color: var(--primary-500);
     background: var(--primary-50);
-    transform: translateY(-1px);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
 }
 
 /* Responsive Design */
@@ -473,11 +471,16 @@ st.markdown("""
         font-size: 2rem;
     }
     
-    .ai-dock {
+    .ai-dock-bottom {
         position: fixed;
-        top: 10px;
+        bottom: 10px;
+        left: 10px;
         right: 10px;
-        min-width: 100px;
+        transform: none;
+        min-width: auto;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: var(--space-md);
     }
 }
 
@@ -935,11 +938,10 @@ def main():
     profilo = st.sidebar.selectbox("Profilo (opzionale)", SUPPORTED_PROFILES, index=0)
     profilo_norm = str(profilo).strip().lower()
 
-    # Floating Filter Dock (always visible)
+    # Floating Filter Dock (always visible at bottom)
     st.markdown(
         """
-        <div class="ai-dock">
-            <span>⚙️ Filtri</span>
+        <div class="ai-dock-bottom">
             <a href="#" onclick="document.querySelector('[data-testid=\'stDateInput\']')?.scrollIntoView({behavior: 'smooth'}); return false;">📅 Data</a>
             <a href="#" onclick="document.querySelector('[data-testid=\'stSelectbox\']')?.scrollIntoView({behavior: 'smooth'}); return false;">🎯 Livello</a>
             <a href="#" onclick="document.querySelectorAll('[data-testid=\'stSelectbox\']')[1]?.scrollIntoView({behavior: 'smooth'}); return false;">👥 Profilo</a>
@@ -1709,51 +1711,29 @@ def main():
                 vals = top_best[["Snowpark", "Area_gare", "Slalom", "Superpipe"]].fillna(0).mean()
                 
                 # KPI Grid per KPI tecnici
-                col1, col2, col3, col4 = st.columns(4)
-                
-                with col1:
-                    st.markdown(
-                        f"""
+                st.markdown(
+                    f"""
+                    <div class="kpi-grid">
                         <div class="kpi-card">
                             <div class="kpi-label">Snowpark</div>
                             <div class="kpi-value">{vals.get('Snowpark',0):.0f}</div>
                         </div>
-                        """,
-                        unsafe_allow_html=True
-                    )
-                
-                with col2:
-                    st.markdown(
-                        f"""
                         <div class="kpi-card">
                             <div class="kpi-label">Area gare</div>
                             <div class="kpi-value">{vals.get('Area_gare',0):.0f}</div>
                         </div>
-                        """,
-                        unsafe_allow_html=True
-                    )
-                
-                with col3:
-                    st.markdown(
-                        f"""
                         <div class="kpi-card">
                             <div class="kpi-label">Slalom</div>
                             <div class="kpi-value">{vals.get('Slalom',0):.0f}</div>
                         </div>
-                        """,
-                        unsafe_allow_html=True
-                    )
-                
-                with col4:
-                    st.markdown(
-                        f"""
                         <div class="kpi-card">
                             <div class="kpi-label">Superpipe</div>
                             <div class="kpi-value">{vals.get('Superpipe',0):.0f}</div>
                         </div>
-                        """,
-                        unsafe_allow_html=True
-                    )
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
         except Exception:
             pass
 
