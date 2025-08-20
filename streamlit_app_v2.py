@@ -563,8 +563,8 @@ html, body {
     margin: var(--space-32) 0;
     position: relative;
     overflow: hidden;
-    /* Glow più marcato (pari all'hover attuale) */
-    box-shadow: 0 0 0 1px rgba(139, 92, 246, 0.4), 0 0 50px rgba(139, 92, 246, 0.2), var(--shadow-xl);
+    /* Glow molto più marcato */
+    box-shadow: 0 0 0 1px rgba(139, 92, 246, 0.5), 0 0 60px rgba(139, 92, 246, 0.3), 0 0 120px rgba(139, 92, 246, 0.15), var(--shadow-xl);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
     transition: all var(--transition-normal);
@@ -572,7 +572,7 @@ html, body {
 
 .ai-overview-section:hover {
     transform: translateY(-2px);
-    box-shadow: 0 0 0 1px rgba(139, 92, 246, 0.45), 0 0 60px rgba(139, 92, 246, 0.25), var(--shadow-xl);
+    box-shadow: 0 0 0 1px rgba(139, 92, 246, 0.6), 0 0 80px rgba(139, 92, 246, 0.4), 0 0 140px rgba(139, 92, 246, 0.2), var(--shadow-xl);
 }
 
 
@@ -601,6 +601,7 @@ html, body {
     flex-direction: column;
     align-items: flex-start;
     justify-content: center;
+    gap: var(--space-4);
 }
 
 .ai-title {
@@ -2924,33 +2925,42 @@ def main():
     # Add restart button after onboarding completion (styled)
     st.markdown("""
     <style>
-    /* Restart Button Styling */
-    .stButton > button[kind="primary"] {
-        background: var(--bg-card) !important;
-        border: 1px solid var(--border-primary) !important;
-        border-radius: var(--radius-xl) !important;
-        padding: var(--space-12) var(--space-24) !important;
+    /* Restart Button Styling - Coerente con design system */
+    .stButton > button[kind="secondary"] {
+        background: linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%) !important;
+        border: 1px solid rgba(148, 163, 184, 0.2) !important;
+        border-radius: var(--radius-2xl) !important;
+        padding: var(--space-12) var(--space-32) !important;
         font-family: 'Inter', sans-serif !important;
         font-size: 0.875rem !important;
         font-weight: 600 !important;
         color: var(--text-secondary) !important;
-        transition: all var(--transition-normal) !important;
-        box-shadow: var(--shadow-sm) !important;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        box-shadow: 
+            0 0 0 1px rgba(148, 163, 184, 0.1),
+            0 0 15px rgba(100, 116, 139, 0.1),
+            0 0 30px rgba(71, 85, 105, 0.05),
+            0 8px 25px -8px rgba(0, 0, 0, 0.4) !important;
         height: auto !important;
         min-height: auto !important;
+        backdrop-filter: blur(10px) !important;
     }
-    .stButton > button[kind="primary"]:hover {
-        background: var(--bg-secondary) !important;
+    .stButton > button[kind="secondary"]:hover {
+        background: linear-gradient(145deg, #334155 0%, #1e293b 50%, #334155 100%) !important;
         color: var(--text-primary) !important;
-        transform: translateY(-1px) !important;
-        box-shadow: var(--shadow-md) !important;
-        border-color: var(--emerald-300) !important;
+        transform: translateY(-2px) scale(1.02) !important;
+        box-shadow: 
+            0 0 0 1px rgba(148, 163, 184, 0.2),
+            0 0 25px rgba(100, 116, 139, 0.15),
+            0 0 50px rgba(71, 85, 105, 0.1),
+            0 15px 35px -10px rgba(0, 0, 0, 0.6) !important;
+        border-color: rgba(148, 163, 184, 0.3) !important;
     }
     </style>
     """, unsafe_allow_html=True)
     
-    # Spazio ridotto prima del bottone per avvicinarlo ai selettori
-    st.markdown('<div style="margin: 8px 0;"></div>', unsafe_allow_html=True)
+    # Più spazio per avvicinarlo ai selettori e allontanarlo dall'hero
+    st.markdown('<div style="margin: 2px 0;"></div>', unsafe_allow_html=True)
     
     col1, col2, col3 = st.columns([2, 1, 2])
     with col2:
@@ -3087,7 +3097,7 @@ def main():
         """.format(best_name), unsafe_allow_html=True)
         
         # Spazio extra per staccare dal bottone "Ricomincia"
-        st.markdown('<div style="margin: 24px 0;"></div>', unsafe_allow_html=True)
+        st.markdown('<div style="margin: 48px 0;"></div>', unsafe_allow_html=True)
         
         # KPI Grid
         st.markdown('<h2 class="section-header">📈 Indicatori chiave</h2>', unsafe_allow_html=True)
