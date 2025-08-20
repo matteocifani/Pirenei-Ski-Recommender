@@ -2667,7 +2667,7 @@ def main():
     
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # Onboarding tooltip - CSS ONLY approach
+    # Onboarding tooltip - SOTTO I SELETTORI nel flusso normale
     if not st.session_state.onboarding_completed:
         step = st.session_state.onboarding_step
         
@@ -2678,49 +2678,56 @@ def main():
             3: "Che tipo di sciatore sei? (puoi anche saltare!) 🤙❄️"
         }
         
-        # Position tooltip based on step
-        tooltip_positions = {
-            1: "left: 16.666%; transform: translateX(-50%);",  # First column (1/3)
-            2: "left: 50%; transform: translateX(-50%);",      # Second column (2/3) 
-            3: "left: 83.333%; transform: translateX(-50%);"  # Third column (3/3)
+        # Position tooltip based on step with flex
+        tooltip_justify = {
+            1: "flex-start",    # Align left for first column
+            2: "center",        # Align center for second column  
+            3: "flex-end"       # Align right for third column
         }
         
         current_message = messages.get(step, f"Step {step}")
-        current_position = tooltip_positions.get(step, "left: 50%; transform: translateX(-50%);")
+        current_justify = tooltip_justify.get(step, "center")
         
-        # Show tooltip with pure CSS positioning
+        # Add spacing and show tooltip in document flow
+        st.markdown("<br>", unsafe_allow_html=True)
+        
+        # Show tooltip in normal document flow
         st.markdown(f"""
-        <div class="onboarding-tooltip-simple-v2" style="
-            position: fixed;
-            top: 500px;
-            {current_position}
-            z-index: 10000;
-            background: #1f2937;
-            border: 2px solid #10b981;
-            border-radius: 16px;
-            padding: 16px 20px;
-            color: #f8fafc;
-            font-family: Inter, sans-serif;
-            font-size: 16px;
-            font-weight: 600;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
-            max-width: 280px;
-            text-align: center;
-            animation: tooltipSlideIn 0.3s ease-out;
-            pointer-events: none;
+        <div style="
+            display: flex;
+            justify-content: {current_justify};
+            width: 100%;
+            margin: 20px 0;
+            padding: 0 20px;
         ">
-            {current_message}
+            <div class="onboarding-tooltip-flow" style="
+                background: #1f2937;
+                border: 2px solid #10b981;
+                border-radius: 16px;
+                padding: 16px 20px;
+                color: #f8fafc;
+                font-family: Inter, sans-serif;
+                font-size: 16px;
+                font-weight: 600;
+                box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
+                max-width: 280px;
+                text-align: center;
+                animation: tooltipSlideDown 0.3s ease-out;
+                position: relative;
+            ">
+                {current_message}
+            </div>
         </div>
         
         <style>
-        @keyframes tooltipSlideIn {{
+        @keyframes tooltipSlideDown {{
             from {{ 
                 opacity: 0; 
-                transform: translateX(-50%) translateY(-10px); 
+                transform: translateY(-20px); 
             }}
             to {{ 
                 opacity: 1; 
-                transform: translateX(-50%) translateY(0); 
+                transform: translateY(0); 
             }}
         }}
         </style>
