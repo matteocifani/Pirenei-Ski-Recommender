@@ -2495,6 +2495,7 @@ div[data-testid="column"] .stSelectbox > div {
 """, unsafe_allow_html=True)
 
 
+@st.cache_data(ttl=1800, show_spinner=False)  # Cache per 30 min
 def aggregate_station_kpis(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
     if "kmtotal" in df.columns:
@@ -2797,8 +2798,9 @@ def build_local_overview(df_kpis: pd.DataFrame, best_name: str) -> str:
     return f"{best_name} è la scelta più pratica: {txt}."
 
 
-@st.cache_data(ttl=3600, show_spinner=False)
+@st.cache_data(ttl=3600, show_spinner=False)  # Cache LLM per 1 ora
 def _llm_overview_cached(prompt: str, max_tokens: int) -> tuple[str, dict]:
+    """Cache delle chiamate LLM per evitare ripetizioni costose"""
     return generate_overview(prompt, max_tokens)
 
 

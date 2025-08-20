@@ -5,6 +5,7 @@ from datetime import timedelta
 from typing import Optional
 
 import pandas as pd
+import streamlit as st
 from sklearn.preprocessing import MinMaxScaler
 
 from .config import DAYS_RANGE
@@ -24,6 +25,7 @@ def ensure_date_column(df: Optional[pd.DataFrame]) -> pd.DataFrame:
     return df
 
 
+@st.cache_data(ttl=7200, show_spinner=False)  # Cache per 2 ore
 def get_historical_data_for_date(
     df: pd.DataFrame, target_date: datetime.date, days_range: int = DAYS_RANGE
 ) -> pd.DataFrame:
@@ -56,6 +58,7 @@ def get_historical_data_for_date(
     return pd.DataFrame()
 
 
+@st.cache_data(ttl=3600, show_spinner=False)  # Cache per 1 ora
 def compute_indices(
     df_infonieve: pd.DataFrame,
     df_valanghe: pd.DataFrame,
