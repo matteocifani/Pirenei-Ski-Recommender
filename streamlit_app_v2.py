@@ -322,14 +322,15 @@ html, body {
     background: var(--bg-card);
     border: 1px solid var(--border-primary);
     border-radius: var(--radius-3xl);
-    padding: var(--space-32) var(--space-24);
-    margin: var(--space-20) 0 var(--space-32) 0;
+    padding: var(--space-24) var(--space-32);
+    margin: var(--space-20) auto var(--space-32) auto;
     text-align: center;
     position: relative;
     overflow: hidden;
     box-shadow: var(--shadow-lg);
     transition: all var(--transition-normal);
-    animation: pulseGlow 3s ease-in-out infinite;
+    max-width: 800px;
+    width: 100%;
 }
 
 .hero-section::before {
@@ -371,11 +372,10 @@ html, body {
     font-family: 'Inter', sans-serif;
     font-size: 0.875rem;
     font-weight: 600;
-    padding: var(--space-8) var(--space-20);
+    padding: var(--space-8) var(--space-16);
     border-radius: var(--radius-full);
-    margin-bottom: var(--space-24);
+    margin-bottom: var(--space-12);
     border: 1px solid var(--emerald-800);
-    animation: float 3s ease-in-out infinite;
     position: relative;
     z-index: 1;
 }
@@ -388,14 +388,14 @@ html, body {
 .hero-title {
     font-family: 'Inter', sans-serif;
     font-weight: 900;
-    font-size: clamp(3rem, 8vw, 5rem);
-    margin: 0 0 var(--space-16) 0;
-    letter-spacing: -0.04em;
+    font-size: clamp(2.5rem, 6vw, 4rem);
+    margin: 0 0 var(--space-8) 0;
+    letter-spacing: -0.02em;
     line-height: 0.9;
     color: var(--text-primary);
     position: relative;
     z-index: 1;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 @keyframes gradientShift {
@@ -2665,12 +2665,15 @@ def main():
             padding: 20px 24px !important;
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8) !important;
             font-family: 'Inter', sans-serif !important;
-            font-size: 16px !important;
+            font-size: 18px !important;
             font-weight: 600 !important;
             color: #f8fafc !important;
-            min-width: 280px !important;
-            max-width: 320px !important;
+            min-width: 300px !important;
+            max-width: 350px !important;
             animation: tooltipFadeIn 0.5s ease-out !important;
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
         }}
         .onboarding-arrow {{
             position: fixed !important;
@@ -2678,6 +2681,9 @@ def main():
             font-size: 3rem !important;
             color: #10b981 !important;
             animation: arrowPulse 1.5s ease-in-out infinite !important;
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
         }}
         </style>
         <script>
@@ -2704,20 +2710,17 @@ def main():
             document.body.appendChild(overlay);
             console.log('✅ Overlay created');
             
-            // Define steps
+            // Define steps (using column index instead of IDs)
             const steps = {{
                 1: {{
-                    target: '#date-column',
                     tooltip: 'Dimmi quando vuoi conquistare le piste! ⛷️',
                     arrow: '👇',
                 }},
                 2: {{
-                    target: '#level-column', 
                     tooltip: 'Sei un principiante o un pro della neve? 🏔️🎿',
                     arrow: '👇',
                 }},
                 3: {{
-                    target: '#profile-column',
                     tooltip: 'Che tipo di sciatore sei? (puoi anche saltare!) 🤙❄️',
                     arrow: '👇',
                 }}
@@ -2730,8 +2733,10 @@ def main():
             }}
             
             function tryHighlight() {{
-                const targetElement = document.querySelector(stepConfig.target);
-                console.log('🔍 Looking for:', stepConfig.target, 'Found:', targetElement);
+                // Find all columns and target the right one
+                const columns = document.querySelectorAll('div[data-testid="column"]');
+                const targetElement = columns[step - 1]; // step 1 = index 0
+                console.log('🔍 Looking for column index:', step - 1, 'Found:', targetElement, 'Total columns:', columns.length);
                 
                 if (targetElement) {{
                     // Highlight element
@@ -2744,6 +2749,9 @@ def main():
                     const tooltip = document.createElement('div');
                     tooltip.className = 'onboarding-tooltip';
                     tooltip.textContent = stepConfig.tooltip;
+                    tooltip.style.display = 'block';
+                    tooltip.style.visibility = 'visible';
+                    tooltip.style.opacity = '1';
                     
                     const tooltipLeft = Math.max(10, rect.left + (rect.width / 2) - 150);
                     const tooltipTop = isMobile ? rect.top - 90 : rect.bottom + 25;
@@ -2755,6 +2763,9 @@ def main():
                     const arrow = document.createElement('div');
                     arrow.className = 'onboarding-arrow';
                     arrow.textContent = stepConfig.arrow;
+                    arrow.style.display = 'block';
+                    arrow.style.visibility = 'visible';
+                    arrow.style.opacity = '1';
                     
                     const arrowLeft = rect.left + (rect.width / 2) - 20;
                     const arrowTop = isMobile ? rect.top - 40 : rect.bottom - 5;
@@ -2823,9 +2834,7 @@ def main():
     profilo = st.session_state.selected_profile or st.session_state.dock_profile
     profilo_norm = str(profilo).strip().lower()
 
-    # Debug info (temporaneo)
-    if st.session_state.onboarding_completed:
-        st.write(f"🔍 DEBUG: data_sel={data_sel}, livello={livello}, profilo={profilo}")
+
 
     # STOP HERE se l'onboarding non è completato
     if not st.session_state.onboarding_completed:
