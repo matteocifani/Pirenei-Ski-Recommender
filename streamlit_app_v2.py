@@ -1855,34 +1855,18 @@ body {
 .hero-title { color: #ffffff !important; }
 .ai-overview-section { color: #ffffff !important; }
 
-/* AI overview only with animated border, no fill */
+/* AI overview: static gradient border only, no fill */
 .ai-overview-section {
-    background: transparent !important; /* no fill */
-    border: 0 !important;
-    position: relative;
-}
-.ai-overview-section::before {
-    content: '';
-    position: absolute;
-    top: -2px; left: -2px; right: -2px; bottom: -2px;
-    border-radius: 18px;
-    background: linear-gradient(90deg, #0ea5e9, #8b5cf6, #ec4899, #ef4444, #f59e0b, #eab308, #0ea5e9);
-    z-index: -2;
-    opacity: 0.45;
-}
-.ai-overview-section::after {
-    content: '';
-    position: absolute;
-    top: 2px; left: 2px; right: 2px; bottom: 2px;
+    background: transparent !important;
+    border: 2px solid transparent !important;
     border-radius: 16px;
-    background: transparent; /* keep only the colored border visible */
-    z-index: -1;
+    border-image: linear-gradient(90deg, #0ea5e9, #8b5cf6, #ec4899, #ef4444, #f59e0b, #eab308, #0ea5e9) 1;
 }
 .kpi-card .kpi-label { color: #cbd5e1 !important; }
 .kpi-card .kpi-value { color: #ffffff !important; }
 
 /* Floating Dock (interactive filters) */
-.floating-dock, #dock-anchor ~ div:has([data-testid="stDateInput"]) {
+.floating-dock, #dock-anchor ~ *:has([data-testid="stDateInput"]) {
     position: fixed;
     left: 50%;
     bottom: 18px;
@@ -1902,27 +1886,27 @@ body {
 
 .floating-dock .stDateInput > div > div,
 .floating-dock .stSelectbox > div > div,
-#dock-anchor ~ div:has([data-testid="stDateInput"]) [data-testid="stDateInput"] > div > div,
-#dock-anchor ~ div:has([data-testid="stDateInput"]) [data-testid="stSelectbox"] > div > div {
+#dock-anchor ~ *:has([data-testid="stDateInput"]) [data-testid="stDateInput"] > div > div,
+#dock-anchor ~ *:has([data-testid="stDateInput"]) [data-testid="stSelectbox"] > div > div {
     background: rgba(255, 255, 255, 0.10) !important;
     border: 1px solid rgba(255, 255, 255, 0.18) !important;
     color: #ffffff !important;
 }
-.floating-dock label, #dock-anchor ~ div:has([data-testid="stDateInput"]) label { color: #e2e8f0 !important; font-size: 0.85rem; }
+.floating-dock label, #dock-anchor ~ *:has([data-testid="stDateInput"]) label { color: #e2e8f0 !important; font-size: 0.85rem; }
 
 .floating-dock .stDateInput input,
 .floating-dock .stSelectbox div[data-baseweb="select"] div,
-#dock-anchor ~ div:has([data-testid="stDateInput"]) [data-testid="stDateInput"] input,
-#dock-anchor ~ div:has([data-testid="stDateInput"]) [data-testid="stSelectbox"] div[data-baseweb="select"] div {
+#dock-anchor ~ *:has([data-testid="stDateInput"]) [data-testid="stDateInput"] input,
+#dock-anchor ~ *:has([data-testid="stDateInput"]) [data-testid="stSelectbox"] div[data-baseweb="select"] div {
     color: #f8fafc !important;
 }
 
 @media (max-width: 768px) {
-    .floating-dock, #dock-anchor ~ div:has([data-testid="stDateInput"]) { left: 12px; right: 12px; transform: none; }
+    .floating-dock, #dock-anchor ~ *:has([data-testid="stDateInput"]) { left: 12px; right: 12px; transform: none; }
 }
 
 /* Fallback: convert the block after #dock-anchor containing the widgets into a floating dock */
-.main .block-container > div:has([data-testid="stDateInput"]) {
+.main .block-container :has([data-testid="stDateInput"]) {
     position: fixed;
     left: 50%;
     bottom: 18px;
@@ -1939,15 +1923,15 @@ body {
     border: 1px solid rgba(255,255,255,0.14);
     box-shadow: 0 12px 32px rgba(0,0,0,0.35);
 }
-.main .block-container > div:has([data-testid="stDateInput"]) [data-testid="stDateInput"] > div > div,
-.main .block-container > div:has([data-testid="stDateInput"]) [data-testid="stSelectbox"] > div > div {
+.main .block-container :has([data-testid="stDateInput"]) [data-testid="stDateInput"] > div > div,
+.main .block-container :has([data-testid="stDateInput"]) [data-testid="stSelectbox"] > div > div {
     background: rgba(255, 255, 255, 0.10) !important;
     border: 1px solid rgba(255, 255, 255, 0.18) !important;
     color: #ffffff !important;
 }
-.main .block-container > div:has([data-testid="stDateInput"]) label { color: #e2e8f0 !important; font-size: 0.85rem; }
-.main .block-container > div:has([data-testid="stDateInput"]) [data-testid="stDateInput"] input,
-.main .block-container > div:has([data-testid="stDateInput"]) [data-testid="stSelectbox"] div[data-baseweb="select"] div {
+.main .block-container :has([data-testid="stDateInput"]) label { color: #e2e8f0 !important; font-size: 0.85rem; }
+.main .block-container :has([data-testid="stDateInput"]) [data-testid="stDateInput"] input,
+.main .block-container :has([data-testid="stDateInput"]) [data-testid="stSelectbox"] div[data-baseweb="select"] div {
     color: #f8fafc !important;
 }
 
