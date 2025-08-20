@@ -816,20 +816,18 @@ html, body {
 
 .ai-header {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     gap: var(--space-12);
     margin-bottom: var(--space-20);
     justify-content: flex-start;
 }
 
-
-
 .ai-header-text {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    justify-content: flex-start;
-    gap: var(--space-6);
+    justify-content: center;
+    gap: var(--space-4);
     width: 100%;
 }
 
@@ -839,6 +837,7 @@ html, body {
     font-size: 1.125rem;
     color: var(--text-primary);
     margin: 0;
+    line-height: 1.2;
 }
 
 .ai-badge {
@@ -855,6 +854,7 @@ html, body {
     margin: 0;
     align-self: flex-start;
     margin-left: 0;
+    line-height: 1;
 }
 
 .ai-overview-content {
@@ -1211,226 +1211,24 @@ div[data-testid="column"] .stSelectbox > div {
     }
 }
 
-/* CSS per snow effect rimosso per semplificazione */
-
-/* Welcome Message */
-.welcome-message {
-    background: var(--bg-card);
-    border: 1px solid var(--border-primary);
-    border-radius: var(--radius-3xl);
-    padding: var(--space-64) var(--space-32);
-    margin: var(--space-48) 0;
-    text-align: center;
-    position: relative;
-    overflow: hidden;
-    box-shadow: var(--shadow-lg);
+/* Messages - Ottimizzati */
+.welcome-message,.no-data-message{
+    background:var(--bg-card);border:1px solid var(--border-primary);border-radius:var(--radius-3xl);
+    padding:var(--space-40) var(--space-32);margin:var(--space-32) 0;text-align:center;position:relative;
+    overflow:hidden;box-shadow:var(--shadow-lg);backdrop-filter:blur(20px);
 }
+.welcome-title,.no-data-title{font-weight:700;font-size:1.8rem;margin:0 0 var(--space-16) 0;}
+.welcome-subtitle,.no-data-subtitle{font-weight:500;font-size:1.2rem;margin:0 0 var(--space-20) 0;line-height:1.5;opacity:0.9;}
+.welcome-guide,.no-data-guide{font-weight:600;font-size:1.1rem;margin:0;opacity:0.9;}
+.no-data-title{color:#f87171;}
+.welcome-title,.welcome-subtitle,.welcome-guide,.no-data-subtitle,.no-data-guide{color:var(--text-primary);}
 
-.welcome-message::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 300px;
-    height: 300px;
-    background: radial-gradient(circle, rgba(16, 185, 129, 0.05) 0%, rgba(16, 185, 129, 0.02) 40%, transparent 70%);
-    border-radius: 50%;
-    animation: welcomeGlow 3s ease-in-out infinite;
-    z-index: 0;
-}
-
-@keyframes welcomeGlow {
-    0%, 100% { 
-        transform: translate(-50%, -50%) scale(1);
-        opacity: 0.4;
-    }
-    50% { 
-        transform: translate(-50%, -50%) scale(1.05);
-        opacity: 0.7;
-    }
-}
-
-.welcome-content {
-    position: relative;
-    z-index: 1;
-}
-
-.welcome-title {
-    font-family: 'Inter', sans-serif;
-    font-weight: 800;
-    font-size: clamp(2rem, 5vw, 3rem);
-    color: var(--text-primary);
-    margin: 0 0 var(--space-16) 0;
-    letter-spacing: -0.02em;
-}
-
-.welcome-subtitle {
-    font-family: 'Inter', sans-serif;
-    font-weight: 500;
-    font-size: 1.25rem;
-    color: var(--text-secondary);
-    margin: 0 0 var(--space-24) 0;
-    line-height: 1.5;
-}
-
-.welcome-guide {
-    font-family: 'Inter', sans-serif;
-    font-weight: 600;
-    font-size: 1rem;
-    color: var(--emerald-400);
-    margin: 0;
-    animation: welcomeBounce 2s ease-in-out infinite;
-}
-
-@keyframes welcomeBounce {
-    0%, 100% { transform: translateY(0px); }
-    50% { transform: translateY(-5px); }
-}
-
-/* No Data Message */
-.no-data-message {
-    background: linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%);
-    border: 1px solid rgba(148, 163, 184, 0.2);
-    border-radius: var(--radius-3xl);
-    padding: var(--space-40) var(--space-32);
-    margin: var(--space-32) 0;
-    text-align: center;
-    position: relative;
-    overflow: hidden;
-    box-shadow: 
-        0 0 0 1px rgba(148, 163, 184, 0.1),
-        0 0 10px rgba(100, 116, 139, 0.08),
-        0 0 20px rgba(71, 85, 105, 0.05),
-        0 25px 50px -12px rgba(0, 0, 0, 0.6);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    backdrop-filter: blur(20px);
-}
-
-.no-data-message::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: conic-gradient(from 0deg, transparent, rgba(248, 113, 113, 0.05), transparent, rgba(239, 68, 68, 0.05), transparent);
-    animation: heroRotate 15s linear infinite;
-    z-index: -1;
-}
-
-.no-data-message::after {
-    content: '';
-    position: absolute;
-    inset: 1px;
-    background: linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%);
-    border-radius: calc(var(--radius-3xl) - 1px);
-    z-index: -1;
-}
-
-.no-data-content {
-    position: relative;
-    z-index: 2;
-}
-
-.no-data-title {
-    font-family: 'Inter', sans-serif;
-    font-weight: 700;
-    font-size: 1.8rem;
-    color: #f87171;
-    margin: 0 0 var(--space-16) 0;
-}
-
-.no-data-subtitle {
-    font-family: 'Inter', sans-serif;
-    font-weight: 500;
-    font-size: 1.2rem;
-    color: #e2e8f0;
-    margin: 0 0 var(--space-20) 0;
-    line-height: 1.5;
-    opacity: 0.9;
-}
-
-.no-data-guide {
-    font-family: 'Inter', sans-serif;
-    font-weight: 600;
-    font-size: 1.1rem;
-    color: var(--text-secondary);
-    margin: 0;
-    opacity: 0.9;
-    animation: welcomeBounce 2s ease-in-out infinite;
-}
-
-/* CSS per celebrazione snow rimosso per semplificazione */
-
-/* Responsive - Ottimizzato */
-@media (max-width: 768px) {
-    .onboarding-selectors { flex-direction: column; gap: var(--space-24); padding: var(--space-20); }
-    .selector-wrapper { min-width: 280px; }
-    .welcome-message { padding: var(--space-48) var(--space-20); margin: var(--space-32) 0; }
-    .welcome-title { font-size: 2rem; }
-}
-
-.theme-light .ai-dock {
-    background: rgba(255, 255, 255, 0.9);
-    border: 1px solid rgba(0, 0, 0, 0.1);
-}
-
-.floating-controls {
-    gap: 20px;
-}
-
-.control-group {
-    gap: 2px;
-}
-
-.control-group label {
-    font-size: 0.7rem;
-}
-
-.theme-light .control-group label {
-    color: #64748b;
-}
-
-.control-value {
-    font-size: 0.8rem;
-}
-
-.theme-light .control-value {
-    color: #0f172a;
-}
-
-.ai-dock:hover {
-    background: rgba(20,20,22,0.9);
-    transform: translateX(-50%) translateY(-2px);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-}
-
-.theme-light .ai-dock:hover {
-    background: rgba(255, 255, 255, 0.95);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-}
-
-.ai-dock a, .ai-dock span {
-    color: var(--text-primary);
-    text-decoration: none;
-    font-weight: 600;
-    padding: 8px 12px;
-    border-radius: 10px;
-}
-
-.ai-dock a:hover {
-    background: var(--bg-secondary);
-}
-
-.theme-dark .ai-dock {
-    background: linear-gradient(135deg, rgba(0, 180, 160, 0.22), rgba(0, 110, 255, 0.10));
-    border-color: rgba(255, 255, 255, 0.14);
-}
-
-.theme-light .ai-dock {
-    background: linear-gradient(135deg, rgba(0, 180, 160, 0.18), rgba(0, 110, 255, 0.06));
-    border-color: rgba(0, 0, 0, 0.08);
+/* Responsive */
+@media (max-width:768px){
+    .onboarding-selectors{flex-direction:column;gap:var(--space-24);padding:var(--space-20);}
+    .selector-wrapper{min-width:280px;}
+    .welcome-message{padding:var(--space-48) var(--space-20);margin:var(--space-32) 0;}
+    .welcome-title{font-size:2rem;}
 }
 
 .ai-dock::before {
@@ -2426,30 +2224,29 @@ div[data-testid="column"] .stSelectbox > div {
 
 @st.cache_data(show_spinner=False)  # Cache permanente per template
 def get_unified_plotly_template():
-    """Template Plotly unificato e ottimizzato per tutti i grafici"""
+    """Template Plotly ultra-ottimizzato - meno codice, più performance"""
+    base_config = {
+        'paper_bgcolor': 'rgba(0,0,0,0)',
+        'plot_bgcolor': 'rgba(0,0,0,0)',
+        'font': {'family': 'Inter, system-ui, sans-serif', 'color': '#f8fafc'},
+        'margin': {'l': 50, 'r': 50, 't': 50, 'b': 50},
+    }
+
+    # Config comune per assi
+    axis_config = {
+        'gridcolor': 'rgba(148, 163, 184, 0.2)',
+        'linecolor': 'rgba(148, 163, 184, 0.3)',
+        'tickfont': {'color': '#cbd5e1'},
+        'titlefont': {'color': '#e2e8f0'}
+    }
+
     return {
         'layout': {
-            'paper_bgcolor': 'rgba(0,0,0,0)',
-            'plot_bgcolor': 'rgba(0,0,0,0)',
-            'font': {'family': 'Inter, system-ui, sans-serif', 'color': '#f8fafc'},
+            **base_config,
             'title': {'font': {'size': 16, 'color': '#f8fafc'}},
-            'xaxis': {
-                'gridcolor': 'rgba(148, 163, 184, 0.2)',
-                'linecolor': 'rgba(148, 163, 184, 0.3)',
-                'tickfont': {'color': '#cbd5e1'},
-                'titlefont': {'color': '#e2e8f0'}
-            },
-            'yaxis': {
-                'gridcolor': 'rgba(148, 163, 184, 0.2)',
-                'linecolor': 'rgba(148, 163, 184, 0.3)',
-                'tickfont': {'color': '#cbd5e1'},
-                'titlefont': {'color': '#e2e8f0'}
-            },
-            'legend': {
-                'font': {'color': '#e2e8f0'},
-                'bgcolor': 'rgba(0,0,0,0)'
-            },
-            'margin': {'l': 50, 'r': 50, 't': 50, 'b': 50},
+            'xaxis': axis_config,
+            'yaxis': axis_config,
+            'legend': {'font': {'color': '#e2e8f0'}, 'bgcolor': 'rgba(0,0,0,0)'},
         }
     }
 
@@ -2786,6 +2583,87 @@ def _prepare_chart_data(df: pd.DataFrame, chart_type: str, **kwargs) -> dict:
 def _llm_overview_cached(prompt: str, max_tokens: int) -> tuple[str, dict]:
     """Cache delle chiamate LLM per evitare ripetizioni costose"""
     return generate_overview(prompt, max_tokens)
+
+# Template HTML/CSS cached per performance
+@st.cache_data(ttl=3600, show_spinner=False)  # Cache per 1 ora
+def _get_cached_templates():
+    """Cache template HTML riutilizzabili"""
+    return {
+        'section_header': '<h2 class="section-header">{emoji} {title}</h2>',
+        'section_subtitle': '<p class="section-subtitle">{subtitle}</p>',
+        'hero_card': '<div class="hero-section">{content}</div>',
+        'kpi_card': '''
+        <div class="kpi-card">
+            <div class="kpi-icon">{icon}</div>
+            <div class="kpi-value">{value}</div>
+            <div class="kpi-label">{label}</div>
+            {subtitle_html}
+        </div>
+        ''',
+        'profile_title': '<h2 class="profile-main-title">{emoji} {title}</h2>',
+        'profile_divider': '<div class="profile-divider"></div>',
+    }
+
+# Componenti UI riutilizzabili per ridurre st.markdown calls
+def create_section_header(title: str, emoji: str = "", subtitle: str = ""):
+    """Componente header di sezione riutilizzabile"""
+    templates = _get_cached_templates()
+    html = templates['section_header'].format(emoji=emoji, title=title)
+    if subtitle:
+        html += templates['section_subtitle'].format(subtitle=subtitle)
+    return html
+
+def create_card(content: str, css_class: str = "hero-section"):
+    """Componente card riutilizzabile"""
+    templates = _get_cached_templates()
+    return templates['hero_card'].replace('hero-section', css_class).format(content=content)
+
+def create_kpi_card(icon: str, value: str, label: str, subtitle: str = ""):
+    """Componente KPI card riutilizzabile"""
+    templates = _get_cached_templates()
+    subtitle_html = f'<div class="kpi-subtitle">{subtitle}</div>' if subtitle else ''
+    return templates['kpi_card'].format(icon=icon, value=value, label=label, subtitle_html=subtitle_html)
+
+# Funzione unificata per creazione chart Plotly ottimizzata
+@st.cache_data(ttl=1800, show_spinner=False)
+def create_optimized_chart(chart_type: str, data: pd.DataFrame, **kwargs):
+    """Funzione unificata per creazione chart Plotly ottimizzata"""
+    try:
+        px, go, make_subplots = get_plotly()  # Lazy import
+        template = get_unified_plotly_template()
+
+        if chart_type == 'bar':
+            fig = px.bar(data, **kwargs)
+        elif chart_type == 'pie':
+            fig = px.pie(data, **kwargs)
+        elif chart_type == 'indicator':
+            fig = go.Figure(data=go.Indicator(**kwargs))
+        else:
+            raise ValueError(f"Tipo chart non supportato: {chart_type}")
+
+        # Applica template ottimizzato
+        fig.update_layout(**template['layout'])
+        return fig
+    except Exception as e:
+        st.error(f"Errore nella creazione del grafico: {str(e)}")
+        return None
+
+# Error handling migliorato per funzioni critiche
+def safe_data_load():
+    """Caricamento dati con error handling migliorato"""
+    try:
+        return load_datasets()
+    except Exception as e:
+        st.error(f"Errore nel caricamento dati: {str(e)}")
+        return None, None, None, None
+
+def safe_llm_call(prompt: str, max_tokens: int = 150):
+    """Chiamata LLM con error handling migliorato"""
+    try:
+        return _llm_overview_cached(prompt, max_tokens)
+    except Exception as e:
+        st.warning(f"LLM non disponibile: {str(e)}")
+        return "Contenuto non disponibile - LLM non raggiungibile", {}
 
 
 def render_map_with_best(df_coords: pd.DataFrame, best_name: str, tooltip_km: bool = False):
