@@ -317,17 +317,23 @@ html, body {
     gap: var(--space-8);
 }
 
+/* Hero Container */
+.hero-container {
+    position: relative;
+    margin: var(--space-20) 0 var(--space-32) 0;
+    width: 100%;
+}
+
 /* Hero Section - Modern Station Recommendation */
 .hero-section {
     background: var(--bg-card);
     border: 1px solid var(--border-primary);
     border-radius: var(--radius-3xl);
-    padding: var(--space-48) var(--space-32) var(--space-32) var(--space-32);
-    margin: var(--space-20) 0 var(--space-32) 0;
+    padding: var(--space-32) var(--space-32);
     text-align: center;
     position: relative;
     overflow: hidden;
-    box-shadow: var(--shadow-lg);
+    box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.2), 0 0 30px rgba(16, 185, 129, 0.15);
     transition: all var(--transition-normal);
     width: 100%;
 }
@@ -364,15 +370,15 @@ html, body {
 
 .hero-frosted-label {
     position: absolute;
-    top: -16px;
+    top: -12px;
     left: 50%;
     transform: translateX(-50%);
-    background: rgba(15, 23, 42, 0.8);
+    background: rgba(15, 23, 42, 0.9);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(16, 185, 129, 0.3);
+    border: 1px solid rgba(16, 185, 129, 0.4);
     border-radius: var(--radius-full);
-    padding: var(--space-8) var(--space-20);
+    padding: var(--space-10) var(--space-20);
     display: flex;
     align-items: center;
     gap: var(--space-8);
@@ -380,7 +386,7 @@ html, body {
     font-size: 0.875rem;
     font-weight: 600;
     color: var(--emerald-300);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(16, 185, 129, 0.2);
     z-index: 10;
 }
 
@@ -419,7 +425,7 @@ html, body {
     font-family: 'Inter', sans-serif;
     font-weight: 900;
     font-size: clamp(2.5rem, 6vw, 4rem);
-    margin: var(--space-16) 0 var(--space-8) 0;
+    margin: 0 0 var(--space-8) 0;
     letter-spacing: -0.02em;
     line-height: 0.9;
     color: var(--text-primary);
@@ -562,7 +568,7 @@ html, body {
     margin: var(--space-32) 0;
     position: relative;
     overflow: hidden;
-    box-shadow: var(--shadow-ai-glow);
+    box-shadow: 0 0 0 1px rgba(139, 92, 246, 0.3), 0 0 40px rgba(139, 92, 246, 0.15), var(--shadow-lg);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
     transition: all var(--transition-normal);
@@ -570,7 +576,7 @@ html, body {
 
 .ai-overview-section:hover {
     transform: translateY(-2px);
-    box-shadow: 0 0 0 1px rgba(139, 92, 246, 0.3), 0 0 40px rgba(139, 92, 246, 0.15), var(--shadow-lg);
+    box-shadow: 0 0 0 1px rgba(139, 92, 246, 0.4), 0 0 50px rgba(139, 92, 246, 0.2), var(--shadow-xl);
 }
 
 
@@ -2661,173 +2667,50 @@ def main():
     
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # Onboarding JavaScript with proper overlay and tooltips
+    # Onboarding JavaScript with SIMPLE approach
     if not st.session_state.onboarding_completed:
         step = st.session_state.onboarding_step
+        
+        # Tooltip messages
+        messages = {
+            1: "Dimmi quando vuoi conquistare le piste! ⛷️",
+            2: "Sei un principiante o un pro della neve? 🏔️🎿", 
+            3: "Che tipo di sciatore sei? (puoi anche saltare!) 🤙❄️"
+        }
+        
+        # Show tooltip directly above the page content
         st.markdown(f"""
-        <style>
-        .onboarding-overlay {{
-            position: fixed !important;
-            top: 0 !important;
-            left: 0 !important;
-            width: 100vw !important;
-            height: 100vh !important;
-            background: rgba(15, 23, 42, 0.95) !important;
-            z-index: 999999 !important;
-            pointer-events: none !important;
-        }}
-        .onboarding-highlight {{
-            position: relative !important;
-            z-index: 1000000 !important;
-            background: rgba(16, 185, 129, 0.15) !important;
-            border-radius: 16px !important;
-            padding: 20px !important;
-            border: 3px solid #10b981 !important;
-            box-shadow: 0 0 30px rgba(16, 185, 129, 0.5) !important;
-            animation: highlightPulse 2s ease-in-out infinite !important;
-        }}
-        .onboarding-tooltip {{
-            position: fixed !important;
-            z-index: 1000001 !important;
-            background: #1f2937 !important;
-            border: 2px solid #10b981 !important;
-            border-radius: 16px !important;
-            padding: 20px 24px !important;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8) !important;
-            font-family: 'Inter', sans-serif !important;
-            font-size: 18px !important;
-            font-weight: 600 !important;
-            color: #f8fafc !important;
-            min-width: 300px !important;
-            max-width: 350px !important;
-            animation: tooltipFadeIn 0.5s ease-out !important;
-            display: block !important;
-            visibility: visible !important;
-            opacity: 1 !important;
-        }}
-        .onboarding-arrow {{
-            position: fixed !important;
-            z-index: 1000001 !important;
-            font-size: 3rem !important;
-            color: #10b981 !important;
-            animation: arrowPulse 1.5s ease-in-out infinite !important;
-            display: block !important;
-            visibility: visible !important;
-            opacity: 1 !important;
-        }}
-        </style>
-        <script>
-        function showOnboarding() {{
-            // Clean up first
-            document.querySelectorAll('.onboarding-overlay, .onboarding-tooltip, .onboarding-arrow').forEach(el => el.remove());
-            document.querySelectorAll('.onboarding-highlight').forEach(el => {{
-                el.classList.remove('onboarding-highlight');
-                el.style.cssText = '';
-            }});
-            
-            const step = {step};
-            console.log('🎯 Onboarding step:', step);
-            
-            // Create overlay
-            const overlay = document.createElement('div');
-            overlay.className = 'onboarding-overlay';
-            document.body.appendChild(overlay);
-            console.log('✅ Overlay created');
-            
-            // Find container with selectors
-            const container = document.querySelector('#selectors-container');
-            if (!container) {{
-                console.log('❌ Selectors container not found');
-                return;
-            }}
-            
-            const columns = container.querySelectorAll('div[data-testid="column"]');
-            console.log('📋 Found columns:', columns.length);
-            
-            if (columns.length === 0) {{
-                console.log('❌ No columns found in container');
-                return;
-            }}
-            
-            const targetColumn = columns[step - 1];
-            if (!targetColumn) {{
-                console.log('❌ Target column not found for step', step);
-                return;
-            }}
-            
-            console.log('✅ Target column found:', targetColumn);
-            
-            // Highlight the column
-            targetColumn.classList.add('onboarding-highlight');
-            
-            const rect = targetColumn.getBoundingClientRect();
-            const isMobile = window.innerWidth <= 768;
-            
-            // Tooltip messages
-            const messages = {{
-                1: 'Dimmi quando vuoi conquistare le piste! ⛷️',
-                2: 'Sei un principiante o un pro della neve? 🏔️🎿',
-                3: 'Che tipo di sciatore sei? (puoi anche saltare!) 🤙❄️'
-            }};
-            
-            // Create and show tooltip
-            const tooltip = document.createElement('div');
-            tooltip.className = 'onboarding-tooltip';
-            tooltip.innerHTML = messages[step] || 'Step ' + step;
-            tooltip.style.cssText = `
-                position: fixed !important;
-                z-index: 1000001 !important;
-                background: #1f2937 !important;
-                border: 2px solid #10b981 !important;
-                border-radius: 16px !important;
-                padding: 20px 24px !important;
-                color: #f8fafc !important;
-                font-family: Inter, sans-serif !important;
-                font-size: 18px !important;
-                font-weight: 600 !important;
-                box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8) !important;
-                min-width: 300px !important;
-                max-width: 350px !important;
-                display: block !important;
-                visibility: visible !important;
-                opacity: 1 !important;
-                left: ${{Math.max(10, rect.left + (rect.width / 2) - 175)}}px !important;
-                top: ${{isMobile ? rect.top - 90 : rect.bottom + 30}}px !important;
-            `;
-            
-            // Create and show arrow
-            const arrow = document.createElement('div');
-            arrow.className = 'onboarding-arrow';
-            arrow.innerHTML = '👇';
-            arrow.style.cssText = `
-                position: fixed !important;
-                z-index: 1000001 !important;
-                font-size: 3rem !important;
-                color: #10b981 !important;
-                display: block !important;
-                visibility: visible !important;
-                opacity: 1 !important;
-                left: ${{rect.left + (rect.width / 2) - 24}}px !important;
-                top: ${{isMobile ? rect.top - 50 : rect.bottom + 5}}px !important;
-                animation: arrowPulse 1.5s ease-in-out infinite !important;
-            `;
-            
-            document.body.appendChild(tooltip);
-            document.body.appendChild(arrow);
-            
-            console.log('✅ Tooltip and arrow added to DOM');
-            console.log('📍 Tooltip position:', tooltip.style.left, tooltip.style.top);
-            console.log('📍 Arrow position:', arrow.style.left, arrow.style.top);
-        }}
-        
-        // Execute immediately
-        showOnboarding();
-        
-        // Retry with delays
-        setTimeout(showOnboarding, 200);
-        setTimeout(showOnboarding, 500);
-        setTimeout(showOnboarding, 1000);
-        </script>
+        <div style="
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(15, 23, 42, 0.95);
+            z-index: 999999;
+            pointer-events: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        ">
+            <div style="
+                background: #1f2937;
+                border: 2px solid #10b981;
+                border-radius: 16px;
+                padding: 24px 32px;
+                color: #f8fafc;
+                font-family: Inter, sans-serif;
+                font-size: 20px;
+                font-weight: 600;
+                text-align: center;
+                box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
+                max-width: 400px;
+                margin: 0 20px;
+                animation: tooltipFadeIn 0.5s ease-out;
+            ">
+                {messages.get(step, f"Step {step}")}
+            </div>
+        </div>
         """, unsafe_allow_html=True)
     
     # Show snowfall when onboarding completes
@@ -2878,10 +2761,37 @@ def main():
     if not st.session_state.onboarding_completed:
         st.stop()
 
-    # Add restart button after onboarding completion (only show when completed)
+    # Add restart button after onboarding completion (styled)
+    st.markdown("""
+    <style>
+    /* Restart Button Styling */
+    .stButton > button[kind="primary"] {
+        background: var(--bg-card) !important;
+        border: 1px solid var(--border-primary) !important;
+        border-radius: var(--radius-xl) !important;
+        padding: var(--space-12) var(--space-24) !important;
+        font-family: 'Inter', sans-serif !important;
+        font-size: 0.875rem !important;
+        font-weight: 600 !important;
+        color: var(--text-secondary) !important;
+        transition: all var(--transition-normal) !important;
+        box-shadow: var(--shadow-sm) !important;
+        height: auto !important;
+        min-height: auto !important;
+    }
+    .stButton > button[kind="primary"]:hover {
+        background: var(--bg-secondary) !important;
+        color: var(--text-primary) !important;
+        transform: translateY(-1px) !important;
+        box-shadow: var(--shadow-md) !important;
+        border-color: var(--emerald-300) !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
-        if st.button("🔄 Ricomincia selezione", key="restart_onboarding", use_container_width=True):
+        if st.button("🔄 Ricomincia selezione", key="restart_onboarding", use_container_width=True, type="primary"):
             # Reset onboarding state
             st.session_state.onboarding_completed = False
             st.session_state.onboarding_step = 1
@@ -3003,20 +2913,19 @@ def main():
 
     # Mostra risultati solo dopo il completamento dell'onboarding
     if st.session_state.onboarding_completed and data_sel and livello and livello != "nessuno":
-        # Hero Section - Stazione consigliata
-        st.markdown(
-            f"""
+        # Hero Section - Stazione consigliata  
+        st.markdown("""
+        <div class="hero-container">
+            <div class="hero-frosted-label">
+                <span class="frosted-icon">⭐</span>
+                <span class="frosted-text">Consigliata per te</span>
+            </div>
             <div class="hero-section">
-                <div class="hero-frosted-label">
-                    <span class="frosted-icon">⭐</span>
-                    <span class="frosted-text">Consigliata per te</span>
-                </div>
-                <h1 class="hero-title">{best_name}</h1>
+                <h1 class="hero-title">{}</h1>
                 <p class="hero-subtitle">La migliore scelta per il tuo livello e profilo</p>
             </div>
-            """,
-            unsafe_allow_html=True
-        )
+        </div>
+        """.format(best_name), unsafe_allow_html=True)
         
         # KPI Grid
         st.markdown('<h2 class="section-header">📈 Indicatori chiave</h2>', unsafe_allow_html=True)
