@@ -1857,8 +1857,11 @@ body {
 
 /* AI overview only with animated border, no fill */
 .ai-overview-section {
-    background: transparent !important;
-    border: 0 !important;
+    background: rgba(20, 24, 28, 0.9) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28) !important;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     position: relative;
 }
 .ai-overview-section::before {
@@ -1875,7 +1878,7 @@ body {
 .kpi-card .kpi-value { color: #ffffff !important; }
 
 /* Floating Dock (interactive filters) */
-#dock-anchor + div {
+.floating-dock {
     position: fixed;
     left: 50%;
     bottom: 18px;
@@ -1893,21 +1896,21 @@ body {
     box-shadow: 0 12px 32px rgba(0,0,0,0.35);
 }
 
-#dock-anchor + div .stDateInput > div > div,
-#dock-anchor + div .stSelectbox > div > div {
+.floating-dock .stDateInput > div > div,
+.floating-dock .stSelectbox > div > div {
     background: rgba(255, 255, 255, 0.10) !important;
     border: 1px solid rgba(255, 255, 255, 0.18) !important;
     color: #ffffff !important;
 }
-#dock-anchor + div label { color: #e2e8f0 !important; font-size: 0.85rem; }
+.floating-dock label { color: #e2e8f0 !important; font-size: 0.85rem; }
 
-#dock-anchor + div .stDateInput input,
-#dock-anchor + div .stSelectbox div[data-baseweb="select"] div {
+.floating-dock .stDateInput input,
+.floating-dock .stSelectbox div[data-baseweb="select"] div {
     color: #f8fafc !important;
 }
 
 @media (max-width: 768px) {
-    #dock-anchor + div { left: 12px; right: 12px; transform: none; }
+    .floating-dock { left: 12px; right: 12px; transform: none; }
 }
 
 </style>
