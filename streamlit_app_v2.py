@@ -375,21 +375,23 @@ html, body {
     position: relative;
     z-index: 2;
     
-    /* Gradient text animato senza bianco - forzato per evitare sovrascritture */
+    /* Gradient text animato senza bianco - solo colori eleganti */
     background: linear-gradient(
         45deg,
-        #e2e8f0 0%,
-        #cbd5e1 20%,
-        #06b6d4 40%,
-        #8b5cf6 60%,
-        #f59e0b 80%,
-        #94a3b8 100%
-    ) !important;
-    background-size: 400% 400% !important;
-    -webkit-background-clip: text !important;
-    -webkit-text-fill-color: transparent !important;
-    background-clip: text !important;
-    animation: gradientShimmer 8s ease-in-out infinite !important;
+        #f1f5f9 0%,      /* Grigio molto chiaro (quasi bianco ma non bianco) */
+        #e2e8f0 15%,     /* Grigio chiaro elegante */
+        #cbd5e1 30%,     /* Grigio medio chiaro */
+        #06b6d4 45%,     /* Azzurro */
+        #8b5cf6 60%,     /* Viola */
+        #f59e0b 75%,     /* Arancione */
+        #94a3b8 90%,     /* Grigio medio sofisticato */
+        #64748b 100%     /* Grigio scuro elegante */
+    );
+    background-size: 400% 400%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: gradientShimmer 8s ease-in-out infinite;
     
     /* Glow effect */
     filter: drop-shadow(0 0 40px rgba(139, 92, 246, 0.3))
