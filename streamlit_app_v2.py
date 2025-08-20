@@ -3601,8 +3601,18 @@ def main():
         # Barre impilate piste verdi/blu ordinate per indice_base
         if not df_with_indices.empty and "indice_base" in df_with_indices.columns:
             st.markdown('<h4 class="section-subtitle">🎿 Distribuzione piste verdi e blu</h4>', unsafe_allow_html=True)
-            piste_base = df_with_indices[["nome_stazione", "Piste_verdi", "Piste_blu", "indice_base"]].drop_duplicates()
-            piste_base = piste_base.sort_values("indice_base", ascending=False)
+            # Raggruppa per stazione per evitare duplicazioni (un valore per stazione)
+            piste_base = (
+                df_with_indices[["nome_stazione", "Piste_verdi", "Piste_blu", "indice_base"]]
+                .groupby("nome_stazione")
+                .agg({
+                    "Piste_verdi": "first",  # Prende il primo valore (sono uguali per stazione)
+                    "Piste_blu": "first",
+                    "indice_base": "mean"    # Media dell'indice se varia per data
+                })
+                .reset_index()
+                .sort_values("indice_base", ascending=False)
+            )
             fig_piste_base = px.bar(
                 piste_base,
                 x="nome_stazione",
@@ -3873,8 +3883,18 @@ def main():
         # Barre: piste blu/rosse ordinate per indice_medio
         if not df_with_indices.empty and "indice_medio" in df_with_indices.columns:
             st.subheader("Piste blu e rosse per stazione (ordinate per indice medio)")
-            piste = df_with_indices[["nome_stazione", "Piste_blu", "Piste_rosse", "indice_medio"]].drop_duplicates()
-            piste = piste.sort_values("indice_medio", ascending=False)
+            # Raggruppa per stazione per evitare duplicazioni (un valore per stazione)
+            piste = (
+                df_with_indices[["nome_stazione", "Piste_blu", "Piste_rosse", "indice_medio"]]
+                .groupby("nome_stazione")
+                .agg({
+                    "Piste_blu": "first",    # Prende il primo valore (sono uguali per stazione)
+                    "Piste_rosse": "first",
+                    "indice_medio": "mean"   # Media dell'indice se varia per data
+                })
+                .reset_index()
+                .sort_values("indice_medio", ascending=False)
+            )
             melted = piste.melt("nome_stazione", value_vars=["Piste_blu", "Piste_rosse"], var_name="Tipo", value_name="Numero")
             fig = px.bar(
                 melted,
