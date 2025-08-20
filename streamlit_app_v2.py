@@ -375,7 +375,7 @@ html, body {
     position: relative;
     z-index: 2;
     
-    /* Gradient text animato senza bianco */
+    /* Gradient text animato senza bianco - forzato per evitare sovrascritture */
     background: linear-gradient(
         45deg,
         #e2e8f0 0%,
@@ -384,12 +384,12 @@ html, body {
         #8b5cf6 60%,
         #f59e0b 80%,
         #94a3b8 100%
-    );
-    background-size: 400% 400%;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    animation: gradientShimmer 8s ease-in-out infinite;
+    ) !important;
+    background-size: 400% 400% !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    background-clip: text !important;
+    animation: gradientShimmer 8s ease-in-out infinite !important;
     
     /* Glow effect */
     filter: drop-shadow(0 0 40px rgba(139, 92, 246, 0.3))
@@ -2320,10 +2320,7 @@ div[data-testid="column"] .stSelectbox > div {
         padding: var(--space-32) var(--space-16);
     }
     
-    .app-title {
-        font-size: clamp(2.5rem, 12vw, 4rem);
-        letter-spacing: -0.04em;
-    }
+
     
     .app-subtitle {
         font-size: clamp(1rem, 4vw, 1.4rem);
