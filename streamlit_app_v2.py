@@ -753,8 +753,8 @@ html, body {
     margin: var(--space-32) 0;
     position: relative;
     overflow: hidden;
-    /* Glow molto più marcato */
-    box-shadow: 0 0 0 1px rgba(139, 92, 246, 0.5), 0 0 60px rgba(139, 92, 246, 0.3), 0 0 120px rgba(139, 92, 246, 0.15), var(--shadow-xl);
+    /* Glow ridotto per un effetto più sottile */
+    box-shadow: 0 0 0 1px rgba(139, 92, 246, 0.3), 0 0 30px rgba(139, 92, 246, 0.15), 0 0 60px rgba(139, 92, 246, 0.08), var(--shadow-xl);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
     transition: all var(--transition-normal);
@@ -762,7 +762,7 @@ html, body {
 
 .ai-overview-section:hover {
     transform: translateY(-2px);
-    box-shadow: 0 0 0 1px rgba(139, 92, 246, 0.6), 0 0 80px rgba(139, 92, 246, 0.4), 0 0 140px rgba(139, 92, 246, 0.2), var(--shadow-xl);
+    box-shadow: 0 0 0 1px rgba(139, 92, 246, 0.4), 0 0 40px rgba(139, 92, 246, 0.2), 0 0 80px rgba(139, 92, 246, 0.1), var(--shadow-xl);
 }
 
 
@@ -772,6 +772,7 @@ html, body {
     align-items: flex-start;
     gap: var(--space-12);
     margin-bottom: var(--space-20);
+    justify-content: flex-start;
 }
 
 
@@ -806,6 +807,7 @@ html, body {
     border: 1px solid var(--purple-800);
     margin: 0;
     align-self: flex-start;
+    margin-left: 0;
 }
 
 .ai-overview-content {
