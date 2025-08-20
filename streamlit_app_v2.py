@@ -3052,11 +3052,12 @@ def main():
                 font-size: 15px;
                 font-weight: 600;
                 box-shadow: 
-                    0 0 0 1px rgba(148, 163, 184, 0.2),
-                    0 0 8px rgba(148, 163, 184, 0.12),
-                    0 0 16px rgba(148, 163, 184, 0.08),
+                    0 0 0 1px rgba(16, 185, 129, 0.3),
+                    0 0 8px rgba(16, 185, 129, 0.15),
+                    0 0 16px rgba(16, 185, 129, 0.12),
+                    0 0 24px rgba(16, 185, 129, 0.08),
                     0 25px 50px -12px rgba(0, 0, 0, 0.8);
-                filter: drop-shadow(0 0 3px rgba(148, 163, 184, 0.1));
+                filter: drop-shadow(0 0 5px rgba(16, 185, 129, 0.2));
                 max-width: 280px;
                 text-align: center;
                 animation: tooltipSlideDown 0.3s ease-out;
