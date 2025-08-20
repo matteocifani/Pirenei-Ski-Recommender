@@ -1273,8 +1273,8 @@ div[data-testid="column"] .stSelectbox > div {
     overflow: hidden;
     box-shadow: 
         0 0 0 1px rgba(148, 163, 184, 0.1),
-        0 0 20px rgba(100, 116, 139, 0.15),
-        0 0 40px rgba(71, 85, 105, 0.1),
+        0 0 10px rgba(100, 116, 139, 0.08),
+        0 0 20px rgba(71, 85, 105, 0.05),
         0 25px 50px -12px rgba(0, 0, 0, 0.6);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     backdrop-filter: blur(20px);
@@ -1312,18 +1312,13 @@ div[data-testid="column"] .stSelectbox > div {
     font-size: 1.8rem;
     color: #f87171;
     margin: 0 0 var(--space-16) 0;
-    filter: drop-shadow(0 0 10px rgba(248, 113, 113, 0.3));
-    text-shadow: 0 0 20px rgba(248, 113, 113, 0.4);
 }
 
 .no-data-subtitle {
     font-family: 'Inter', sans-serif;
     font-weight: 500;
     font-size: 1.2rem;
-    background: linear-gradient(135deg, #e2e8f0 0%, #94a3b8 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: #e2e8f0;
     margin: 0 0 var(--space-20) 0;
     line-height: 1.5;
     opacity: 0.9;
@@ -1336,8 +1331,6 @@ div[data-testid="column"] .stSelectbox > div {
     color: #fbbf24;
     margin: 0;
     opacity: 0.9;
-    filter: drop-shadow(0 0 8px rgba(251, 191, 36, 0.3));
-    text-shadow: 0 0 15px rgba(251, 191, 36, 0.4);
     animation: welcomeBounce 2s ease-in-out infinite;
 }
 
