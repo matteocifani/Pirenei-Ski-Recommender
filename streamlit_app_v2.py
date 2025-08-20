@@ -77,38 +77,10 @@ def parse_model_name(model_name: str | None) -> str:
     except:
         return model_str
 
-def clean_html_content(content):
-    """Pulisce il contenuto da tag HTML e normalizza il testo"""
-    import re
-    content_str = str(content)
-    clean_content = re.sub(r'<[^>]*>', '', content_str)
-    clean_content = re.sub(r'\s+', ' ', clean_content).strip()
-    return clean_content
 
 
-def render_ai_overview(content, note=None, model_name: str | None = None):
-    """Rende una card AI overview moderna con effetto glow.
 
-    model_name: se fornito, verrà mostrato nel badge "Powered by <model_name>".
-    Se non fornito, viene mostrato semplicemente "Powered by AI".
-    """
-    # Il contenuto dovrebbe essere già pulito prima di arrivare qui
-    note_html = f'<div class="mb-16"><span class="stInfo">ℹ️ {note}</span></div>' if note else ""
-    parsed_model = parse_model_name(model_name)
-    badge_text = f"Powered by {parsed_model}"
-    
-    return f"""
-    <div class="ai-overview-section">
-        <div class="ai-header">
-            <div class="ai-icon">✨</div>
-            <div class="ai-header-text">
-                <div class="ai-title">AI Overview</div>
-                <div class="ai-badge">{badge_text}</div>
-            </div>
-        </div>
-        {note_html}
-        <div class="ai-overview-content">{content}</div>
-    </div>"""
+
 
 
 def render_podium(top3):
@@ -3505,7 +3477,7 @@ def main():
             clean_output = re.sub(r'<[^>]*>', '', str(output)).strip()
             clean_output = re.sub(r'\s+', ' ', clean_output)
             
-            # AI Overview con box e componenti Streamlit nativi
+            # AI Overview completo con box HTML e contenuto integrato
             st.markdown(f"""
             <div class="ai-overview-section">
                 <div class="ai-header">
@@ -3515,11 +3487,9 @@ def main():
                         <div class="ai-badge">Powered by {parse_model_name(DEFAULT_LLM_MODEL)}</div>
                     </div>
                 </div>
+                <div class="ai-overview-content">{clean_output}</div>
             </div>
             """, unsafe_allow_html=True)
-            
-            # Contenuto con componenti nativi (senza HTML)
-            st.write(clean_output)
         except Exception as e:
             st.error(f"Errore nell'AI Overview: {e}")
 
@@ -3707,10 +3677,18 @@ def main():
                 clean_out = re.sub(r'<[^>]*>', '', str(out)).strip()
                 clean_out = re.sub(r'\s+', ' ', clean_out)
                 
-                st.markdown(
-                    render_ai_overview(clean_out, model_name=DEFAULT_LLM_MODEL),
-                    unsafe_allow_html=True
-                )
+                st.markdown(f"""
+                <div class="ai-overview-section">
+                    <div class="ai-header">
+                        <div class="ai-icon">✨</div>
+                        <div class="ai-header-text">
+                            <div class="ai-title">AI Overview</div>
+                            <div class="ai-badge">Powered by {parse_model_name(DEFAULT_LLM_MODEL)}</div>
+                        </div>
+                    </div>
+                    <div class="ai-overview-content">{clean_out}</div>
+                </div>
+                """, unsafe_allow_html=True)
             except Exception as e:
                 st.error(f"Errore nell'AI Overview Festaiolo: {e}")
 
@@ -3779,10 +3757,18 @@ def main():
                 clean_out = re.sub(r'<[^>]*>', '', str(out)).strip()
                 clean_out = re.sub(r'\s+', ' ', clean_out)
                 
-                st.markdown(
-                    render_ai_overview(clean_out, model_name=DEFAULT_LLM_MODEL),
-                    unsafe_allow_html=True
-                )
+                st.markdown(f"""
+                <div class="ai-overview-section">
+                    <div class="ai-header">
+                        <div class="ai-icon">✨</div>
+                        <div class="ai-header-text">
+                            <div class="ai-title">AI Overview</div>
+                            <div class="ai-badge">Powered by {parse_model_name(DEFAULT_LLM_MODEL)}</div>
+                        </div>
+                    </div>
+                    <div class="ai-overview-content">{clean_out}</div>
+                </div>
+                """, unsafe_allow_html=True)
             except Exception as e:
                 st.error(f"Errore nell'AI Overview Famiglia: {e}")
             # RIMOSSI: Snowpark/Superpipe e AI Overview – Festa (solo per profilo festaiolo)
@@ -4004,10 +3990,18 @@ def main():
                 clean_out = re.sub(r'<[^>]*>', '', str(out)).strip()
                 clean_out = re.sub(r'\s+', ' ', clean_out)
                 
-                st.markdown(
-                    render_ai_overview(clean_out, model_name=DEFAULT_LLM_MODEL),
-                    unsafe_allow_html=True
-                )
+                st.markdown(f"""
+                <div class="ai-overview-section">
+                    <div class="ai-header">
+                        <div class="ai-icon">✨</div>
+                        <div class="ai-header-text">
+                            <div class="ai-title">AI Overview</div>
+                            <div class="ai-badge">Powered by {parse_model_name(DEFAULT_LLM_MODEL)}</div>
+                        </div>
+                    </div>
+                    <div class="ai-overview-content">{clean_out}</div>
+                </div>
+                """, unsafe_allow_html=True)
             except Exception as e:
                 st.error(f"Errore nell'AI Overview Festaiolo: {e}")
 
@@ -4077,10 +4071,18 @@ def main():
                 clean_out = re.sub(r'<[^>]*>', '', str(out)).strip()
                 clean_out = re.sub(r'\s+', ' ', clean_out)
                 
-                st.markdown(
-                    render_ai_overview(clean_out, model_name=DEFAULT_LLM_MODEL),
-                    unsafe_allow_html=True
-                )
+                st.markdown(f"""
+                <div class="ai-overview-section">
+                    <div class="ai-header">
+                        <div class="ai-icon">✨</div>
+                        <div class="ai-header-text">
+                            <div class="ai-title">AI Overview</div>
+                            <div class="ai-badge">Powered by {parse_model_name(DEFAULT_LLM_MODEL)}</div>
+                        </div>
+                    </div>
+                    <div class="ai-overview-content">{clean_out}</div>
+                </div>
+                """, unsafe_allow_html=True)
             except Exception as e:
                 st.error(f"Errore nell'AI Overview Famiglia: {e}")
 
@@ -4274,10 +4276,18 @@ def main():
                 clean_out = re.sub(r'<[^>]*>', '', str(out)).strip()
                 clean_out = re.sub(r'\s+', ' ', clean_out)
                 
-                st.markdown(
-                    render_ai_overview(clean_out, model_name=DEFAULT_LLM_MODEL),
-                    unsafe_allow_html=True
-                )
+                st.markdown(f"""
+                <div class="ai-overview-section">
+                    <div class="ai-header">
+                        <div class="ai-icon">✨</div>
+                        <div class="ai-header-text">
+                            <div class="ai-title">AI Overview</div>
+                            <div class="ai-badge">Powered by {parse_model_name(DEFAULT_LLM_MODEL)}</div>
+                        </div>
+                    </div>
+                    <div class="ai-overview-content">{clean_out}</div>
+                </div>
+                """, unsafe_allow_html=True)
             except Exception as e:
                 st.error(f"Errore nell'AI Overview Festaiolo: {e}")
 
@@ -4347,10 +4357,18 @@ def main():
                 clean_out = re.sub(r'<[^>]*>', '', str(out)).strip()
                 clean_out = re.sub(r'\s+', ' ', clean_out)
                 
-                st.markdown(
-                    render_ai_overview(clean_out, model_name=DEFAULT_LLM_MODEL),
-                    unsafe_allow_html=True
-                )
+                st.markdown(f"""
+                <div class="ai-overview-section">
+                    <div class="ai-header">
+                        <div class="ai-icon">✨</div>
+                        <div class="ai-header-text">
+                            <div class="ai-title">AI Overview</div>
+                            <div class="ai-badge">Powered by {parse_model_name(DEFAULT_LLM_MODEL)}</div>
+                        </div>
+                    </div>
+                    <div class="ai-overview-content">{clean_out}</div>
+                </div>
+                """, unsafe_allow_html=True)
             except Exception as e:
                 st.error(f"Errore nell'AI Overview Famiglia: {e}")
 
@@ -4423,10 +4441,18 @@ def main():
                 clean_out = re.sub(r'<[^>]*>', '', str(out)).strip()
                 clean_out = re.sub(r'\s+', ' ', clean_out)
                 
-                st.markdown(
-                    render_ai_overview(clean_out, model_name=DEFAULT_LLM_MODEL),
-                    unsafe_allow_html=True
-                )
+                st.markdown(f"""
+                <div class="ai-overview-section">
+                    <div class="ai-header">
+                        <div class="ai-icon">✨</div>
+                        <div class="ai-header-text">
+                            <div class="ai-title">AI Overview</div>
+                            <div class="ai-badge">Powered by {parse_model_name(DEFAULT_LLM_MODEL)}</div>
+                        </div>
+                    </div>
+                    <div class="ai-overview-content">{clean_out}</div>
+                </div>
+                """, unsafe_allow_html=True)
             except Exception as e:
                 st.error(f"Errore nell'AI Overview Famiglia: {e}")
 
@@ -4730,10 +4756,18 @@ def main():
                 clean_out = re.sub(r'<[^>]*>', '', str(out)).strip()
                 clean_out = re.sub(r'\s+', ' ', clean_out)
                 
-                st.markdown(
-                    render_ai_overview(clean_out, model_name=DEFAULT_LLM_MODEL),
-                    unsafe_allow_html=True
-                )
+                st.markdown(f"""
+                <div class="ai-overview-section">
+                    <div class="ai-header">
+                        <div class="ai-icon">✨</div>
+                        <div class="ai-header-text">
+                            <div class="ai-title">AI Overview</div>
+                            <div class="ai-badge">Powered by {parse_model_name(DEFAULT_LLM_MODEL)}</div>
+                        </div>
+                    </div>
+                    <div class="ai-overview-content">{clean_out}</div>
+                </div>
+                """, unsafe_allow_html=True)
             except Exception as e:
                 st.error(f"Errore nell'AI Overview Low-Cost: {e}")
         except Exception as e:
