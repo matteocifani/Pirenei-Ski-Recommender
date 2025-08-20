@@ -2667,7 +2667,7 @@ def main():
     
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # Onboarding JavaScript - positioned near selectors
+    # Onboarding tooltip - CSS ONLY approach
     if not st.session_state.onboarding_completed:
         step = st.session_state.onboarding_step
         
@@ -2678,87 +2678,52 @@ def main():
             3: "Che tipo di sciatore sei? (puoi anche saltare!) 🤙❄️"
         }
         
-        # Add the tooltip positioned near the selector
+        # Position tooltip based on step
+        tooltip_positions = {
+            1: "left: 16.666%; transform: translateX(-50%);",  # First column (1/3)
+            2: "left: 50%; transform: translateX(-50%);",      # Second column (2/3) 
+            3: "left: 83.333%; transform: translateX(-50%);"  # Third column (3/3)
+        }
+        
+        current_message = messages.get(step, f"Step {step}")
+        current_position = tooltip_positions.get(step, "left: 50%; transform: translateX(-50%);")
+        
+        # Show tooltip with pure CSS positioning
         st.markdown(f"""
-        <script>
-        setTimeout(function() {{
-            // Clean up existing tooltips
-            document.querySelectorAll('.onboarding-tooltip-positioned').forEach(el => el.remove());
-            
-            const step = {step};
-            const messages = {{
-                1: 'Dimmi quando vuoi conquistare le piste! ⛷️',
-                2: 'Sei un principiante o un pro della neve? 🏔️🎿',
-                3: 'Che tipo di sciatore sei? (puoi anche saltare!) 🤙❄️'
-            }};
-            
-            // Find the container with selectors
-            const container = document.querySelector('#selectors-container');
-            if (!container) {{
-                console.log('Container not found');
-                return;
+        <div class="onboarding-tooltip-simple" style="
+            position: fixed;
+            top: 320px;
+            {current_position}
+            z-index: 10000;
+            background: #1f2937;
+            border: 2px solid #10b981;
+            border-radius: 16px;
+            padding: 16px 20px;
+            color: #f8fafc;
+            font-family: Inter, sans-serif;
+            font-size: 16px;
+            font-weight: 600;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
+            max-width: 280px;
+            text-align: center;
+            animation: tooltipSlideIn 0.3s ease-out;
+            pointer-events: none;
+        ">
+            {current_message}
+        </div>
+        
+        <style>
+        @keyframes tooltipSlideIn {{
+            from {{ 
+                opacity: 0; 
+                transform: translateX(-50%) translateY(-10px); 
             }}
-            
-            const columns = container.querySelectorAll('div[data-testid="column"]');
-            if (columns.length === 0) {{
-                console.log('Columns not found');
-                return;
+            to {{ 
+                opacity: 1; 
+                transform: translateX(-50%) translateY(0); 
             }}
-            
-            const targetColumn = columns[step - 1];
-            if (!targetColumn) {{
-                console.log('Target column not found');
-                return;
-            }}
-            
-            const rect = targetColumn.getBoundingClientRect();
-            
-            // Create tooltip
-            const tooltip = document.createElement('div');
-            tooltip.className = 'onboarding-tooltip-positioned';
-            tooltip.innerHTML = messages[step] || 'Step ' + step;
-            
-            // Style the tooltip
-            tooltip.style.cssText = `
-                position: fixed;
-                z-index: 10000;
-                background: #1f2937;
-                border: 2px solid #10b981;
-                border-radius: 16px;
-                padding: 16px 20px;
-                color: #f8fafc;
-                font-family: Inter, sans-serif;
-                font-size: 16px;
-                font-weight: 600;
-                box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
-                max-width: 280px;
-                left: ${{Math.max(10, rect.left + (rect.width / 2) - 140)}}px;
-                top: ${{rect.bottom + 15}}px;
-                animation: tooltipSlideIn 0.3s ease-out;
-                pointer-events: none;
-            `;
-            
-            // Add animation style
-            const style = document.createElement('style');
-            style.textContent = `
-                @keyframes tooltipSlideIn {{
-                    from {{ 
-                        opacity: 0; 
-                        transform: translateY(-10px); 
-                    }}
-                    to {{ 
-                        opacity: 1; 
-                        transform: translateY(0); 
-                    }}
-                }}
-            `;
-            document.head.appendChild(style);
-            
-            document.body.appendChild(tooltip);
-            
-            console.log('Tooltip positioned at:', tooltip.style.left, tooltip.style.top);
-        }}, 300);
-        </script>
+        }}
+        </style>
         """, unsafe_allow_html=True)
     
     # Show snowfall when onboarding completes
