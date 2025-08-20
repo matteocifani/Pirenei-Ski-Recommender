@@ -3695,7 +3695,6 @@ def main():
             st.markdown('<h3 class="profile-section-title">🎉 Profilo: Festaiolo</h3>', unsafe_allow_html=True)
             
             # AI Overview per profilo festaiolo (PRIMA dei grafici)
-            st.markdown('<h4 class="section-subtitle">AI Overview</h4>', unsafe_allow_html=True)
             try:
                 prompt_festaiolo = build_festaiolo_prompt(df_filtered_rec, best_name, livello, data_sel)
                 out, usage = generate_overview(prompt_festaiolo, max_tokens=140)
@@ -3751,7 +3750,6 @@ def main():
             st.markdown('<h3 class="profile-section-title">👨‍👩‍👧‍👦 Profilo: Familiare</h3>', unsafe_allow_html=True)
             
             # AI Overview per profilo familiare (PRIMA dei grafici)
-            st.markdown('<h4 class="section-subtitle">AI Overview</h4>', unsafe_allow_html=True)
             try:
                 prompt_family = build_familiare_prompt(df_filtered_rec, best_name, livello, data_sel)
                 out, usage = generate_overview(prompt_family, max_tokens=140)
