@@ -3548,17 +3548,17 @@ def main():
             )
             fig = go.Figure(indicator)
             
-            # Delta migliorato per dark mode
+            # Delta migliorato per dark mode - posizionato sotto al numero principale
             if reference_pct is not None:
                 delta_val = max(0, min(100, value_pct)) - max(0, min(100, reference_pct))
                 fig.add_annotation(
-                    x=0.5, y=0.15, xref="paper", yref="paper",
+                    x=0.5, y=0.35, xref="paper", yref="paper",
                     text=f"Δ {delta_val:+.1f}%", showarrow=False,
-                    font=dict(size=13, color="#10b981" if delta_val < 0 else "#f59e0b", family="Inter", weight=600),
-                    bgcolor="rgba(15, 23, 42, 0.8)",
+                    font=dict(size=14, color="#10b981" if delta_val < 0 else "#f59e0b", family="Inter", weight=600),
+                    bgcolor="rgba(15, 23, 42, 0.9)",
                     bordercolor="#374151",
                     borderwidth=1,
-                    borderpad=4
+                    borderpad=6
                 )
             
             fig.update_layout(
@@ -3588,7 +3588,13 @@ def main():
                 baseline_pioggia = float((baseline.get("pioggia", 0).mean() * 100) if not baseline.empty else 0)
                 fig_p = create_speedometer(prob_pioggia, "Prob. Pioggia", "#06b6d4", reference_pct=baseline_pioggia)
                 st.plotly_chart(fig_p, use_container_width=True)
-            st.caption("Nota: probabilità calcolate sui dati storici per periodi simili; il delta confronta con la media degli anni precedenti nella finestra ±15 giorni.")
+            st.markdown(
+                '<div style="text-align: center; margin-top: 20px; margin-bottom: 30px;">'
+                '<p style="font-size: 14px; color: #94a3b8; font-family: Inter, sans-serif; font-style: italic; margin: 0;">'
+                'Nota: probabilità calcolate sui dati storici per periodi simili; il delta confronta con la media degli anni precedenti nella finestra ±15 giorni.'
+                '</p></div>',
+                unsafe_allow_html=True
+            )
         else:
             st.warning("Dati meteo non disponibili per questa data")
 
