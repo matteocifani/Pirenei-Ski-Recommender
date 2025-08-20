@@ -3053,11 +3053,13 @@ def main():
                 font-weight: 600;
                 box-shadow: 
                     0 0 0 1px rgba(16, 185, 129, 0.3),
-                    0 0 8px rgba(16, 185, 129, 0.15),
-                    0 0 16px rgba(16, 185, 129, 0.12),
-                    0 0 24px rgba(16, 185, 129, 0.08),
+                    0 0 8px rgba(16, 185, 129, 0.18),
+                    0 0 16px rgba(16, 185, 129, 0.15),
+                    0 0 24px rgba(16, 185, 129, 0.12),
+                    0 0 32px rgba(16, 185, 129, 0.08),
+                    0 0 40px rgba(16, 185, 129, 0.05),
                     0 25px 50px -12px rgba(0, 0, 0, 0.8);
-                filter: drop-shadow(0 0 5px rgba(16, 185, 129, 0.2));
+                filter: drop-shadow(0 0 8px rgba(16, 185, 129, 0.25));
                 max-width: 280px;
                 text-align: center;
                 animation: tooltipSlideDown 0.3s ease-out;
