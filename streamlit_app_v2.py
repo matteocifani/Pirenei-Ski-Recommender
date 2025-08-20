@@ -816,26 +816,27 @@ section[data-testid="stSidebar"] {
     display: flex !important;
     width: 100% !important;
     font-weight: 700 !important;
-    font-size: 18px !important;
+    font-size: 22px !important;
     margin-bottom: var(--space-4) !important;
     line-height: 1.2 !important;
+    height: 32px !important;
+    align-items: center !important;
 }
 
 /* Vertical alignment for selector columns */
 #selectors-container {
-    display: flex !important;
-    align-items: stretch !important;
-    justify-content: space-between !important;
+    display: grid !important;
+    grid-template-columns: 1fr 1fr 1fr !important;
     gap: 20px !important;
+    align-items: start !important;
 }
 
 #selectors-container > div {
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: center !important;
-    justify-content: flex-start !important;
-    min-height: 140px !important;
-    flex: 1 !important;
+    display: grid !important;
+    grid-template-rows: 32px 60px auto !important;
+    align-items: start !important;
+    justify-items: center !important;
+    gap: 12px !important;
 }
 
 /* Center input widgets */
@@ -845,7 +846,8 @@ section[data-testid="stSidebar"] {
     flex-direction: column !important;
     align-items: center !important;
     width: 100% !important;
-    flex-grow: 1 !important;
+    height: 60px !important;
+    justify-content: center !important;
 }
 
 /* Center input fields */
@@ -854,7 +856,8 @@ section[data-testid="stSidebar"] {
     display: flex !important;
     justify-content: center !important;
     width: 100% !important;
-    margin-bottom: 8px !important;
+    height: 100% !important;
+    align-items: center !important;
 }
 
 /* Tooltip container alignment */
@@ -2745,13 +2748,15 @@ def main():
         # Show tooltip in normal document flow - allineato con i selettori  
         st.markdown(f"""
         <div id="tooltip-container" style="
-            display: flex;
-            justify-content: {current_justify};
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
             width: 100%;
-            margin: 5px 0 25px 0;
+            margin: 0 0 25px 0;
             padding: 0 20px;
         ">
-            <div class="onboarding-tooltip-flow tooltip-step-{step}" style="
+            <div style="grid-column: {step}; justify-self: center;">
+                <div class="onboarding-tooltip-flow tooltip-step-{step}" style="
                 background: #1f2937;
                 border: 2px solid #10b981;
                 border-radius: 16px;
@@ -2772,7 +2777,8 @@ def main():
                 position: relative;
                 backdrop-filter: blur(10px);
             ">
-                {current_message}
+                    {current_message}
+                </div>
             </div>
         </div>
         
