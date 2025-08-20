@@ -5,9 +5,18 @@ from typing import List, Tuple
 import numpy as np
 import re
 import pandas as pd
-import plotly.express as px
-import plotly.graph_objects as go
-import pydeck as pdk
+# Lazy imports - caricati solo quando necessari
+def get_plotly():
+    """Lazy import Plotly per ridurre tempo di startup"""
+    import plotly.express as px
+    import plotly.graph_objects as go
+    from plotly.subplots import make_subplots
+    return px, go, make_subplots
+
+def get_pydeck():
+    """Lazy import PyDeck per mappe"""
+    import pydeck as pdk
+    return pdk
 import streamlit as st
 
 from app.data_loader import load_datasets
@@ -1403,43 +1412,12 @@ div[data-testid="column"] .stSelectbox > div {
     }
 }
 
-/* Responsive Onboarding */
+/* Responsive - Ottimizzato */
 @media (max-width: 768px) {
-    .onboarding-selectors {
-        flex-direction: column;
-        gap: var(--space-24);
-        padding: var(--space-20);
-    }
-    
-    .selector-wrapper {
-        min-width: 280px;
-    }
-    
-    .onboarding-tooltip {
-        min-width: 200px;
-        padding: var(--space-16) var(--space-20);
-    }
-    
-    .tooltip-text {
-        font-size: 0.9rem;
-    }
-    
-    .onboarding-arrow {
-        font-size: 1.5rem;
-    }
-    
-    .welcome-message {
-        padding: var(--space-48) var(--space-20);
-        margin: var(--space-32) 0;
-    }
-    
-    .welcome-title {
-        font-size: 2rem;
-    }
-    
-    .welcome-subtitle {
-        font-size: 1.125rem;
-    }
+    .onboarding-selectors { flex-direction: column; gap: var(--space-24); padding: var(--space-20); }
+    .selector-wrapper { min-width: 280px; }
+    .welcome-message { padding: var(--space-48) var(--space-20); margin: var(--space-32) 0; }
+    .welcome-title { font-size: 2rem; }
 }
 
 .theme-light .ai-dock {
@@ -2495,11 +2473,47 @@ div[data-testid="column"] .stSelectbox > div {
 """, unsafe_allow_html=True)
 
 
+@st.cache_data(show_spinner=False)  # Cache permanente per template
+def get_unified_plotly_template():
+    """Template Plotly unificato e ottimizzato per tutti i grafici"""
+    return {
+        'layout': {
+            'paper_bgcolor': 'rgba(0,0,0,0)',
+            'plot_bgcolor': 'rgba(0,0,0,0)',
+            'font': {'family': 'Inter, system-ui, sans-serif', 'color': '#f8fafc'},
+            'title': {'font': {'size': 16, 'color': '#f8fafc'}},
+            'xaxis': {
+                'gridcolor': 'rgba(148, 163, 184, 0.2)',
+                'linecolor': 'rgba(148, 163, 184, 0.3)',
+                'tickfont': {'color': '#cbd5e1'},
+                'titlefont': {'color': '#e2e8f0'}
+            },
+            'yaxis': {
+                'gridcolor': 'rgba(148, 163, 184, 0.2)',
+                'linecolor': 'rgba(148, 163, 184, 0.3)',
+                'tickfont': {'color': '#cbd5e1'},
+                'titlefont': {'color': '#e2e8f0'}
+            },
+            'legend': {
+                'font': {'color': '#e2e8f0'},
+                'bgcolor': 'rgba(0,0,0,0)'
+            },
+            'margin': {'l': 50, 'r': 50, 't': 50, 'b': 50},
+        }
+    }
+
 @st.cache_data(ttl=1800, show_spinner=False)  # Cache per 30 min
 def aggregate_station_kpis(df: pd.DataFrame) -> pd.DataFrame:
-    df = df.copy()
-    if "kmtotal" in df.columns:
-        df["pct_open"] = np.where(df["kmtotal"] > 0, df.get("kmopen", 0) / df["kmtotal"], np.nan)
+    """Ottimizzata con operazioni vectorizzate"""
+    # Evita copy inutili se possibile
+    if df.empty:
+        return df
+    
+    # Operazioni vectorizzate più efficienti
+    if "kmtotal" in df.columns and "kmopen" in df.columns:
+        mask = df["kmtotal"] > 0
+        df.loc[mask, "pct_open"] = df.loc[mask, "kmopen"] / df.loc[mask, "kmtotal"]
+        df.loc[~mask, "pct_open"] = np.nan
     else:
         df["pct_open"] = np.nan
     if "kmopen" in df.columns:
@@ -2798,6 +2812,25 @@ def build_local_overview(df_kpis: pd.DataFrame, best_name: str) -> str:
     return f"{best_name} è la scelta più pratica: {txt}."
 
 
+@st.cache_data(ttl=1800, show_spinner=False)  # Cache per 30 min
+def _prepare_chart_data(df: pd.DataFrame, chart_type: str, **kwargs) -> dict:
+    """Cache preparazione dati per grafici comuni"""
+    result = {'data': df.copy(), 'config': kwargs}
+    
+    if chart_type == 'bar_grouped':
+        # Ottimizza aggregazioni per grafici a barre
+        if 'group_by' in kwargs and 'value_col' in kwargs:
+            grouped = df.groupby(kwargs['group_by'])[kwargs['value_col']].sum().reset_index()
+            result['data'] = grouped
+    
+    elif chart_type == 'gauge_meteo':
+        # Pre-calcola valori per gauge meteo
+        if 'prob_col' in kwargs:
+            prob_mean = df[kwargs['prob_col']].mean() if kwargs['prob_col'] in df.columns else 0
+            result['prob_value'] = round(prob_mean, 1)
+    
+    return result
+
 @st.cache_data(ttl=3600, show_spinner=False)  # Cache LLM per 1 ora
 def _llm_overview_cached(prompt: str, max_tokens: int) -> tuple[str, dict]:
     """Cache delle chiamate LLM per evitare ripetizioni costose"""
@@ -2805,7 +2838,10 @@ def _llm_overview_cached(prompt: str, max_tokens: int) -> tuple[str, dict]:
 
 
 def render_map_with_best(df_coords: pd.DataFrame, best_name: str, tooltip_km: bool = False):
-    # Prepara DF con coordinate di tutte le stazioni
+    """Rendering mappa ottimizzato con lazy import"""
+    pdk = get_pydeck()  # Lazy import
+    
+    # Prepara DF con coordinate di tutte le stazioni  
     base_coords = df_coords.copy()
     def _norm(s: str) -> str:
         try:
@@ -3589,6 +3625,7 @@ def main():
                     }
                 },
             )
+            px, go, make_subplots = get_plotly()  # Lazy import
             fig = go.Figure(indicator)
             
             # Delta migliorato per dark mode - posizionato sotto al numero principale
@@ -3656,6 +3693,7 @@ def main():
                 .reset_index()
                 .sort_values("indice_base", ascending=False)
             )
+            px, go, make_subplots = get_plotly()  # Lazy import
             fig_piste_base = px.bar(
                 piste_base,
                 x="nome_stazione",
@@ -3761,6 +3799,7 @@ def main():
                 def donut(value, label, color):
                     val = max(0.0, min(100.0, value))
                     rem = 100 - val
+                    px, go, make_subplots = get_plotly()  # Lazy import
                     fig = go.Figure(
                         data=[go.Pie(values=[val, rem], hole=0.72, sort=False, direction='clockwise', marker_colors=[color, 'rgba(255,255,255,0.08)'], textinfo='none')]
                     )
@@ -3845,6 +3884,7 @@ def main():
                 .sort_values("indice_medio", ascending=False)
             )
             melted = piste.melt("nome_stazione", value_vars=["Piste_blu", "Piste_rosse"], var_name="Tipo", value_name="Numero")
+            px, go, make_subplots = get_plotly()  # Lazy import
             fig = px.bar(
                 melted,
                 x="nome_stazione", y="Numero", color="Tipo", barmode="group",
@@ -3937,6 +3977,7 @@ def main():
             # Due livelli: subheader esterno e delta in basso, numero centrato
             d = risk - baseline
             st.markdown('<h4 class="section-subtitle">⚠️ Rischio valanghe (1-5)</h4>', unsafe_allow_html=True)
+            px, go, make_subplots = get_plotly()  # Lazy import
             fig_risk = go.Figure()
             fig_risk.add_trace(go.Indicator(
                 mode="gauge+number",
@@ -3999,6 +4040,7 @@ def main():
                 df_with_indices.groupby("nome_stazione")["Quota_max"].mean().dropna().sort_values(ascending=False).head(10).reset_index()
             )
             if not quota.empty:
+                px, go, make_subplots = get_plotly()  # Lazy import
                 fig_quota = px.bar(
                     quota, 
                     x="nome_stazione", 
@@ -4019,6 +4061,7 @@ def main():
 
         # Km totali: solo totali per le prime 8 stazioni
         top_total = df_kpis.sort_values("km_total_est", ascending=False).head(8)
+        px, go, make_subplots = get_plotly()  # Lazy import
         fig_bar_total = px.bar(
             top_total, 
             x="nome_stazione", 
@@ -4039,6 +4082,7 @@ def main():
             try:
                 df_night = df_with_indices[["nome_stazione", "Scii_notte"]].drop_duplicates().fillna(0)
                 if not df_night.empty:
+                    px, go, make_subplots = get_plotly()  # Lazy import
                     fig_night = px.bar(
                         df_night.sort_values("Scii_notte", ascending=False),
                         x="nome_stazione", y="Scii_notte",
@@ -4053,6 +4097,7 @@ def main():
                 df_acts = df_with_indices[["nome_stazione"] + cols].drop_duplicates().fillna(0)
                 if not df_acts.empty:
                     melted = df_acts.melt("nome_stazione", value_vars=cols, var_name="Attività", value_name="Valore")
+                    px, go, make_subplots = get_plotly()  # Lazy import
                     fig_acts = px.bar(
                         melted, x="nome_stazione", y="Valore", color="Attività",
                         barmode="group", title="Snowpark e Superpipe",
@@ -4120,6 +4165,7 @@ def main():
                 "Piste rosse": "#ef4444",
                 "Piste nere": "#374151",
             }
+            px, go, make_subplots = get_plotly()  # Lazy import
             fig_stack = px.bar(
                 melted,
                 x="nome_stazione",
@@ -4195,6 +4241,7 @@ def main():
                 stations = sorted(history["nome_stazione"].unique().tolist())
                 focus = st.selectbox("Evidenzia impianto", options=["(Nessuno)"] + stations, index=0)
                 solo = st.checkbox("Mostra solo impianto selezionato", value=False)
+                px, go, make_subplots = get_plotly()  # Lazy import
                 palette = px.colors.qualitative.Set2 + px.colors.qualitative.Set3 + px.colors.qualitative.T10
                 color_cycle = {name: palette[i % len(palette)] for i, name in enumerate(stations)}
                 fig_lines = go.Figure()
