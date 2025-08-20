@@ -337,9 +337,9 @@ html, body {
     right: 0;
     bottom: 0;
     background-image: 
-        radial-gradient(circle at 20% 50%, rgba(139, 92, 246, 0.04) 0%, transparent 70%),
-        radial-gradient(circle at 80% 20%, rgba(59, 130, 246, 0.03) 0%, transparent 70%),
-        radial-gradient(circle at 40% 80%, rgba(16, 185, 129, 0.025) 0%, transparent 70%);
+        radial-gradient(circle at 20% 50%, rgba(139, 92, 246, 0.04) 0%, rgba(139, 92, 246, 0.02) 40%, rgba(139, 92, 246, 0.005) 70%, transparent 85%),
+        radial-gradient(circle at 80% 20%, rgba(59, 130, 246, 0.03) 0%, rgba(59, 130, 246, 0.015) 40%, rgba(59, 130, 246, 0.003) 70%, transparent 85%),
+        radial-gradient(circle at 40% 80%, rgba(16, 185, 129, 0.025) 0%, rgba(16, 185, 129, 0.012) 40%, rgba(16, 185, 129, 0.002) 70%, transparent 85%);
     animation: particleFloat 25s ease-in-out infinite;
     z-index: 1;
     filter: blur(1px);
