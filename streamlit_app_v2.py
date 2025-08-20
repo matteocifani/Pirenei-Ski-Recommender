@@ -83,6 +83,10 @@ def render_ai_overview(content, note=None, model_name: str | None = None):
     model_name: se fornito, verrà mostrato nel badge "Powered by <model_name>".
     Se non fornito, viene mostrato semplicemente "Powered by AI".
     """
+    # Rimuove eventuali tag HTML dal contenuto per mostrare solo testo pulito
+    import re
+    clean_content = re.sub(r'<[^>]+>', '', str(content)).strip()
+    
     note_html = f'<div class="mb-16"><span class="stInfo">ℹ️ {note}</span></div>' if note else ""
     parsed_model = parse_model_name(model_name)
     badge_text = f"Powered by {parsed_model}"
@@ -97,7 +101,7 @@ def render_ai_overview(content, note=None, model_name: str | None = None):
             </div>
         </div>
         {note_html}
-        <div class="ai-overview-content">{content}</div>
+        <div class="ai-overview-content">{clean_content}</div>
     </div>"""
 
 
