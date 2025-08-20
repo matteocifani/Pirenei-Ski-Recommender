@@ -4698,7 +4698,11 @@ def main():
     
     # Sezione Profilo Low-Cost (solo se selezionato, dopo tutti i livelli)
     if profilo_norm == "lowcost":
-        st.markdown("---")
+        # Divider e titolo principale sezione profilo
+        st.markdown('<hr class="profile-divider">', unsafe_allow_html=True)
+        st.markdown('<h2 class="profile-main-title">💰 Sezione Profilo: Low-Cost</h2>', unsafe_allow_html=True)
+        
+        # Titolo sezione profilo
         st.subheader("💰 Profilo: Low-Cost")
         
         # 1) Grafico a barre: costi di ski pass, scuola sci e noleggio
