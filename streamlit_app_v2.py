@@ -85,7 +85,23 @@ def render_ai_overview(content, note=None, model_name: str | None = None):
     """
     # Rimuove eventuali tag HTML dal contenuto per mostrare solo testo pulito
     import re
-    clean_content = re.sub(r'<[^>]+>', '', str(content)).strip()
+    
+    # Converti in stringa e rimuovi tutti i tag HTML
+    content_str = str(content)
+    
+    # Prima rimuovi i tag div con class specifiche che potrebbero essere rimasti
+    content_str = re.sub(r'<div[^>]*class="[^"]*"[^>]*>', '', content_str)
+    content_str = re.sub(r'<div[^>]*>', '', content_str)
+    
+    # Poi rimuovi tutti gli altri tag HTML rimanenti
+    clean_content = re.sub(r'<[^>]+>', '', content_str).strip()
+    
+    # Rimuovi anche eventuali spazi multipli e newline
+    clean_content = re.sub(r'\s+', ' ', clean_content).strip()
+    
+    # Debug: stampa il contenuto originale e pulito per verificare
+    print(f"DEBUG - Contenuto originale: {repr(content)}")
+    print(f"DEBUG - Contenuto pulito: {repr(clean_content)}")
     
     note_html = f'<div class="mb-16"><span class="stInfo">ℹ️ {note}</span></div>' if note else ""
     parsed_model = parse_model_name(model_name)
