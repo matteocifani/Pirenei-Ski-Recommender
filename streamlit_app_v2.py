@@ -407,7 +407,7 @@ html, body {
     font-family: 'Inter', sans-serif;
     font-weight: 900;
     font-size: clamp(2.5rem, 6vw, 4rem);
-    margin: 0 0 var(--space-16) 0;
+    margin: 0;
     letter-spacing: -0.02em;
     line-height: 0.9;
     background: linear-gradient(135deg, #ffffff 0%, #e2e8f0 50%, #cbd5e1 100%);
@@ -445,7 +445,7 @@ html, body {
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    margin: 0;
+    margin: 0 0 var(--space-16) 0;
     letter-spacing: 0.01em;
     line-height: 1.4;
     position: relative;
@@ -1064,45 +1064,85 @@ div[data-testid="column"] .stSelectbox > div {
 
 /* No Data Message */
 .no-data-message {
-    background: var(--bg-card);
-    border: 1px solid var(--amber-600);
+    background: linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%);
+    border: 1px solid rgba(148, 163, 184, 0.2);
     border-radius: var(--radius-3xl);
-    padding: var(--space-48) var(--space-32);
+    padding: var(--space-40) var(--space-32);
     margin: var(--space-32) 0;
     text-align: center;
     position: relative;
     overflow: hidden;
-    box-shadow: var(--shadow-lg);
+    box-shadow: 
+        0 0 0 1px rgba(148, 163, 184, 0.1),
+        0 0 20px rgba(100, 116, 139, 0.15),
+        0 0 40px rgba(71, 85, 105, 0.1),
+        0 25px 50px -12px rgba(0, 0, 0, 0.6);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(20px);
+}
+
+.no-data-message::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: conic-gradient(from 0deg, transparent, rgba(248, 113, 113, 0.05), transparent, rgba(239, 68, 68, 0.05), transparent);
+    animation: heroRotate 15s linear infinite;
+    z-index: -1;
+}
+
+.no-data-message::after {
+    content: '';
+    position: absolute;
+    inset: 1px;
+    background: linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%);
+    border-radius: calc(var(--radius-3xl) - 1px);
+    z-index: -1;
 }
 
 .no-data-content {
     position: relative;
-    z-index: 1;
+    z-index: 2;
 }
 
 .no-data-title {
     font-family: 'Inter', sans-serif;
     font-weight: 700;
-    font-size: 1.5rem;
-    color: var(--text-primary);
-    margin: 0 0 var(--space-12) 0;
+    font-size: 1.8rem;
+    background: linear-gradient(135deg, #f87171 0%, #ef4444 50%, #dc2626 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin: 0 0 var(--space-16) 0;
+    filter: drop-shadow(0 0 10px rgba(248, 113, 113, 0.3));
 }
 
 .no-data-subtitle {
     font-family: 'Inter', sans-serif;
     font-weight: 500;
-    font-size: 1.125rem;
-    color: var(--text-secondary);
-    margin: 0 0 var(--space-16) 0;
+    font-size: 1.2rem;
+    background: linear-gradient(135deg, #e2e8f0 0%, #94a3b8 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin: 0 0 var(--space-20) 0;
     line-height: 1.5;
+    opacity: 0.9;
 }
 
 .no-data-guide {
     font-family: 'Inter', sans-serif;
     font-weight: 600;
-    font-size: 1rem;
-    color: var(--amber-400);
+    font-size: 1.1rem;
+    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
     margin: 0;
+    opacity: 0.9;
+    filter: drop-shadow(0 0 8px rgba(251, 191, 36, 0.3));
     animation: welcomeBounce 2s ease-in-out infinite;
 }
 
@@ -2630,7 +2670,7 @@ def main():
         <div class="welcome-message">
             <div class="welcome-content">
                 <h2 class="welcome-title">Benvenuto su Pirenei Ski Recommender! 🎿</h2>
-                <p class="welcome-subtitle">Ti aiuteremo a trovare la stazione sciistica perfetta per te.</p>
+                <p class="welcome-subtitle">Analizziamo in tempo reale condizioni meteo, apertura piste e qualità della neve per suggerirti la stazione sciistica perfetta per il tuo livello.</p>
                 <p class="welcome-guide">👇 Inizia selezionando le tue preferenze qui sotto</p>
             </div>
         </div>
@@ -2723,7 +2763,7 @@ def main():
         
         # Tooltip messages
         messages = {
-            1: "Dimmi quando vuoi conquistare le piste! ⛷️",
+            1: "Quando vorresti conquistare le piste? ⛷️",
             2: "Sei un principiante o un pro della neve? 🏔️🎿", 
             3: "Che tipo di sciatore sei? (puoi anche saltare!) 🤙❄️"
         }
@@ -2895,9 +2935,12 @@ def main():
     </style>
     """, unsafe_allow_html=True)
     
-    col1, col2, col3 = st.columns([1, 2, 1])
+    # Spazio ridotto prima del bottone per avvicinarlo ai selettori
+    st.markdown('<div style="margin: 8px 0;"></div>', unsafe_allow_html=True)
+    
+    col1, col2, col3 = st.columns([2, 1, 2])
     with col2:
-        if st.button("🔄 Ricomincia selezione", key="restart_onboarding", use_container_width=True, type="primary"):
+        if st.button("🔄 Ricomincia", key="restart_onboarding", use_container_width=True, type="secondary"):
             # Reset onboarding state
             st.session_state.onboarding_completed = False
             st.session_state.onboarding_step = 1
@@ -3023,11 +3066,14 @@ def main():
         st.markdown("""
         <div class="hero-container">
             <div class="hero-section">
-                <h1 class="hero-title">{}</h1>
                 <p class="hero-subtitle">La migliore scelta per il tuo livello e profilo</p>
+                <h1 class="hero-title">{}</h1>
             </div>
         </div>
         """.format(best_name), unsafe_allow_html=True)
+        
+        # Spazio extra per staccare dal bottone "Ricomincia"
+        st.markdown('<div style="margin: 24px 0;"></div>', unsafe_allow_html=True)
         
         # KPI Grid
         st.markdown('<h2 class="section-header">📈 Indicatori chiave</h2>', unsafe_allow_html=True)
