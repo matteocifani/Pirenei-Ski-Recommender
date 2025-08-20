@@ -3979,7 +3979,7 @@ def main():
                     tickfont=dict(color="#d1d5db", family="Inter")
                 ),
                 legend=dict(
-                    font=dict(color="#f8afc", family="Inter")
+                    font=dict(color="#f8fafc", family="Inter")
                 )
             )
             st.plotly_chart(fig, use_container_width=True)
