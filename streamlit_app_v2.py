@@ -3822,7 +3822,7 @@ def main():
                     )
                     return fig
 
-                st.subheader("Meteo (storico ±3 giorni)")
+                st.markdown('<h4 class="section-subtitle">🌤️ Meteo (storico ±3 giorni)</h4>', unsafe_allow_html=True)
                 r1c1, r1c2, r1c3 = st.columns(3)
                 with r1c1:
                     st.plotly_chart(donut(pioggia, "Pioggia", "#60A5FA"), use_container_width=True)
@@ -3882,7 +3882,7 @@ def main():
 
         # Barre: piste blu/rosse ordinate per indice_medio
         if not df_with_indices.empty and "indice_medio" in df_with_indices.columns:
-            st.markdown('<h4 class="section-subtitle">🎿 Piste blu e rosse per stazione (ordinate per indice medio)</h4>', unsafe_allow_html=True)
+            st.markdown('<h4 class="section-subtitle">🎿 Piste blu e rosse per stazione</h4>', unsafe_allow_html=True)
             # Raggruppa per stazione per evitare duplicazioni (un valore per stazione)
             piste = (
                 df_with_indices[["nome_stazione", "Piste_blu", "Piste_rosse", "indice_medio"]]
@@ -3908,10 +3908,12 @@ def main():
                 plot_bgcolor="rgba(0,0,0,0)",
                 font=dict(family="Inter", color="#f8fafc"),
                 xaxis=dict(
+                    title="Stazione",
                     gridcolor="#374151",
                     tickfont=dict(color="#d1d5db", family="Inter")
                 ),
                 yaxis=dict(
+                    title="Numero piste",
                     gridcolor="#374151",
                     tickfont=dict(color="#d1d5db", family="Inter")
                 ),
@@ -3924,7 +3926,7 @@ def main():
 
         # Sezione Festaiolo (profilo)
         if profilo_norm == "festaiolo":
-            st.subheader("Profilo: Festaiolo")
+            st.markdown('<h4 class="section-subtitle">🎉 Profilo: Festaiolo</h4>', unsafe_allow_html=True)
             try:
                 df_night = df_with_indices[["nome_stazione", "Scii_notte"]].drop_duplicates().fillna(0)
                 if not df_night.empty:
