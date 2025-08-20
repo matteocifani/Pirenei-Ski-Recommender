@@ -3505,11 +3505,21 @@ def main():
             clean_output = re.sub(r'<[^>]*>', '', str(output)).strip()
             clean_output = re.sub(r'\s+', ' ', clean_output)
             
-            # AI Overview semplificato senza HTML complesso
-            with st.container():
-                st.markdown("### ✨ AI Overview")
-                st.info(f"🤖 Powered by {parse_model_name(DEFAULT_LLM_MODEL)}")
-                st.write(clean_output)
+            # AI Overview con box e componenti Streamlit nativi
+            st.markdown(f"""
+            <div class="ai-overview-section">
+                <div class="ai-header">
+                    <div class="ai-icon">✨</div>
+                    <div class="ai-header-text">
+                        <div class="ai-title">AI Overview</div>
+                        <div class="ai-badge">Powered by {parse_model_name(DEFAULT_LLM_MODEL)}</div>
+                    </div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            # Contenuto con componenti nativi (senza HTML)
+            st.write(clean_output)
         except Exception as e:
             st.error(f"Errore nell'AI Overview: {e}")
 
@@ -3697,10 +3707,10 @@ def main():
                 clean_out = re.sub(r'<[^>]*>', '', str(out)).strip()
                 clean_out = re.sub(r'\s+', ' ', clean_out)
                 
-                st.markdown(
+            st.markdown(
                     render_ai_overview(clean_out, model_name=DEFAULT_LLM_MODEL),
-                    unsafe_allow_html=True
-                )
+                unsafe_allow_html=True
+            )
             except Exception as e:
                 st.error(f"Errore nell'AI Overview Festaiolo: {e}")
 
@@ -4263,10 +4273,10 @@ def main():
                     # Pulizia del contenuto HTML
                     clean_out = clean_html_content(out)
                     
-                    st.markdown(
+            st.markdown(
                         render_ai_overview(clean_out, model_name=DEFAULT_LLM_MODEL),
-                        unsafe_allow_html=True
-                    )
+                unsafe_allow_html=True
+            )
                 except Exception as e:
                     st.error(f"Errore nell'AI Overview Festaiolo: {e}")
 
