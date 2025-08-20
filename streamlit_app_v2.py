@@ -267,17 +267,7 @@ st.markdown("""
     box-sizing: border-box;
 }
 
-/* Reset completo per Streamlit */
-.stApp > header,
-.stApp > footer,
-.stApp > div:not(.main) {
-    display: none !important;
-}
 
-.stApp {
-    padding: 0 !important;
-    margin: 0 !important;
-}
 
 html, body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
@@ -291,27 +281,15 @@ html, body {
 
 /* Streamlit Specific Overrides */
 .main .block-container {
-    padding-top: 0 !important;
+    padding-top: var(--space-24) !important;
     padding-bottom: 8rem !important;
-    max-width: none !important;
-    padding-left: 0 !important;
-    padding-right: 0 !important;
+    max-width: 1400px !important;
+    padding-left: var(--space-32) !important;
+    padding-right: var(--space-32) !important;
 }
 
 .stApp {
     background: var(--bg-primary) !important;
-}
-
-/* Rimuovi tutti i margini di Streamlit */
-.main {
-    padding: 0 !important;
-    margin: 0 !important;
-}
-
-.block-container {
-    padding: 0 !important;
-    margin: 0 !important;
-    max-width: none !important;
 }
 
 /* Remove Streamlit default margins */
@@ -331,11 +309,8 @@ html, body {
     overflow: hidden;
     background: radial-gradient(ellipse at center, rgba(139, 92, 246, 0.03) 0%, rgba(59, 130, 246, 0.02) 50%, transparent 100%);
     padding: var(--space-64) var(--space-32);
-    margin: 0;
-    width: 100vw;
-    left: 50%;
-    transform: translateX(-50%);
-    margin-bottom: var(--space-64);
+    margin: calc(-1 * var(--space-32)) calc(-1 * var(--space-32)) var(--space-64) calc(-1 * var(--space-32));
+    width: calc(100% + 2 * var(--space-32));
 }
 
 /* Organic Background Movement - Ultra sottile */
