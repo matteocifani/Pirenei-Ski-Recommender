@@ -269,36 +269,178 @@ html, body {
     margin-bottom: 0 !important;
 }
 
-/* Typography System */
+/* HERO HEADER - Capolavoro di Web Design */
 .app-header {
-    padding: var(--space-48) 0 var(--space-32) 0;
-    margin-bottom: var(--space-48);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
     text-align: center;
+    position: relative;
+    overflow: hidden;
+    background: radial-gradient(ellipse at center, rgba(139, 92, 246, 0.03) 0%, rgba(59, 130, 246, 0.02) 50%, transparent 100%);
+    padding: var(--space-64) var(--space-32);
+    margin-bottom: var(--space-64);
+}
+
+/* Animated Background Particles */
+.app-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: 
+        radial-gradient(circle at 20% 50%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(59, 130, 246, 0.08) 0%, transparent 50%),
+        radial-gradient(circle at 40% 80%, rgba(16, 185, 129, 0.06) 0%, transparent 50%);
+    animation: particleFloat 20s ease-in-out infinite;
+    z-index: 1;
+}
+
+/* Floating orbs animation */
+@keyframes particleFloat {
+    0%, 100% { 
+        transform: translateY(0px) rotate(0deg);
+        opacity: 0.6;
+    }
+    33% { 
+        transform: translateY(-20px) rotate(120deg);
+        opacity: 0.8;
+    }
+    66% { 
+        transform: translateY(-10px) rotate(240deg);
+        opacity: 0.4;
+    }
 }
 
 .app-title {
-    font-family: 'Inter', sans-serif;
-    font-weight: 800;
-    font-size: clamp(2.5rem, 5vw, 4rem);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-weight: 900;
+    font-size: clamp(3.5rem, 8vw, 7rem);
     text-align: center;
     margin: 0;
-    letter-spacing: -0.04em;
-    line-height: 1.1;
-    background: var(--gradient-primary);
+    letter-spacing: -0.06em;
+    line-height: 0.9;
+    position: relative;
+    z-index: 2;
+    
+    /* Gradient text animato */
+    background: linear-gradient(
+        45deg,
+        #ffffff 0%,
+        #e2e8f0 20%,
+        #06b6d4 40%,
+        #8b5cf6 60%,
+        #f59e0b 80%,
+        #ffffff 100%
+    );
+    background-size: 400% 400%;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    color: transparent;
+    animation: gradientShimmer 8s ease-in-out infinite;
+    
+    /* Glow effect */
+    filter: drop-shadow(0 0 40px rgba(139, 92, 246, 0.3))
+            drop-shadow(0 0 80px rgba(59, 130, 246, 0.2));
+}
+
+@keyframes gradientShimmer {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
 }
 
 .app-subtitle {
-    font-family: 'Inter', sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: clamp(1.2rem, 3vw, 1.8rem);
     font-weight: 500;
-    font-size: 1.125rem;
+    margin-top: var(--space-24);
     text-align: center;
-    color: var(--text-secondary);
-    margin-top: var(--space-8);
-    letter-spacing: -0.01em;
+    letter-spacing: 0.02em;
+    line-height: 1.4;
+    position: relative;
+    z-index: 2;
+    
+    /* Gradient subtitle */
+    background: linear-gradient(135deg, #f8fafc 0%, #cbd5e1 50%, #94a3b8 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    
+    /* Typing animation */
+    opacity: 0;
+    animation: fadeInUp 1.5s ease-out 0.5s forwards;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Floating scroll indicator */
+.app-header::after {
+    content: '↓';
+    position: absolute;
+    bottom: var(--space-32);
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 2rem;
+    color: rgba(148, 163, 184, 0.6);
+    animation: bounce 2s infinite;
+    z-index: 2;
+}
+
+@keyframes bounce {
+    0%, 20%, 50%, 80%, 100% {
+        transform: translateX(-50%) translateY(0);
+    }
+    40% {
+        transform: translateX(-50%) translateY(-10px);
+    }
+    60% {
+        transform: translateX(-50%) translateY(-5px);
+    }
+}
+
+/* Magic sparkles */
+.app-title::before {
+    content: '✨';
+    position: absolute;
+    top: -20px;
+    left: -30px;
+    font-size: 1.5rem;
+    animation: sparkleRotate 4s ease-in-out infinite;
+    z-index: 3;
+}
+
+.app-title::after {
+    content: '⭐';
+    position: absolute;
+    bottom: -20px;
+    right: -30px;
+    font-size: 1.2rem;
+    animation: sparkleRotate 6s ease-in-out infinite reverse;
+    z-index: 3;
+}
+
+@keyframes sparkleRotate {
+    0%, 100% { 
+        transform: rotate(0deg) scale(1);
+        opacity: 0.7;
+    }
+    50% { 
+        transform: rotate(180deg) scale(1.2);
+        opacity: 1;
+    }
 }
 
 .section-header {
@@ -1159,6 +1301,36 @@ div[data-testid="column"] .stSelectbox > div {
     opacity: 0.9;
     filter: drop-shadow(0 0 8px rgba(251, 191, 36, 0.3));
     animation: welcomeBounce 2s ease-in-out infinite;
+}
+
+/* CELEBRATION SNOWFALL - Animazione Spettacolare */
+.celebration-snowflake {
+    position: fixed;
+    top: -50px;
+    z-index: 10000;
+    pointer-events: none;
+    user-select: none;
+    color: white;
+    text-shadow: 
+        0 0 10px rgba(255, 255, 255, 0.8),
+        0 0 20px rgba(139, 92, 246, 0.6),
+        0 0 30px rgba(59, 130, 246, 0.4);
+    filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.5));
+}
+
+@keyframes celebrationSnowfall {
+    0% {
+        transform: translateY(-50px) translateX(0) rotate(0deg) scale(0);
+        opacity: 0;
+    }
+    10% {
+        opacity: 1;
+        transform: translateY(10vh) translateX(0) rotate(90deg) scale(1);
+    }
+    100% {
+        transform: translateY(110vh) translateX(30px) rotate(360deg) scale(0.8);
+        opacity: 0;
+    }
 }
 
 /* Responsive Onboarding */
@@ -2104,8 +2276,19 @@ div[data-testid="column"] .stSelectbox > div {
 
 /* Responsive Design */
 @media (max-width: 768px) {
+    .app-header {
+        min-height: 100vh;
+        padding: var(--space-32) var(--space-16);
+    }
+    
     .app-title {
-        font-size: 2.5rem;
+        font-size: clamp(2.5rem, 12vw, 4rem);
+        letter-spacing: -0.04em;
+    }
+    
+    .app-subtitle {
+        font-size: clamp(1rem, 4vw, 1.4rem);
+        margin-top: var(--space-16);
     }
     
     .hero-section {
@@ -2900,13 +3083,58 @@ def main():
             setTimeout(() => createSnowflake(), i * 100);
         }
         
-        // Auto scroll to results
+        // CELEBRATION FIOCCHI DI NEVE SPETTACOLARE! 
+        function createCelebrationSnowfall() {
+            const container = document.body;
+            const snowflakeCount = 150; // Molti più fiocchi!
+            
+            for (let i = 0; i < snowflakeCount; i++) {
+                setTimeout(() => {
+                    const snowflake = document.createElement('div');
+                    snowflake.classList.add('celebration-snowflake');
+                    
+                    // Varietà di simboli invernali
+                    const symbols = ['❄️', '⭐', '✨', '🌟', '💫', '❅', '🔥'];
+                    snowflake.innerHTML = symbols[Math.floor(Math.random() * symbols.length)];
+                    
+                    // Posizione e stile randomici
+                    snowflake.style.left = Math.random() * 100 + 'vw';
+                    snowflake.style.fontSize = (Math.random() * 1.5 + 0.8) + 'rem';
+                    snowflake.style.opacity = Math.random() * 0.8 + 0.6;
+                    
+                    // Velocità e rotazione casuali
+                    const duration = Math.random() * 3 + 4; // 4-7 secondi
+                    const rotation = Math.random() * 360;
+                    
+                    snowflake.style.animation = `
+                        celebrationSnowfall ${duration}s linear forwards,
+                        sparkleRotate ${duration * 0.7}s ease-in-out infinite
+                    `;
+                    
+                    snowflake.style.transform = `rotate(${rotation}deg)`;
+                    
+                    container.appendChild(snowflake);
+                    
+                    // Rimozione automatica
+                    setTimeout(() => {
+                        if (snowflake && snowflake.parentNode) {
+                            snowflake.remove();
+                        }
+                    }, duration * 1000 + 500);
+                }, i * 30); // Rilascio graduale
+            }
+        }
+        
+        // Avvia celebrazione
+        createCelebrationSnowfall();
+        
+        // Auto scroll to results con ritardo per godersi l'animazione
         setTimeout(() => {
             const resultsSection = document.querySelector('.hero-section');
             if (resultsSection) {
                 resultsSection.scrollIntoView({ behavior: 'smooth' });
             }
-        }, 1000);
+        }, 2000);
         </script>
         """, unsafe_allow_html=True)
 
