@@ -34,16 +34,21 @@ def render_kpi(label, value, suffix=None, icon="📊"):
     </div>"""
 
 
-def render_ai_overview(content, note=None):
-    """Rende una card AI overview moderna con effetto glow"""
+def render_ai_overview(content, note=None, model_name: str | None = None):
+    """Rende una card AI overview moderna con effetto glow.
+
+    model_name: se fornito, verrà mostrato nel badge "Powered by <model_name>".
+    Se non fornito, viene mostrato semplicemente "Powered by AI".
+    """
     note_html = f'<div class="mb-16"><span class="stInfo">ℹ️ {note}</span></div>' if note else ""
+    badge_text = f"Powered by {model_name}" if (model_name and str(model_name).strip()) else "Powered by AI"
     return f"""
     <div class="ai-overview-section">
         <div class="ai-header">
             <div class="ai-icon">✨</div>
-            <div>
+            <div class="ai-header-text">
                 <div class="ai-title">AI Overview</div>
-                <div class="ai-badge">Powered by AI</div>
+                <div class="ai-badge">{badge_text}</div>
             </div>
         </div>
         {note_html}
@@ -557,7 +562,8 @@ html, body {
     margin: var(--space-32) 0;
     position: relative;
     overflow: hidden;
-    box-shadow: 0 0 0 1px rgba(139, 92, 246, 0.3), 0 0 40px rgba(139, 92, 246, 0.15), var(--shadow-lg);
+    /* Glow più marcato (pari all'hover attuale) */
+    box-shadow: 0 0 0 1px rgba(139, 92, 246, 0.4), 0 0 50px rgba(139, 92, 246, 0.2), var(--shadow-xl);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
     transition: all var(--transition-normal);
@@ -565,7 +571,7 @@ html, body {
 
 .ai-overview-section:hover {
     transform: translateY(-2px);
-    box-shadow: 0 0 0 1px rgba(139, 92, 246, 0.4), 0 0 50px rgba(139, 92, 246, 0.2), var(--shadow-xl);
+    box-shadow: 0 0 0 1px rgba(139, 92, 246, 0.45), 0 0 60px rgba(139, 92, 246, 0.25), var(--shadow-xl);
 }
 
 
@@ -587,6 +593,13 @@ html, body {
     justify-content: center;
     font-size: 1.25rem;
     color: var(--purple-400);
+}
+
+.ai-header-text {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
 }
 
 .ai-title {
@@ -3185,7 +3198,7 @@ def main():
         output = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat."
         
         st.markdown(
-            render_ai_overview(output),
+            render_ai_overview(output, model_name=None),
             unsafe_allow_html=True
         )
 
@@ -3351,7 +3364,7 @@ def main():
             st.markdown('<h4 class="section-subtitle">🤖 AI Overview – Festaiolo</h4>', unsafe_allow_html=True)
             out = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat."
             st.markdown(
-                render_ai_overview(out),
+                render_ai_overview(out, model_name=None),
                 unsafe_allow_html=True
             )
 
@@ -3417,7 +3430,7 @@ def main():
                 # out, usage = generate_overview(prompt_family, max_tokens=140)
                 out = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat."
                 st.markdown(
-                    render_ai_overview(out),
+                    render_ai_overview(out, model_name=None),
                     unsafe_allow_html=True
                 )
             except Exception:
@@ -3626,7 +3639,7 @@ def main():
                 # out, usage = generate_overview(prompt_f, max_tokens=140)
                 out = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat."
                 st.markdown(
-                    render_ai_overview(out),
+                    render_ai_overview(out, model_name=None),
                     unsafe_allow_html=True
                 )
             except Exception:
