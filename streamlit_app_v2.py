@@ -513,6 +513,21 @@ html, body {
 }
 
 /* Profile Section Styles */
+.profile-main-title {
+    font-family: 'Inter', sans-serif;
+    font-weight: 800;
+    font-size: 2.5rem;
+    color: var(--text-primary);
+    margin: var(--space-32) 0 var(--space-24) 0;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+    text-align: center;
+    background: linear-gradient(135deg, var(--purple-500), var(--emerald-500));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
 .profile-divider {
     border: none;
     height: 2px;
@@ -3667,12 +3682,15 @@ def main():
 
         # Sezione Festaiolo (profilo) – solo se selezionato
         if profilo_norm == "festaiolo":
+            # Titolo principale sezione profilo
+            st.markdown('<h2 class="profile-main-title">🎉 Sezione Profilo: Festaiolo</h2>', unsafe_allow_html=True)
+            
             # Divider e titolo sezione profilo
             st.markdown('<hr class="profile-divider">', unsafe_allow_html=True)
             st.markdown('<h3 class="profile-section-title">🎉 Profilo: Festaiolo</h3>', unsafe_allow_html=True)
             
             # AI Overview per profilo festaiolo (PRIMA dei grafici)
-            st.markdown('<h4 class="section-subtitle">🤖 AI Overview – Festaiolo</h4>', unsafe_allow_html=True)
+            st.markdown('<h4 class="section-subtitle">🤖 AI Overview della scelta per il profilo festaiolo ✨</h4>', unsafe_allow_html=True)
             try:
                 prompt_festaiolo = build_festaiolo_prompt(df_filtered_rec, best_name, livello, data_sel)
                 out, usage = generate_overview(prompt_festaiolo, max_tokens=140)
@@ -4029,7 +4047,7 @@ def main():
                         <div class="ai-header-text">
                             <div class="ai-title">AI Overview ✨</div>
                             <div class="ai-badge">Powered by {parse_model_name(DEFAULT_LLM_MODEL)}</div>
-                        </div>
+                </div>
                     </div>
                     <div class="ai-overview-content">{clean_out}</div>
                 </div>
@@ -4039,12 +4057,15 @@ def main():
 
         # Sezione Familiare (profilo)
         if profilo_norm == "familiare":
+            # Titolo principale sezione profilo
+            st.markdown('<h2 class="profile-main-title">👨‍👩‍👧‍👦 Sezione Profilo: Familiare</h2>', unsafe_allow_html=True)
+            
             # Divider e titolo sezione profilo
             st.markdown('<hr class="profile-divider">', unsafe_allow_html=True)
             st.markdown('<h3 class="profile-section-title">👨‍👩‍👧‍👦 Profilo: Familiare</h3>', unsafe_allow_html=True)
             
             # AI Overview per profilo familiare (PRIMA dei grafici)
-            st.markdown('<h4 class="section-subtitle">🤖 AI Overview – Famiglia</h4>', unsafe_allow_html=True)
+            st.markdown('<h4 class="section-subtitle">🤖 AI Overview della scelta per il profilo familiare ✨</h4>', unsafe_allow_html=True)
             try:
                 prompt_family = build_familiare_prompt(df_filtered_rec, best_name, livello, data_sel)
                 out, usage = generate_overview(prompt_family, max_tokens=140)
@@ -4668,7 +4689,10 @@ def main():
                     labels={"nome_stazione": "Impianto", "Prezzo": "€", "Voce": "Tipo costo"},
                     color_discrete_map={"Prezzo_skipass": "#FF6B6B", "Prezzo_scuola": "#4ECDC4", "Prezzo_noleggio": "#45B7D1"}
                 )
-                fig_prices_lowcost.update_layout(xaxis_tickangle=-45)
+                fig_prices_lowcost.update_layout(
+                    xaxis_tickangle=-45,
+                    template=plotly_template
+                )
                 st.plotly_chart(fig_prices_lowcost, use_container_width=True)
             else:
                 st.info("Dati prezzo non disponibili per l'analisi low-cost")
