@@ -907,6 +907,125 @@ section[data-testid="stSidebar"] {
     }
 }
 
+/* Welcome Message */
+.welcome-message {
+    background: var(--bg-card);
+    border: 1px solid var(--border-primary);
+    border-radius: var(--radius-3xl);
+    padding: var(--space-64) var(--space-32);
+    margin: var(--space-48) 0;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    box-shadow: var(--shadow-lg);
+}
+
+.welcome-message::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(circle, rgba(16, 185, 129, 0.05) 0%, rgba(16, 185, 129, 0.02) 40%, transparent 70%);
+    border-radius: 50%;
+    animation: welcomeGlow 3s ease-in-out infinite;
+    z-index: 0;
+}
+
+@keyframes welcomeGlow {
+    0%, 100% { 
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 0.4;
+    }
+    50% { 
+        transform: translate(-50%, -50%) scale(1.05);
+        opacity: 0.7;
+    }
+}
+
+.welcome-content {
+    position: relative;
+    z-index: 1;
+}
+
+.welcome-title {
+    font-family: 'Inter', sans-serif;
+    font-weight: 800;
+    font-size: clamp(2rem, 5vw, 3rem);
+    color: var(--text-primary);
+    margin: 0 0 var(--space-16) 0;
+    letter-spacing: -0.02em;
+}
+
+.welcome-subtitle {
+    font-family: 'Inter', sans-serif;
+    font-weight: 500;
+    font-size: 1.25rem;
+    color: var(--text-secondary);
+    margin: 0 0 var(--space-24) 0;
+    line-height: 1.5;
+}
+
+.welcome-guide {
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--emerald-400);
+    margin: 0;
+    animation: welcomeBounce 2s ease-in-out infinite;
+}
+
+@keyframes welcomeBounce {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-5px); }
+}
+
+/* No Data Message */
+.no-data-message {
+    background: var(--bg-card);
+    border: 1px solid var(--amber-600);
+    border-radius: var(--radius-3xl);
+    padding: var(--space-48) var(--space-32);
+    margin: var(--space-32) 0;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    box-shadow: var(--shadow-lg);
+}
+
+.no-data-content {
+    position: relative;
+    z-index: 1;
+}
+
+.no-data-title {
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+    font-size: 1.5rem;
+    color: var(--text-primary);
+    margin: 0 0 var(--space-12) 0;
+}
+
+.no-data-subtitle {
+    font-family: 'Inter', sans-serif;
+    font-weight: 500;
+    font-size: 1.125rem;
+    color: var(--text-secondary);
+    margin: 0 0 var(--space-16) 0;
+    line-height: 1.5;
+}
+
+.no-data-guide {
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--amber-400);
+    margin: 0;
+    animation: welcomeBounce 2s ease-in-out infinite;
+}
+
 /* Responsive Onboarding */
 @media (max-width: 768px) {
     .onboarding-selectors {
@@ -930,6 +1049,19 @@ section[data-testid="stSidebar"] {
     
     .onboarding-arrow {
         font-size: 1.5rem;
+    }
+    
+    .welcome-message {
+        padding: var(--space-48) var(--space-20);
+        margin: var(--space-32) 0;
+    }
+    
+    .welcome-title {
+        font-size: 2rem;
+    }
+    
+    .welcome-subtitle {
+        font-size: 1.125rem;
     }
 }
 
@@ -2448,6 +2580,9 @@ def main():
                 if st.session_state.onboarding_step == 1:
                     st.session_state.onboarding_step = 2
                     st.rerun()
+                elif st.session_state.onboarding_completed:
+                    # Allow changes after onboarding completion
+                    st.rerun()
     
     with col2:
         if st.session_state.onboarding_step >= 2:
@@ -2464,6 +2599,9 @@ def main():
                 st.session_state.dock_level = new_level
                 if st.session_state.onboarding_step == 2:
                     st.session_state.onboarding_step = 3
+                    st.rerun()
+                elif st.session_state.onboarding_completed:
+                    # Allow changes after onboarding completion
                     st.rerun()
     
     with col3:
@@ -2486,6 +2624,9 @@ def main():
                 
                 if not st.session_state.onboarding_completed:
                     st.session_state.onboarding_completed = True
+                    st.rerun()
+                else:
+                    # Allow changes after onboarding completion
                     st.rerun()
 
     # Onboarding JavaScript
@@ -2615,6 +2756,32 @@ def main():
     profilo = st.session_state.selected_profile or st.session_state.dock_profile
     profilo_norm = str(profilo).strip().lower()
 
+    # Show welcome message if onboarding not completed
+    if not st.session_state.onboarding_completed:
+        st.markdown("""
+        <div class="welcome-message">
+            <div class="welcome-content">
+                <h2 class="welcome-title">Benvenuto su Pirenei Ski Recommender! 🎿</h2>
+                <p class="welcome-subtitle">Ti aiuteremo a trovare la stazione sciistica perfetta per te.</p>
+                <p class="welcome-guide">👆 Inizia selezionando le tue preferenze qui sopra</p>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+    else:
+        # Add restart button after onboarding completion
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            if st.button("🔄 Ricomincia selezione", key="restart_onboarding", use_container_width=True):
+                # Reset onboarding state
+                st.session_state.onboarding_completed = False
+                st.session_state.onboarding_step = 1
+                st.session_state.selected_date = None
+                st.session_state.selected_level = None
+                st.session_state.selected_profile = None
+                if "snowfall_shown" in st.session_state:
+                    del st.session_state.snowfall_shown
+                st.rerun()
+
     # Plotly theme synchronization
     plotly_template = "plotly_white" if theme == "light" else "plotly_dark"
 
@@ -2631,7 +2798,16 @@ def main():
     )
 
     if df_with_indices.empty:
-        st.warning("La stazione non è aperta in questa data. Prova a scegliere un altro giorno per divertirti sulla neve!")
+        if st.session_state.onboarding_completed:
+            st.markdown("""
+            <div class="no-data-message">
+                <div class="no-data-content">
+                    <h3 class="no-data-title">😔 Nessuna stazione aperta</h3>
+                    <p class="no-data-subtitle">Le piste sono chiuse in questa data. Prova a scegliere un altro giorno per divertirti sulla neve!</p>
+                    <p class="no-data-guide">⬆️ Modifica la data qui sopra</p>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
         # Tabella media apertura/chiusura per impianto (sugli anni disponibili) con logica 5 chiusi/prima e 5 aperti/dopo
         try:
             base = df_infonieve.dropna(subset=["date"]).copy()
@@ -2717,8 +2893,8 @@ def main():
     # Best station name
     best_name = ranking.iloc[0]["nome_stazione"] if not ranking.empty else df_kpis.sort_values("km_open_est", ascending=False).iloc[0]["nome_stazione"]
 
-    # Mostra raccomandazione solo se almeno un filtro è selezionato
-    if not (livello == "nessuno" and profilo == "nessuno"):
+    # Mostra risultati solo dopo il completamento dell'onboarding
+    if st.session_state.onboarding_completed and data_sel and livello != "nessuno":
         # Hero Section - Stazione consigliata
         st.markdown(
             f"""
@@ -3980,46 +4156,7 @@ def main():
     # Chiudi theme wrapper
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # Floating controls bar - Real functional version
-    st.markdown('<div class="floating-controls-container">', unsafe_allow_html=True)
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        st.markdown('<div class="floating-control-item"><span class="floating-label">📅 Data</span></div>', unsafe_allow_html=True)
-        new_date = st.date_input("",
-                               value=st.session_state.dock_date,
-                               key="real_floating_date",
-                               min_value=min_date,
-                               max_value=datetime.date(2030, 12, 31),
-                               label_visibility="collapsed")
-        if new_date != st.session_state.dock_date:
-            st.session_state.dock_date = new_date
-            st.rerun()
-    
-    with col2:
-        st.markdown('<div class="floating-control-item"><span class="floating-label">🎯 Livello</span></div>', unsafe_allow_html=True)
-        level_opts = ["nessuno", "base", "medio", "esperto"]
-        new_level = st.selectbox("",
-                               level_opts,
-                               index=level_opts.index(st.session_state.dock_level),
-                               key="real_floating_level",
-                               label_visibility="collapsed")
-        if new_level != st.session_state.dock_level:
-            st.session_state.dock_level = new_level
-            st.rerun()
-    
-    with col3:
-        st.markdown('<div class="floating-control-item"><span class="floating-label">👥 Profilo</span></div>', unsafe_allow_html=True)
-        new_profile = st.selectbox("",
-                                 SUPPORTED_PROFILES,
-                                 index=SUPPORTED_PROFILES.index(st.session_state.dock_profile),
-                                 key="real_floating_profile",
-                                 label_visibility="collapsed")
-        if new_profile != st.session_state.dock_profile:
-            st.session_state.dock_profile = new_profile
-            st.rerun()
-    
-    st.markdown('</div>', unsafe_allow_html=True)
+
 
 
 
