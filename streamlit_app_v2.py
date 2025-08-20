@@ -188,7 +188,7 @@ st.markdown("""
     --shadow-ai-glow: 0 0 0 1px rgba(139, 92, 246, 0.2), 0 0 30px rgba(139, 92, 246, 0.1);
     
     /* Color Palette - Tech/Startup inspired */
-
+    --white: #ffffff;
     --gray-25: #fcfcfd;
     --gray-50: #f9fafb;
     --gray-100: #f3f4f6;
@@ -2322,7 +2322,10 @@ div[data-testid="column"] .stSelectbox > div {
         padding: var(--space-32) var(--space-16);
     }
     
-
+    .app-title {
+        font-size: clamp(2.5rem, 12vw, 4rem);
+        letter-spacing: -0.04em;
+    }
     
     .app-subtitle {
         font-size: clamp(1rem, 4vw, 1.4rem);
@@ -3996,7 +3999,7 @@ def main():
                         <div class="ai-header-text">
                             <div class="ai-title">AI Overview ✨</div>
                             <div class="ai-badge">Powered by {parse_model_name(DEFAULT_LLM_MODEL)}</div>
-                        </div>
+                </div>
                     </div>
                     <div class="ai-overview-content">{clean_out}</div>
                 </div>
@@ -4752,12 +4755,12 @@ def main():
                 clean_out = re.sub(r'\s+', ' ', clean_out)
                 
                 st.markdown(f"""
-                <div class="ai-overview-section">
+            <div class="ai-overview-section">
                     <div class="ai-header">
                         <div class="ai-header-text">
                             <div class="ai-title">AI Overview ✨</div>
                             <div class="ai-badge">Powered by {parse_model_name(DEFAULT_LLM_MODEL)}</div>
-                        </div>
+            </div>
                     </div>
                     <div class="ai-overview-content">{clean_out}</div>
                 </div>
