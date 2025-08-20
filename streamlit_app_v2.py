@@ -322,13 +322,14 @@ html, body {
     background: var(--bg-card);
     border: 1px solid var(--border-primary);
     border-radius: var(--radius-3xl);
-    padding: var(--space-48) var(--space-32);
-    margin: var(--space-32) 0 var(--space-48) 0;
+    padding: var(--space-32) var(--space-24);
+    margin: var(--space-20) 0 var(--space-32) 0;
     text-align: center;
     position: relative;
     overflow: hidden;
     box-shadow: var(--shadow-lg);
     transition: all var(--transition-normal);
+    animation: pulseGlow 3s ease-in-out infinite;
 }
 
 .hero-section::before {
@@ -402,14 +403,7 @@ html, body {
     50% { background-position: 100% 50%; }
 }
 
-.hero-title::after {
-    content: '✨';
-    position: absolute;
-    top: -15px;
-    right: -25px;
-    font-size: 1.5rem;
-    animation: sparkle 2s ease-in-out infinite;
-}
+
 
 @keyframes sparkle {
     0%, 100% { 
@@ -2641,125 +2635,149 @@ def main():
     if not st.session_state.onboarding_completed:
         step = st.session_state.onboarding_step
         st.markdown(f"""
+        <style>
+        .onboarding-overlay {{
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            background: rgba(15, 23, 42, 0.95) !important;
+            z-index: 999999 !important;
+            pointer-events: none !important;
+        }}
+        .onboarding-highlight {{
+            position: relative !important;
+            z-index: 1000000 !important;
+            background: rgba(16, 185, 129, 0.15) !important;
+            border-radius: 16px !important;
+            padding: 20px !important;
+            border: 3px solid #10b981 !important;
+            box-shadow: 0 0 30px rgba(16, 185, 129, 0.5) !important;
+            animation: highlightPulse 2s ease-in-out infinite !important;
+        }}
+        .onboarding-tooltip {{
+            position: fixed !important;
+            z-index: 1000001 !important;
+            background: #1f2937 !important;
+            border: 2px solid #10b981 !important;
+            border-radius: 16px !important;
+            padding: 20px 24px !important;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8) !important;
+            font-family: 'Inter', sans-serif !important;
+            font-size: 16px !important;
+            font-weight: 600 !important;
+            color: #f8fafc !important;
+            min-width: 280px !important;
+            max-width: 320px !important;
+            animation: tooltipFadeIn 0.5s ease-out !important;
+        }}
+        .onboarding-arrow {{
+            position: fixed !important;
+            z-index: 1000001 !important;
+            font-size: 3rem !important;
+            color: #10b981 !important;
+            animation: arrowPulse 1.5s ease-in-out infinite !important;
+        }}
+        </style>
         <script>
-        (function() {{
-            // Clean up existing onboarding elements
+        setTimeout(function() {{
+            // Clean up existing elements
             document.querySelectorAll('.onboarding-overlay, .onboarding-tooltip, .onboarding-arrow').forEach(el => el.remove());
-            document.querySelectorAll('.onboarding-highlight').forEach(el => el.classList.remove('onboarding-highlight'));
+            document.querySelectorAll('.onboarding-highlight').forEach(el => {{
+                el.classList.remove('onboarding-highlight');
+                el.style.removeProperty('position');
+                el.style.removeProperty('z-index');
+                el.style.removeProperty('background');
+                el.style.removeProperty('border-radius');
+                el.style.removeProperty('padding');
+                el.style.removeProperty('border');
+                el.style.removeProperty('box-shadow');
+            }});
             
             const step = {step};
-            console.log('Onboarding step:', step);
+            console.log('🎯 Onboarding step:', step);
             
-            function createOnboarding() {{
-                // Create overlay that covers everything
-                const overlay = document.createElement('div');
-                overlay.className = 'onboarding-overlay';
-                overlay.style.cssText = `
-                    position: fixed;
-                    top: 0;
-                    left: 0;
-                    width: 100vw;
-                    height: 100vh;
-                    background: rgba(15, 23, 42, 0.9);
-                    z-index: 9998;
-                    pointer-events: none;
-                `;
-                document.body.appendChild(overlay);
-                
-                // Define step configurations
-                const steps = {{
-                    1: {{
-                        target: '#date-column',
-                        tooltip: 'Dimmi quando vuoi conquistare le piste! ⛷️✨',
-                        arrow: '👇',
-                    }},
-                    2: {{
-                        target: '#level-column',
-                        tooltip: 'Sei un principiante o un pro della neve? 🏔️🎿',
-                        arrow: '👇',
-                    }},
-                    3: {{
-                        target: '#profile-column',
-                        tooltip: 'Che tipo di sciatore sei? (puoi anche saltare!) 🤙❄️',
-                        arrow: '👇',
-                    }}
-                }};
-                
-                const stepConfig = steps[step];
-                if (!stepConfig) return;
-                
-                setTimeout(() => {{
-                    const targetElement = document.querySelector(stepConfig.target);
-                    console.log('Target element:', targetElement);
-                    
-                    if (targetElement) {{
-                        // Highlight the target element
-                        targetElement.style.position = 'relative';
-                        targetElement.style.zIndex = '9999';
-                        targetElement.style.background = 'rgba(16, 185, 129, 0.1)';
-                        targetElement.style.borderRadius = '12px';
-                        targetElement.style.padding = '16px';
-                        targetElement.style.border = '2px solid #10b981';
-                        targetElement.style.boxShadow = '0 0 20px rgba(16, 185, 129, 0.3)';
-                        targetElement.classList.add('onboarding-highlight');
-                        
-                        // Get position for tooltip and arrow
-                        const rect = targetElement.getBoundingClientRect();
-                        const isMobile = window.innerWidth <= 768;
-                        
-                        // Create tooltip
-                        const tooltip = document.createElement('div');
-                        tooltip.className = 'onboarding-tooltip';
-                        tooltip.innerHTML = `<p class="tooltip-text" style="margin: 0; color: #f8fafc; font-family: Inter, sans-serif; font-size: 16px; font-weight: 600;">${{stepConfig.tooltip}}</p>`;
-                        
-                        tooltip.style.cssText = `
-                            position: fixed;
-                            z-index: 10000;
-                            background: #1f2937;
-                            border: 2px solid #10b981;
-                            border-radius: 16px;
-                            padding: 16px 20px;
-                            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-                            min-width: 250px;
-                            max-width: 300px;
-                            animation: tooltipFadeIn 0.5s ease-out;
-                            ${{isMobile ? 
-                                `top: ${{rect.top - 80}}px; left: ${{Math.max(10, rect.left + (rect.width / 2) - 125)}}px;` :
-                                `top: ${{rect.bottom + 20}}px; left: ${{Math.max(10, rect.left + (rect.width / 2) - 125)}}px;`
-                            }}
-                        `;
-                        
-                        // Create arrow
-                        const arrow = document.createElement('div');
-                        arrow.className = 'onboarding-arrow';
-                        arrow.textContent = stepConfig.arrow;
-                        arrow.style.cssText = `
-                            position: fixed;
-                            z-index: 10000;
-                            font-size: 2.5rem;
-                            color: #10b981;
-                            animation: arrowPulse 1.5s ease-in-out infinite;
-                            ${{isMobile ? 
-                                `top: ${{rect.top - 40}}px; left: ${{rect.left + (rect.width / 2) - 20}}px;` :
-                                `top: ${{rect.bottom - 10}}px; left: ${{rect.left + (rect.width / 2) - 20}}px;`
-                            }}
-                        `;
-                        
-                        document.body.appendChild(tooltip);
-                        document.body.appendChild(arrow);
-                        
-                        console.log('Onboarding elements created for step', step);
-                    }}
-                }}, 200);
+            // Create the overlay first
+            const overlay = document.createElement('div');
+            overlay.className = 'onboarding-overlay';
+            document.body.appendChild(overlay);
+            console.log('✅ Overlay created');
+            
+            // Define steps
+            const steps = {{
+                1: {{
+                    target: '#date-column',
+                    tooltip: 'Dimmi quando vuoi conquistare le piste! ⛷️',
+                    arrow: '👇',
+                }},
+                2: {{
+                    target: '#level-column', 
+                    tooltip: 'Sei un principiante o un pro della neve? 🏔️🎿',
+                    arrow: '👇',
+                }},
+                3: {{
+                    target: '#profile-column',
+                    tooltip: 'Che tipo di sciatore sei? (puoi anche saltare!) 🤙❄️',
+                    arrow: '👇',
+                }}
+            }};
+            
+            const stepConfig = steps[step];
+            if (!stepConfig) {{
+                console.log('❌ No config for step', step);
+                return;
             }}
             
-            // Execute onboarding
-            createOnboarding();
+            function tryHighlight() {{
+                const targetElement = document.querySelector(stepConfig.target);
+                console.log('🔍 Looking for:', stepConfig.target, 'Found:', targetElement);
+                
+                if (targetElement) {{
+                    // Highlight element
+                    targetElement.classList.add('onboarding-highlight');
+                    
+                    const rect = targetElement.getBoundingClientRect();
+                    const isMobile = window.innerWidth <= 768;
+                    
+                    // Create tooltip
+                    const tooltip = document.createElement('div');
+                    tooltip.className = 'onboarding-tooltip';
+                    tooltip.textContent = stepConfig.tooltip;
+                    
+                    const tooltipLeft = Math.max(10, rect.left + (rect.width / 2) - 150);
+                    const tooltipTop = isMobile ? rect.top - 90 : rect.bottom + 25;
+                    
+                    tooltip.style.left = tooltipLeft + 'px';
+                    tooltip.style.top = tooltipTop + 'px';
+                    
+                    // Create arrow
+                    const arrow = document.createElement('div');
+                    arrow.className = 'onboarding-arrow';
+                    arrow.textContent = stepConfig.arrow;
+                    
+                    const arrowLeft = rect.left + (rect.width / 2) - 20;
+                    const arrowTop = isMobile ? rect.top - 40 : rect.bottom - 5;
+                    
+                    arrow.style.left = arrowLeft + 'px';
+                    arrow.style.top = arrowTop + 'px';
+                    
+                    document.body.appendChild(tooltip);
+                    document.body.appendChild(arrow);
+                    
+                    console.log('✅ Onboarding elements created for step', step);
+                    return true;
+                }}
+                return false;
+            }}
             
-            // Retry after DOM updates
-            setTimeout(createOnboarding, 500);
-            setTimeout(createOnboarding, 1000);
-        }})();
+            // Try multiple times
+            if (!tryHighlight()) {{
+                setTimeout(tryHighlight, 300);
+                setTimeout(tryHighlight, 600);
+                setTimeout(tryHighlight, 1000);
+            }}
+        }}, 100);
         </script>
         """, unsafe_allow_html=True)
     
@@ -2805,25 +2823,30 @@ def main():
     profilo = st.session_state.selected_profile or st.session_state.dock_profile
     profilo_norm = str(profilo).strip().lower()
 
-    # Add restart button after onboarding completion (only show when completed)
+    # Debug info (temporaneo)
     if st.session_state.onboarding_completed:
-        col1, col2, col3 = st.columns([1, 2, 1])
-        with col2:
-            if st.button("🔄 Ricomincia selezione", key="restart_onboarding", use_container_width=True):
-                # Reset onboarding state
-                st.session_state.onboarding_completed = False
-                st.session_state.onboarding_step = 1
-                st.session_state.selected_date = None
-                st.session_state.selected_level = None
-                st.session_state.selected_profile = None
-                if "snowfall_shown" in st.session_state:
-                    del st.session_state.snowfall_shown
-                st.rerun()
+        st.write(f"🔍 DEBUG: data_sel={data_sel}, livello={livello}, profilo={profilo}")
+
+    # STOP HERE se l'onboarding non è completato
+    if not st.session_state.onboarding_completed:
+        st.stop()
+
+    # Add restart button after onboarding completion (only show when completed)
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        if st.button("🔄 Ricomincia selezione", key="restart_onboarding", use_container_width=True):
+            # Reset onboarding state
+            st.session_state.onboarding_completed = False
+            st.session_state.onboarding_step = 1
+            st.session_state.selected_date = None
+            st.session_state.selected_level = None
+            st.session_state.selected_profile = None
+            if "snowfall_shown" in st.session_state:
+                del st.session_state.snowfall_shown
+            st.rerun()
 
     # Plotly theme synchronization
     plotly_template = "plotly_white" if theme == "light" else "plotly_dark"
-
-
 
     # Considera sempre tutte le stazioni
     df_filtered_infonieve = df_infonieve.copy()
