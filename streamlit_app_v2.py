@@ -2692,7 +2692,7 @@ def main():
         st.markdown(f"""
         <div class="onboarding-tooltip-simple" style="
             position: fixed;
-            top: 320px;
+            top: 420px;
             {current_position}
             z-index: 10000;
             background: #1f2937;
