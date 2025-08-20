@@ -2670,7 +2670,7 @@ def main():
         <div class="welcome-message">
             <div class="welcome-content">
                 <h2 class="welcome-title">Benvenuto su Pirenei Ski Recommender! 🎿</h2>
-                <p class="welcome-subtitle">Analizziamo in tempo reale condizioni meteo, apertura piste e qualità della neve per suggerirti la stazione sciistica perfetta per il tuo livello.</p>
+                <p class="welcome-subtitle">Analizziamo condizioni meteo storiche e recenti, apertura piste e qualità della neve per suggerirti la stazione sciistica più adatta al tuo livello e profilo.</p>
                 <p class="welcome-guide">👇 Inizia selezionando le tue preferenze qui sotto</p>
             </div>
         </div>
