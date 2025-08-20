@@ -3500,8 +3500,10 @@ def main():
             prompt = build_llm_prompt(df_kpis, best_name, livello, profilo, data_sel)
             output, usage = generate_overview(prompt, max_tokens=160)
             
-            # Pulizia del contenuto HTML prima del rendering
-            clean_output = clean_html_content(output)
+            # Pulizia diretta e aggressiva del contenuto HTML
+            import re
+            clean_output = re.sub(r'<[^>]*>', '', str(output)).strip()
+            clean_output = re.sub(r'\s+', ' ', clean_output)
             
             st.markdown(
                 render_ai_overview(clean_output, model_name=DEFAULT_LLM_MODEL),
@@ -3690,8 +3692,9 @@ def main():
                 prompt_festaiolo = build_festaiolo_prompt(df_filtered_rec, best_name, livello, data_sel)
                 out, usage = generate_overview(prompt_festaiolo, max_tokens=140)
                 
-                # Pulizia del contenuto HTML
-                clean_out = clean_html_content(out)
+                # Pulizia diretta e aggressiva del contenuto HTML
+                clean_out = re.sub(r'<[^>]*>', '', str(out)).strip()
+                clean_out = re.sub(r'\s+', ' ', clean_out)
                 
                 st.markdown(
                     render_ai_overview(clean_out, model_name=DEFAULT_LLM_MODEL),
@@ -3761,8 +3764,9 @@ def main():
                 prompt_family = build_familiare_prompt(df_filtered_rec, best_name, livello, data_sel)
                 out, usage = generate_overview(prompt_family, max_tokens=140)
                 
-                # Pulizia del contenuto HTML
-                clean_out = clean_html_content(out)
+                # Pulizia diretta e aggressiva del contenuto HTML
+                clean_out = re.sub(r'<[^>]*>', '', str(out)).strip()
+                clean_out = re.sub(r'\s+', ' ', clean_out)
                 
                 st.markdown(
                     render_ai_overview(clean_out, model_name=DEFAULT_LLM_MODEL),
