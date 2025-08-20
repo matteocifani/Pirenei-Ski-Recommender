@@ -14,6 +14,7 @@ from app.data_loader import load_datasets
 from app.prediction import compute_indices, get_historical_data_for_date
 from app.scoring import apply_profile_adjustment, build_ranking
 from app.llm import generate_overview
+from app.config import DEFAULT_LLM_MODEL
 from app.config import SUPPORTED_PROFILES
 
 
@@ -3198,7 +3199,7 @@ def main():
         output = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat."
         
         st.markdown(
-            render_ai_overview(output, model_name=None),
+            render_ai_overview(output, model_name=DEFAULT_LLM_MODEL),
             unsafe_allow_html=True
         )
 
@@ -3364,7 +3365,7 @@ def main():
             st.markdown('<h4 class="section-subtitle">🤖 AI Overview – Festaiolo</h4>', unsafe_allow_html=True)
             out = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat."
             st.markdown(
-                render_ai_overview(out, model_name=None),
+                render_ai_overview(out, model_name=DEFAULT_LLM_MODEL),
                 unsafe_allow_html=True
             )
 
@@ -3430,7 +3431,7 @@ def main():
                 # out, usage = generate_overview(prompt_family, max_tokens=140)
                 out = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat."
                 st.markdown(
-                    render_ai_overview(out, model_name=None),
+                    render_ai_overview(out, model_name=DEFAULT_LLM_MODEL),
                     unsafe_allow_html=True
                 )
             except Exception:
@@ -3639,7 +3640,7 @@ def main():
                 # out, usage = generate_overview(prompt_f, max_tokens=140)
                 out = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat."
                 st.markdown(
-                    render_ai_overview(out, model_name=None),
+                    render_ai_overview(out, model_name=DEFAULT_LLM_MODEL),
                     unsafe_allow_html=True
                 )
             except Exception:
