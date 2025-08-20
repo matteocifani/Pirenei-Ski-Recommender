@@ -324,48 +324,59 @@ html, body {
     width: 100%;
 }
 
-/* Hero Section - Modern Station Recommendation */
+/* Hero Section - Complete Redesign */
 .hero-section {
-    background: var(--bg-card);
-    border: 1px solid var(--border-primary);
+    background: linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%);
+    border: 2px solid rgba(16, 185, 129, 0.3);
     border-radius: var(--radius-3xl);
-    padding: var(--space-32) var(--space-32);
+    padding: var(--space-48) var(--space-40);
     text-align: center;
     position: relative;
     overflow: hidden;
-    box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.2), 0 0 30px rgba(16, 185, 129, 0.15);
-    transition: all var(--transition-normal);
+    box-shadow: 
+        0 0 0 1px rgba(16, 185, 129, 0.2),
+        0 0 40px rgba(16, 185, 129, 0.25),
+        0 0 80px rgba(16, 185, 129, 0.15),
+        0 25px 50px -12px rgba(0, 0, 0, 0.6);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     width: 100%;
+    backdrop-filter: blur(20px);
 }
 
 .hero-section::before {
     content: '';
     position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 400px;
-    height: 400px;
-    background: radial-gradient(circle, rgba(139, 92, 246, 0.05) 0%, rgba(139, 92, 246, 0.02) 40%, transparent 70%);
-    border-radius: 50%;
-    animation: pulseGlow 4s ease-in-out infinite;
-    z-index: 0;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: conic-gradient(from 0deg, transparent, rgba(16, 185, 129, 0.1), transparent, rgba(6, 182, 212, 0.1), transparent);
+    animation: heroRotate 8s linear infinite;
+    z-index: -1;
 }
 
-@keyframes pulseGlow {
-    0%, 100% { 
-        transform: translate(-50%, -50%) scale(1);
-        opacity: 0.3;
-    }
-    50% { 
-        transform: translate(-50%, -50%) scale(1.1);
-    opacity: 0.6;
-    }
+.hero-section::after {
+    content: '';
+    position: absolute;
+    inset: 2px;
+    background: linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%);
+    border-radius: calc(var(--radius-3xl) - 2px);
+    z-index: -1;
+}
+
+@keyframes heroRotate {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
 
 .hero-section:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-xl);
+    transform: translateY(-8px) scale(1.03);
+    box-shadow: 
+        0 0 0 1px rgba(16, 185, 129, 0.4),
+        0 0 60px rgba(16, 185, 129, 0.4),
+        0 0 120px rgba(16, 185, 129, 0.2),
+        0 40px 80px -20px rgba(0, 0, 0, 0.8);
+    border-color: rgba(16, 185, 129, 0.6);
 }
 
 .hero-frosted-label {
@@ -425,13 +436,16 @@ html, body {
     font-family: 'Inter', sans-serif;
     font-weight: 900;
     font-size: clamp(2.5rem, 6vw, 4rem);
-    margin: 0 0 var(--space-8) 0;
+    margin: 0 0 var(--space-16) 0;
     letter-spacing: -0.02em;
     line-height: 0.9;
-    color: var(--text-primary);
+    background: linear-gradient(135deg, #ffffff 0%, #10b981 50%, #06b6d4 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
     position: relative;
-    z-index: 1;
-    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+    z-index: 2;
+    filter: drop-shadow(0 0 20px rgba(16, 185, 129, 0.4));
 }
 
 @keyframes gradientShift {
@@ -454,14 +468,18 @@ html, body {
 
 .hero-subtitle {
     font-family: 'Inter', sans-serif;
-    font-weight: 500;
-    font-size: 1.125rem;
-    color: var(--text-secondary);
+    font-weight: 600;
+    font-size: 1.3rem;
+    background: linear-gradient(135deg, #e2e8f0 0%, #94a3b8 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
     margin: 0;
-    letter-spacing: -0.01em;
+    letter-spacing: 0.01em;
     line-height: 1.4;
     position: relative;
-    z-index: 1;
+    z-index: 2;
+    opacity: 0.95;
 }
 
 /* KPI Cards - Modern Design */
@@ -823,47 +841,51 @@ section[data-testid="stSidebar"] {
     align-items: center !important;
 }
 
-/* Vertical alignment for selector columns */
-#selectors-container {
-    display: grid !important;
-    grid-template-columns: 1fr 1fr 1fr !important;
-    gap: 20px !important;
-    align-items: start !important;
-}
-
-#selectors-container > div {
-    display: grid !important;
-    grid-template-rows: 32px 60px auto !important;
-    align-items: start !important;
-    justify-items: center !important;
-    gap: 12px !important;
-}
-
-/* Center input widgets */
-#selectors-container .stDateInput,
-#selectors-container .stSelectbox {
+/* FORCED Alignment - Override Streamlit */
+div[data-testid="column"]:has(.stDateInput),
+div[data-testid="column"]:has(.stSelectbox) {
     display: flex !important;
     flex-direction: column !important;
     align-items: center !important;
+    justify-content: flex-start !important;
+    min-height: 150px !important;
+}
+
+/* Force labels to be the same height */
+div[data-testid="column"] .stDateInput > label,
+div[data-testid="column"] .stSelectbox > label {
+    height: 40px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin-bottom: 16px !important;
+    font-size: 22px !important;
+    font-weight: 700 !important;
+    width: 100% !important;
+    text-align: center !important;
+}
+
+/* Force widgets to be the same height */
+div[data-testid="column"] .stDateInput,
+div[data-testid="column"] .stSelectbox {
     width: 100% !important;
     height: 60px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
     justify-content: center !important;
 }
 
-/* Center input fields */
-#selectors-container .stDateInput > div,
-#selectors-container .stSelectbox > div {
+/* Force input containers */
+div[data-testid="column"] .stDateInput > div,
+div[data-testid="column"] .stSelectbox > div {
+    width: 100% !important;
     display: flex !important;
     justify-content: center !important;
-    width: 100% !important;
-    height: 100% !important;
     align-items: center !important;
 }
 
-/* Tooltip container alignment */
-#tooltip-container {
-    align-items: flex-start !important;
-}
+/* Remove old conflicting rules - using new forced alignment above */
 
 .onboarding-selectors {
     display: flex;
