@@ -35,6 +35,48 @@ def render_kpi(label, value, suffix=None, icon="📊"):
     </div>"""
 
 
+def parse_model_name(model_name: str | None) -> str:
+    """Converte il nome del modello in formato user-friendly.
+    
+    Esempi:
+    - mistralai/mistral-nemo:free -> Mistral AI (Nemo Free)
+    - openai/gpt-4 -> OpenAI (GPT-4)
+    - None -> AI
+    """
+    if not model_name or not str(model_name).strip():
+        return "AI"
+    
+    model_str = str(model_name).strip()
+    
+    # Mapping dei provider
+    provider_map = {
+        "mistralai": "Mistral AI",
+        "openai": "OpenAI", 
+        "anthropic": "Anthropic",
+        "google": "Google",
+        "meta-llama": "Meta",
+        "microsoft": "Microsoft"
+    }
+    
+    try:
+        # Parse formato: provider/model:variant
+        if "/" in model_str:
+            provider_part, model_part = model_str.split("/", 1)
+            provider_name = provider_map.get(provider_part, provider_part.title())
+            
+            if ":" in model_part:
+                model_base, variant = model_part.split(":", 1)
+                model_display = model_base.replace("-", " ").title()
+                variant_display = variant.replace("-", " ").title()
+                return f"{provider_name} ({model_display} {variant_display})"
+            else:
+                model_display = model_part.replace("-", " ").title()
+                return f"{provider_name} ({model_display})"
+        else:
+            return model_str.title()
+    except:
+        return model_str
+
 def render_ai_overview(content, note=None, model_name: str | None = None):
     """Rende una card AI overview moderna con effetto glow.
 
@@ -42,7 +84,9 @@ def render_ai_overview(content, note=None, model_name: str | None = None):
     Se non fornito, viene mostrato semplicemente "Powered by AI".
     """
     note_html = f'<div class="mb-16"><span class="stInfo">ℹ️ {note}</span></div>' if note else ""
-    badge_text = f"Powered by {model_name}" if (model_name and str(model_name).strip()) else "Powered by AI"
+    parsed_model = parse_model_name(model_name)
+    badge_text = f"Powered by {parsed_model}"
+    
     return f"""
     <div class="ai-overview-section">
         <div class="ai-header">
@@ -284,7 +328,7 @@ html, body {
     margin-bottom: var(--space-64);
 }
 
-/* Animated Background Particles */
+/* Animated Background Particles - Più sfumato */
 .app-header::before {
     content: '';
     position: absolute;
@@ -293,11 +337,12 @@ html, body {
     right: 0;
     bottom: 0;
     background-image: 
-        radial-gradient(circle at 20% 50%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
-        radial-gradient(circle at 80% 20%, rgba(59, 130, 246, 0.08) 0%, transparent 50%),
-        radial-gradient(circle at 40% 80%, rgba(16, 185, 129, 0.06) 0%, transparent 50%);
-    animation: particleFloat 20s ease-in-out infinite;
+        radial-gradient(circle at 20% 50%, rgba(139, 92, 246, 0.04) 0%, transparent 70%),
+        radial-gradient(circle at 80% 20%, rgba(59, 130, 246, 0.03) 0%, transparent 70%),
+        radial-gradient(circle at 40% 80%, rgba(16, 185, 129, 0.025) 0%, transparent 70%);
+    animation: particleFloat 25s ease-in-out infinite;
     z-index: 1;
+    filter: blur(1px);
 }
 
 /* Floating orbs animation */
@@ -743,7 +788,8 @@ html, body {
     flex-direction: column;
     align-items: flex-start;
     justify-content: center;
-    gap: var(--space-4);
+    gap: var(--space-2);
+    width: 100%;
 }
 
 .ai-title {
@@ -1268,12 +1314,10 @@ div[data-testid="column"] .stSelectbox > div {
     font-family: 'Inter', sans-serif;
     font-weight: 700;
     font-size: 1.8rem;
-    background: linear-gradient(135deg, #f87171 0%, #ef4444 50%, #dc2626 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: #f87171;
     margin: 0 0 var(--space-16) 0;
     filter: drop-shadow(0 0 10px rgba(248, 113, 113, 0.3));
+    text-shadow: 0 0 20px rgba(248, 113, 113, 0.4);
 }
 
 .no-data-subtitle {
@@ -1293,13 +1337,11 @@ div[data-testid="column"] .stSelectbox > div {
     font-family: 'Inter', sans-serif;
     font-weight: 600;
     font-size: 1.1rem;
-    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: #fbbf24;
     margin: 0;
     opacity: 0.9;
     filter: drop-shadow(0 0 8px rgba(251, 191, 36, 0.3));
+    text-shadow: 0 0 15px rgba(251, 191, 36, 0.4);
     animation: welcomeBounce 2s ease-in-out infinite;
 }
 
@@ -2868,7 +2910,7 @@ def main():
         <div class="welcome-message">
             <div class="welcome-content">
                 <h2 class="welcome-title">Benvenuto su Pirenei Ski Recommender! 🎿</h2>
-                <p class="welcome-subtitle">Analizziamo condizioni meteo storiche e recenti, apertura piste e qualità della neve per suggerirti la stazione sciistica più adatta al tuo livello e profilo.</p>
+                <p class="welcome-subtitle">Analizziamo condizioni meteo storiche, apertura piste e qualità della neve per suggerirti la stazione sciistica più adatta al tuo livello e profilo.</p>
                 <p class="welcome-guide">👇 Inizia selezionando le tue preferenze qui sotto</p>
             </div>
         </div>
