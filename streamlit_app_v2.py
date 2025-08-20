@@ -328,36 +328,45 @@ html, body {
     margin-bottom: var(--space-64);
 }
 
-/* Animated Background Particles - Più sfumato */
+/* Organic Background Movement - Ultra sottile */
 .app-header::before {
     content: '';
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-image: 
-        radial-gradient(circle at 20% 50%, rgba(139, 92, 246, 0.04) 0%, rgba(139, 92, 246, 0.02) 40%, rgba(139, 92, 246, 0.005) 70%, transparent 85%),
-        radial-gradient(circle at 80% 20%, rgba(59, 130, 246, 0.03) 0%, rgba(59, 130, 246, 0.015) 40%, rgba(59, 130, 246, 0.003) 70%, transparent 85%),
-        radial-gradient(circle at 40% 80%, rgba(16, 185, 129, 0.025) 0%, rgba(16, 185, 129, 0.012) 40%, rgba(16, 185, 129, 0.002) 70%, transparent 85%);
-    animation: particleFloat 25s ease-in-out infinite;
+    top: -20%;
+    left: -20%;
+    right: -20%;
+    bottom: -20%;
+    background: 
+        radial-gradient(ellipse 80% 60% at 30% 40%, rgba(139, 92, 246, 0.015) 0%, transparent 60%),
+        radial-gradient(ellipse 70% 80% at 70% 60%, rgba(6, 182, 212, 0.012) 0%, transparent 65%),
+        radial-gradient(ellipse 90% 50% at 50% 80%, rgba(245, 158, 11, 0.008) 0%, transparent 70%),
+        radial-gradient(ellipse 60% 90% at 20% 20%, rgba(239, 246, 255, 0.005) 0%, transparent 75%);
+    animation: organicFlow 30s ease-in-out infinite;
     z-index: 1;
-    filter: blur(1px);
+    filter: blur(2px);
 }
 
-/* Floating orbs animation */
-@keyframes particleFloat {
-    0%, 100% { 
-        transform: translateY(0px) rotate(0deg);
+/* Organic flowing animation - no geometric shapes */
+@keyframes organicFlow {
+    0% { 
+        transform: translate(0%, 0%) scale(1);
+        opacity: 0.3;
+    }
+    25% { 
+        transform: translate(2%, -1%) scale(1.05);
+        opacity: 0.5;
+    }
+    50% { 
+        transform: translate(-1%, 2%) scale(0.98);
+        opacity: 0.4;
+    }
+    75% { 
+        transform: translate(-2%, -1%) scale(1.02);
         opacity: 0.6;
     }
-    33% { 
-        transform: translateY(-20px) rotate(120deg);
-        opacity: 0.8;
-    }
-    66% { 
-        transform: translateY(-10px) rotate(240deg);
-        opacity: 0.4;
+    100% { 
+        transform: translate(0%, 0%) scale(1);
+        opacity: 0.3;
     }
 }
 
