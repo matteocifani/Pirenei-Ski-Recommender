@@ -3505,10 +3505,11 @@ def main():
             clean_output = re.sub(r'<[^>]*>', '', str(output)).strip()
             clean_output = re.sub(r'\s+', ' ', clean_output)
             
-            st.markdown(
-                render_ai_overview(clean_output, model_name=DEFAULT_LLM_MODEL),
-                unsafe_allow_html=True
-            )
+            # AI Overview semplificato senza HTML complesso
+            with st.container():
+                st.markdown("### ✨ AI Overview")
+                st.info(f"🤖 Powered by {parse_model_name(DEFAULT_LLM_MODEL)}")
+                st.write(clean_output)
         except Exception as e:
             st.error(f"Errore nell'AI Overview: {e}")
 
