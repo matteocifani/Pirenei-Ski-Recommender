@@ -4234,7 +4234,7 @@ def main():
     if profilo_norm == "familiare":
         # Divider e titolo sezione profilo
         st.markdown('<hr class="profile-divider">', unsafe_allow_html=True)
-        st.markdown('<h2 class="profile-main-title">👨‍👩‍👧‍👦 Sezione Profilo: Familiare</h2>', unsafe_allow_html=True)
+        st.markdown('<h2 class="profile-main-title">👶 Sezione Profilo: Familiare</h2>', unsafe_allow_html=True)
         
         # AI Overview per profilo familiare (PRIMA dei grafici)
         try:
