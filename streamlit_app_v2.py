@@ -821,12 +821,20 @@ section[data-testid="stSidebar"] {
 }
 
 /* Vertical alignment for selector columns */
+#selectors-container {
+    display: flex !important;
+    align-items: flex-start !important;
+    justify-content: space-between !important;
+    gap: 20px !important;
+}
+
 #selectors-container > div {
     display: flex !important;
     flex-direction: column !important;
     align-items: center !important;
     justify-content: flex-start !important;
     min-height: 120px !important;
+    flex: 1 !important;
 }
 
 /* Center input widgets */
@@ -844,6 +852,12 @@ section[data-testid="stSidebar"] {
     display: flex !important;
     justify-content: center !important;
     width: 100% !important;
+    margin-bottom: 15px !important;
+}
+
+/* Tooltip container alignment */
+#tooltip-container {
+    align-items: flex-start !important;
 }
 
 .onboarding-selectors {
@@ -2726,14 +2740,14 @@ def main():
         current_message = messages.get(step, f"Step {step}")
         current_justify = tooltip_justify.get(step, "center")
         
-        # Show tooltip in normal document flow - allineato con i selettori
+        # Show tooltip in normal document flow - allineato con i selettori  
         st.markdown(f"""
-        <div class="stSelectbox" style="
+        <div id="tooltip-container" style="
             display: flex;
             justify-content: {current_justify};
             width: 100%;
-            margin: 8px 0 20px 0;
-            padding: 0;
+            margin: 15px 0 25px 0;
+            padding: 0 20px;
         ">
             <div class="onboarding-tooltip-flow tooltip-step-{step}" style="
                 background: #1f2937;
@@ -2756,34 +2770,39 @@ def main():
                 position: relative;
                 backdrop-filter: blur(10px);
             ">
-                <div class="tooltip-arrow" style="
-                    position: absolute;
-                    top: -12px;
-                    left: 50%;
-                    transform: translateX(-50%);
-                    width: 0;
-                    height: 0;
-                    border-left: 12px solid transparent;
-                    border-right: 12px solid transparent;
-                    border-bottom: 12px solid #10b981;
-                    filter: drop-shadow(0 -2px 4px rgba(16, 185, 129, 0.3));
-                "></div>
-                
-                <div class="tooltip-arrow-inner" style="
-                    position: absolute;
-                    top: -9px;
-                    left: 50%;
-                    transform: translateX(-50%);
-                    width: 0;
-                    height: 0;
-                    border-left: 10px solid transparent;
-                    border-right: 10px solid transparent;
-                    border-bottom: 10px solid #1f2937;
-                "></div>
-                
                 {current_message}
             </div>
         </div>
+        
+        <!-- Freccia separata con CSS -->
+        <style>
+        .tooltip-step-{step}::before {{
+            content: '';
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 12px solid transparent;
+            border-right: 12px solid transparent;
+            border-bottom: 12px solid #10b981;
+            filter: drop-shadow(0 -2px 4px rgba(16, 185, 129, 0.3));
+        }}
+        
+        .tooltip-step-{step}::after {{
+            content: '';
+            position: absolute;
+            top: -9px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-bottom: 10px solid #1f2937;
+        }}
+        </style>
         
         <style>
         @keyframes tooltipSlideDown {{
