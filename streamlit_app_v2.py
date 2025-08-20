@@ -2756,9 +2756,6 @@ def main():
                 position: relative;
                 backdrop-filter: blur(10px);
             ">
-                {current_message}
-                
-                <!-- Freccia che punta al selettore sopra -->
                 <div class="tooltip-arrow" style="
                     position: absolute;
                     top: -12px;
@@ -2772,7 +2769,6 @@ def main():
                     filter: drop-shadow(0 -2px 4px rgba(16, 185, 129, 0.3));
                 "></div>
                 
-                <!-- Bordo interno della freccia -->
                 <div class="tooltip-arrow-inner" style="
                     position: absolute;
                     top: -9px;
@@ -2784,6 +2780,8 @@ def main():
                     border-right: 10px solid transparent;
                     border-bottom: 10px solid #1f2937;
                 "></div>
+                
+                {current_message}
             </div>
         </div>
         
