@@ -794,8 +794,8 @@ html, body {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    justify-content: center;
-    gap: var(--space-2);
+    justify-content: flex-start;
+    gap: var(--space-4);
     width: 100%;
 }
 
@@ -820,6 +820,7 @@ html, body {
     border: 1px solid var(--purple-800);
     margin: 0;
     align-self: flex-start;
+    margin-top: var(--space-2);
 }
 
 .ai-overview-content {
