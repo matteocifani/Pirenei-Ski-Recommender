@@ -48,7 +48,7 @@ def render_ai_overview(content, note=None):
         </div>
         {note_html}
         <div class="ai-overview-content">
-            {content}
+        {content}
         </div>
     </div>"""
 
@@ -352,7 +352,7 @@ html, body {
     }
     50% { 
         transform: translate(-50%, -50%) scale(1.1);
-        opacity: 0.6;
+    opacity: 0.6;
     }
 }
 
@@ -848,7 +848,7 @@ section[data-testid="stSidebar"] {
 /* Onboarding Arrow */
 .onboarding-arrow {
     position: absolute;
-    font-size: 2rem;
+        font-size: 2rem;
     color: var(--emerald-400);
     animation: arrowPulse 2s infinite;
     z-index: 9999;
@@ -886,7 +886,7 @@ section[data-testid="stSidebar"] {
 
 /* Snow Effect */
 .snowflake {
-    position: fixed;
+        position: fixed;
     top: -10px;
     color: #fff;
     user-select: none;
@@ -1985,7 +1985,7 @@ section[data-testid="stSidebar"] {
     
     .podium-container {
         flex-direction: column;
-        align-items: center;
+    align-items: center;
         height: auto;
         gap: var(--space-20);
         padding: var(--space-20);
@@ -2544,6 +2544,18 @@ def main():
     if "selected_profile" not in st.session_state:
         st.session_state.selected_profile = None
 
+    # Show welcome message FIRST if onboarding not completed
+    if not st.session_state.onboarding_completed:
+        st.markdown("""
+        <div class="welcome-message">
+            <div class="welcome-content">
+                <h2 class="welcome-title">Benvenuto su Pirenei Ski Recommender! 🎿</h2>
+                <p class="welcome-subtitle">Ti aiuteremo a trovare la stazione sciistica perfetta per te.</p>
+                <p class="welcome-guide">👇 Inizia selezionando le tue preferenze qui sotto</p>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
     # Onboarding Controls Section
     st.markdown("""
     <div class="onboarding-container">
@@ -2634,83 +2646,108 @@ def main():
         step = st.session_state.onboarding_step
         st.markdown(f"""
         <script>
-        // Onboarding System
-        document.addEventListener('DOMContentLoaded', function() {{
+        (function() {{
+            // Clean up existing onboarding elements
+            document.querySelectorAll('.onboarding-overlay, .onboarding-tooltip, .onboarding-arrow').forEach(el => el.remove());
+            document.querySelectorAll('.onboarding-highlight').forEach(el => el.classList.remove('onboarding-highlight'));
+            
             const step = {step};
             
-            // Create overlay
+            // Create overlay immediately
             const overlay = document.createElement('div');
             overlay.className = 'onboarding-overlay';
+            overlay.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100vw;
+                height: 100vh;
+                background: rgba(15, 23, 42, 0.85);
+                z-index: 9998;
+                pointer-events: none;
+            `;
             document.body.appendChild(overlay);
             
             // Define step configurations
             const steps = {{
                 1: {{
-                    target: 'div[data-testid="column"]:nth-child(1)',
                     tooltip: 'Dimmi quando vuoi conquistare le piste! ⛷️✨',
-                    arrow: '↗️',
-                    position: 'bottom'
+                    arrow: '👇',
                 }},
                 2: {{
-                    target: 'div[data-testid="column"]:nth-child(2)',
                     tooltip: 'Sei un principiante o un pro della neve? 🏔️🎿',
-                    arrow: '↗️',
-                    position: 'bottom'
+                    arrow: '👇',
                 }},
                 3: {{
-                    target: 'div[data-testid="column"]:nth-child(3)',
                     tooltip: 'Che tipo di sciatore sei? (puoi anche saltare!) 🤙❄️',
-                    arrow: '↗️',
-                    position: 'bottom'
+                    arrow: '👇',
                 }}
             }};
             
-            if (steps[step]) {{
-                setTimeout(() => {{
-                    const target = document.querySelector(steps[step].target);
-                    if (target) {{
-                        // Highlight element
-                        target.classList.add('onboarding-highlight');
-                        
-                        // Create tooltip
-                        const tooltip = document.createElement('div');
-                        tooltip.className = 'onboarding-tooltip';
-                        tooltip.innerHTML = `<p class="tooltip-text">${{steps[step].tooltip}}</p>`;
-                        
-                        // Position tooltip responsively
-                        const rect = target.getBoundingClientRect();
-                        const isMobile = window.innerWidth <= 768;
-                        
-                        tooltip.style.position = 'fixed';
-                        tooltip.style.left = Math.max(10, rect.left + (rect.width / 2) - 125) + 'px';
-                        
-                        if (isMobile) {{
-                            // Mobile: tooltip above the element
-                            tooltip.style.top = rect.top - 80 + 'px';
-                        }} else {{
-                            // Desktop: tooltip below the element
-                            tooltip.style.top = rect.bottom + 20 + 'px';
+            function showOnboarding() {{
+                if (!steps[step]) return;
+                
+                // Find the target column
+                const columns = document.querySelectorAll('div[data-testid="column"]');
+                const targetColumn = columns[step - 1];
+                
+                if (targetColumn) {{
+                    // Highlight element
+                    targetColumn.style.position = 'relative';
+                    targetColumn.style.zIndex = '9999';
+                    targetColumn.classList.add('onboarding-highlight');
+                    
+                    // Create tooltip
+                    const tooltip = document.createElement('div');
+                    tooltip.className = 'onboarding-tooltip';
+                    tooltip.innerHTML = `<p class="tooltip-text">${{steps[step].tooltip}}</p>`;
+                    
+                    // Position tooltip
+                    const rect = targetColumn.getBoundingClientRect();
+                    const isMobile = window.innerWidth <= 768;
+                    
+                    tooltip.style.cssText = `
+                        position: fixed;
+                        z-index: 10000;
+                        background: var(--bg-card);
+                        border: 1px solid var(--emerald-400);
+                        border-radius: var(--radius-2xl);
+                        padding: var(--space-16) var(--space-20);
+                        box-shadow: var(--shadow-xl);
+                        min-width: 250px;
+                        max-width: 300px;
+                        animation: tooltipFadeIn 0.3s ease-out;
+                        ${{isMobile ? 
+                            `top: ${{rect.top - 100}}px; left: ${{Math.max(10, rect.left + (rect.width / 2) - 125)}}px;` :
+                            `top: ${{rect.bottom + 20}}px; left: ${{Math.max(10, rect.left + (rect.width / 2) - 125)}}px;`
                         }}
-                        
-                        // Create arrow
-                        const arrow = document.createElement('div');
-                        arrow.className = 'onboarding-arrow';
-                        arrow.textContent = steps[step].arrow;
-                        arrow.style.position = 'fixed';
-                        arrow.style.left = rect.left + (rect.width / 2) - 15 + 'px';
-                        
-                        if (isMobile) {{
-                            arrow.style.top = rect.top - 15 + 'px';
-                        }} else {{
-                            arrow.style.top = rect.bottom - 10 + 'px';
+                    `;
+                    
+                    // Create arrow
+                    const arrow = document.createElement('div');
+                    arrow.className = 'onboarding-arrow';
+                    arrow.textContent = steps[step].arrow;
+                    arrow.style.cssText = `
+                        position: fixed;
+                        z-index: 10000;
+                        font-size: 2rem;
+                        animation: arrowPulse 1.5s ease-in-out infinite;
+                        ${{isMobile ? 
+                            `top: ${{rect.top - 50}}px; left: ${{rect.left + (rect.width / 2) - 20}}px;` :
+                            `top: ${{rect.bottom - 10}}px; left: ${{rect.left + (rect.width / 2) - 20}}px;`
                         }}
-                        
-                        document.body.appendChild(tooltip);
-                        document.body.appendChild(arrow);
-                    }}
-                }}, 500);
+                    `;
+                    
+                    document.body.appendChild(tooltip);
+                    document.body.appendChild(arrow);
+                }}
             }}
-        }});
+            
+            // Run immediately and also after a delay
+            showOnboarding();
+            setTimeout(showOnboarding, 100);
+            setTimeout(showOnboarding, 500);
+        }})();
         </script>
         """, unsafe_allow_html=True)
     
@@ -2756,19 +2793,8 @@ def main():
     profilo = st.session_state.selected_profile or st.session_state.dock_profile
     profilo_norm = str(profilo).strip().lower()
 
-    # Show welcome message if onboarding not completed
-    if not st.session_state.onboarding_completed:
-        st.markdown("""
-        <div class="welcome-message">
-            <div class="welcome-content">
-                <h2 class="welcome-title">Benvenuto su Pirenei Ski Recommender! 🎿</h2>
-                <p class="welcome-subtitle">Ti aiuteremo a trovare la stazione sciistica perfetta per te.</p>
-                <p class="welcome-guide">👆 Inizia selezionando le tue preferenze qui sopra</p>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-    else:
-        # Add restart button after onboarding completion
+    # Add restart button after onboarding completion (only show when completed)
+    if st.session_state.onboarding_completed:
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
             if st.button("🔄 Ricomincia selezione", key="restart_onboarding", use_container_width=True):
