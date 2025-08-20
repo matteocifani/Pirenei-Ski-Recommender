@@ -322,14 +322,13 @@ html, body {
     background: var(--bg-card);
     border: 1px solid var(--border-primary);
     border-radius: var(--radius-3xl);
-    padding: var(--space-24) var(--space-32);
-    margin: var(--space-20) auto var(--space-32) auto;
+    padding: var(--space-48) var(--space-32) var(--space-32) var(--space-32);
+    margin: var(--space-20) 0 var(--space-32) 0;
     text-align: center;
     position: relative;
     overflow: hidden;
     box-shadow: var(--shadow-lg);
     transition: all var(--transition-normal);
-    max-width: 800px;
     width: 100%;
 }
 
@@ -363,6 +362,37 @@ html, body {
     box-shadow: var(--shadow-xl);
 }
 
+.hero-frosted-label {
+    position: absolute;
+    top: -16px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(15, 23, 42, 0.8);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    border-radius: var(--radius-full);
+    padding: var(--space-8) var(--space-20);
+    display: flex;
+    align-items: center;
+    gap: var(--space-8);
+    font-family: 'Inter', sans-serif;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--emerald-300);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    z-index: 10;
+}
+
+.frosted-icon {
+    font-size: 1rem;
+    color: var(--emerald-400);
+}
+
+.frosted-text {
+    color: var(--emerald-300);
+}
+
 .hero-badge {
     display: inline-flex;
     align-items: center;
@@ -389,7 +419,7 @@ html, body {
     font-family: 'Inter', sans-serif;
     font-weight: 900;
     font-size: clamp(2.5rem, 6vw, 4rem);
-    margin: 0 0 var(--space-8) 0;
+    margin: var(--space-16) 0 var(--space-8) 0;
     letter-spacing: -0.02em;
     line-height: 0.9;
     color: var(--text-primary);
@@ -2687,108 +2717,116 @@ def main():
         }}
         </style>
         <script>
-        setTimeout(function() {{
-            // Clean up existing elements
+        function showOnboarding() {{
+            // Clean up first
             document.querySelectorAll('.onboarding-overlay, .onboarding-tooltip, .onboarding-arrow').forEach(el => el.remove());
             document.querySelectorAll('.onboarding-highlight').forEach(el => {{
                 el.classList.remove('onboarding-highlight');
-                el.style.removeProperty('position');
-                el.style.removeProperty('z-index');
-                el.style.removeProperty('background');
-                el.style.removeProperty('border-radius');
-                el.style.removeProperty('padding');
-                el.style.removeProperty('border');
-                el.style.removeProperty('box-shadow');
+                el.style.cssText = '';
             }});
             
             const step = {step};
             console.log('🎯 Onboarding step:', step);
             
-            // Create the overlay first
+            // Create overlay
             const overlay = document.createElement('div');
             overlay.className = 'onboarding-overlay';
             document.body.appendChild(overlay);
             console.log('✅ Overlay created');
             
-            // Define steps (using column index instead of IDs)
-            const steps = {{
-                1: {{
-                    tooltip: 'Dimmi quando vuoi conquistare le piste! ⛷️',
-                    arrow: '👇',
-                }},
-                2: {{
-                    tooltip: 'Sei un principiante o un pro della neve? 🏔️🎿',
-                    arrow: '👇',
-                }},
-                3: {{
-                    tooltip: 'Che tipo di sciatore sei? (puoi anche saltare!) 🤙❄️',
-                    arrow: '👇',
-                }}
-            }};
-            
-            const stepConfig = steps[step];
-            if (!stepConfig) {{
-                console.log('❌ No config for step', step);
+            // Find container with selectors
+            const container = document.querySelector('#selectors-container');
+            if (!container) {{
+                console.log('❌ Selectors container not found');
                 return;
             }}
             
-            function tryHighlight() {{
-                // Find all columns and target the right one
-                const columns = document.querySelectorAll('div[data-testid="column"]');
-                const targetElement = columns[step - 1]; // step 1 = index 0
-                console.log('🔍 Looking for column index:', step - 1, 'Found:', targetElement, 'Total columns:', columns.length);
-                
-                if (targetElement) {{
-                    // Highlight element
-                    targetElement.classList.add('onboarding-highlight');
-                    
-                    const rect = targetElement.getBoundingClientRect();
-                    const isMobile = window.innerWidth <= 768;
-                    
-                    // Create tooltip
-                    const tooltip = document.createElement('div');
-                    tooltip.className = 'onboarding-tooltip';
-                    tooltip.textContent = stepConfig.tooltip;
-                    tooltip.style.display = 'block';
-                    tooltip.style.visibility = 'visible';
-                    tooltip.style.opacity = '1';
-                    
-                    const tooltipLeft = Math.max(10, rect.left + (rect.width / 2) - 150);
-                    const tooltipTop = isMobile ? rect.top - 90 : rect.bottom + 25;
-                    
-                    tooltip.style.left = tooltipLeft + 'px';
-                    tooltip.style.top = tooltipTop + 'px';
-                    
-                    // Create arrow
-                    const arrow = document.createElement('div');
-                    arrow.className = 'onboarding-arrow';
-                    arrow.textContent = stepConfig.arrow;
-                    arrow.style.display = 'block';
-                    arrow.style.visibility = 'visible';
-                    arrow.style.opacity = '1';
-                    
-                    const arrowLeft = rect.left + (rect.width / 2) - 20;
-                    const arrowTop = isMobile ? rect.top - 40 : rect.bottom - 5;
-                    
-                    arrow.style.left = arrowLeft + 'px';
-                    arrow.style.top = arrowTop + 'px';
-                    
-                    document.body.appendChild(tooltip);
-                    document.body.appendChild(arrow);
-                    
-                    console.log('✅ Onboarding elements created for step', step);
-                    return true;
-                }}
-                return false;
+            const columns = container.querySelectorAll('div[data-testid="column"]');
+            console.log('📋 Found columns:', columns.length);
+            
+            if (columns.length === 0) {{
+                console.log('❌ No columns found in container');
+                return;
             }}
             
-            // Try multiple times
-            if (!tryHighlight()) {{
-                setTimeout(tryHighlight, 300);
-                setTimeout(tryHighlight, 600);
-                setTimeout(tryHighlight, 1000);
+            const targetColumn = columns[step - 1];
+            if (!targetColumn) {{
+                console.log('❌ Target column not found for step', step);
+                return;
             }}
-        }}, 100);
+            
+            console.log('✅ Target column found:', targetColumn);
+            
+            // Highlight the column
+            targetColumn.classList.add('onboarding-highlight');
+            
+            const rect = targetColumn.getBoundingClientRect();
+            const isMobile = window.innerWidth <= 768;
+            
+            // Tooltip messages
+            const messages = {{
+                1: 'Dimmi quando vuoi conquistare le piste! ⛷️',
+                2: 'Sei un principiante o un pro della neve? 🏔️🎿',
+                3: 'Che tipo di sciatore sei? (puoi anche saltare!) 🤙❄️'
+            }};
+            
+            // Create and show tooltip
+            const tooltip = document.createElement('div');
+            tooltip.className = 'onboarding-tooltip';
+            tooltip.innerHTML = messages[step] || 'Step ' + step;
+            tooltip.style.cssText = `
+                position: fixed !important;
+                z-index: 1000001 !important;
+                background: #1f2937 !important;
+                border: 2px solid #10b981 !important;
+                border-radius: 16px !important;
+                padding: 20px 24px !important;
+                color: #f8fafc !important;
+                font-family: Inter, sans-serif !important;
+                font-size: 18px !important;
+                font-weight: 600 !important;
+                box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8) !important;
+                min-width: 300px !important;
+                max-width: 350px !important;
+                display: block !important;
+                visibility: visible !important;
+                opacity: 1 !important;
+                left: ${{Math.max(10, rect.left + (rect.width / 2) - 175)}}px !important;
+                top: ${{isMobile ? rect.top - 90 : rect.bottom + 30}}px !important;
+            `;
+            
+            // Create and show arrow
+            const arrow = document.createElement('div');
+            arrow.className = 'onboarding-arrow';
+            arrow.innerHTML = '👇';
+            arrow.style.cssText = `
+                position: fixed !important;
+                z-index: 1000001 !important;
+                font-size: 3rem !important;
+                color: #10b981 !important;
+                display: block !important;
+                visibility: visible !important;
+                opacity: 1 !important;
+                left: ${{rect.left + (rect.width / 2) - 24}}px !important;
+                top: ${{isMobile ? rect.top - 50 : rect.bottom + 5}}px !important;
+                animation: arrowPulse 1.5s ease-in-out infinite !important;
+            `;
+            
+            document.body.appendChild(tooltip);
+            document.body.appendChild(arrow);
+            
+            console.log('✅ Tooltip and arrow added to DOM');
+            console.log('📍 Tooltip position:', tooltip.style.left, tooltip.style.top);
+            console.log('📍 Arrow position:', arrow.style.left, arrow.style.top);
+        }}
+        
+        // Execute immediately
+        showOnboarding();
+        
+        // Retry with delays
+        setTimeout(showOnboarding, 200);
+        setTimeout(showOnboarding, 500);
+        setTimeout(showOnboarding, 1000);
         </script>
         """, unsafe_allow_html=True)
     
@@ -2969,8 +3007,9 @@ def main():
         st.markdown(
             f"""
             <div class="hero-section">
-                <div class="hero-badge">
-                    ⭐ Consigliata per te
+                <div class="hero-frosted-label">
+                    <span class="frosted-icon">⭐</span>
+                    <span class="frosted-text">Consigliata per te</span>
                 </div>
                 <h1 class="hero-title">{best_name}</h1>
                 <p class="hero-subtitle">La migliore scelta per il tuo livello e profilo</p>
