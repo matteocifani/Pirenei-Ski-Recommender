@@ -2690,9 +2690,9 @@ def main():
         
         # Show tooltip with pure CSS positioning
         st.markdown(f"""
-        <div class="onboarding-tooltip-simple" style="
+        <div class="onboarding-tooltip-simple-v2" style="
             position: fixed;
-            top: 420px;
+            top: 500px;
             {current_position}
             z-index: 10000;
             background: #1f2937;
