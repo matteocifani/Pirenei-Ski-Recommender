@@ -820,6 +820,32 @@ section[data-testid="stSidebar"] {
     margin-bottom: var(--space-3) !important;
 }
 
+/* Vertical alignment for selector columns */
+#selectors-container > div {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    min-height: 120px !important;
+}
+
+/* Center input widgets */
+#selectors-container .stDateInput,
+#selectors-container .stSelectbox {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    width: 100% !important;
+}
+
+/* Center input fields */
+#selectors-container .stDateInput > div,
+#selectors-container .stSelectbox > div {
+    display: flex !important;
+    justify-content: center !important;
+    width: 100% !important;
+}
+
 .onboarding-selectors {
     display: flex;
     justify-content: center;
