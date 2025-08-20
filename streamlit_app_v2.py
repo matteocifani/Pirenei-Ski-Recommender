@@ -2688,32 +2688,35 @@ def main():
         current_message = messages.get(step, f"Step {step}")
         current_justify = tooltip_justify.get(step, "center")
         
-        # Add spacing and show tooltip in document flow
-        st.markdown("<br>", unsafe_allow_html=True)
-        
-        # Show tooltip in normal document flow
+        # Show tooltip in normal document flow - allineato con i selettori
         st.markdown(f"""
-        <div style="
+        <div class="stSelectbox" style="
             display: flex;
             justify-content: {current_justify};
             width: 100%;
-            margin: 20px 0;
-            padding: 0 20px;
+            margin: 8px 0 20px 0;
+            padding: 0;
         ">
             <div class="onboarding-tooltip-flow" style="
                 background: #1f2937;
                 border: 2px solid #10b981;
                 border-radius: 16px;
-                padding: 16px 20px;
+                padding: 12px 18px;
                 color: #f8fafc;
                 font-family: Inter, sans-serif;
-                font-size: 16px;
+                font-size: 15px;
                 font-weight: 600;
-                box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
+                box-shadow: 
+                    0 0 0 1px rgba(16, 185, 129, 0.3),
+                    0 0 20px rgba(16, 185, 129, 0.4),
+                    0 0 40px rgba(16, 185, 129, 0.2),
+                    0 25px 50px -12px rgba(0, 0, 0, 0.8);
+                filter: drop-shadow(0 0 15px rgba(16, 185, 129, 0.3));
                 max-width: 280px;
                 text-align: center;
                 animation: tooltipSlideDown 0.3s ease-out;
                 position: relative;
+                backdrop-filter: blur(10px);
             ">
                 {current_message}
             </div>
