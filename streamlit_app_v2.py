@@ -3728,7 +3728,9 @@ def main():
                     fig_night.update_traces(texttemplate='%{text:.0f} km', textposition='outside')
                     fig_night.update_layout(
                         xaxis_tickangle=-45,
-                        template=plotly_template
+                        template=plotly_template,
+                        paper_bgcolor="rgba(0,0,0,0)",
+                        plot_bgcolor="rgba(0,0,0,0)"
                     )
                     st.plotly_chart(fig_night, use_container_width=True)
             except Exception:
@@ -3783,7 +3785,9 @@ def main():
                     )
                     fig_kids.update_layout(
                         xaxis_tickangle=-45,
-                        template=plotly_template
+                        template=plotly_template,
+                        paper_bgcolor="rgba(0,0,0,0)",
+                        plot_bgcolor="rgba(0,0,0,0)"
                     )
                     st.plotly_chart(fig_kids, use_container_width=True)
                 else:
@@ -3815,7 +3819,9 @@ def main():
                     )
                     fig_prices.update_layout(
                         template=plotly_template,
-                        xaxis_tickangle=-45
+                        xaxis_tickangle=-45,
+                        paper_bgcolor="rgba(0,0,0,0)",
+                        plot_bgcolor="rgba(0,0,0,0)"
                     )
                     st.plotly_chart(fig_prices, use_container_width=True)
                 else:
@@ -4009,7 +4015,7 @@ def main():
 
         # Sezione Festaiolo (profilo)
         if profilo_norm == "festaiolo":
-            st.markdown('<h4 class="section-subtitle">🎉 Profilo: Festaiolo</h4>', unsafe_allow_html=True)
+
             try:
                 df_night = df_with_indices[["nome_stazione", "Scii_notte"]].drop_duplicates().fillna(0)
                 if not df_night.empty:
@@ -4033,7 +4039,9 @@ def main():
                     )
                     fig_acts.update_layout(
                         xaxis_tickangle=-45,
-                        template=plotly_template
+                        template=plotly_template,
+                        paper_bgcolor="rgba(0,0,0,0)",
+                        plot_bgcolor="rgba(0,0,0,0)"
                     )
                     st.plotly_chart(fig_acts, use_container_width=True)
             except Exception:
@@ -4219,7 +4227,7 @@ def main():
         st.plotly_chart(fig_bar_total, use_container_width=True)
 
         if profilo_norm == "festaiolo":
-            st.markdown('<h4 class="section-subtitle">🎉 Profilo: Festaiolo</h4>', unsafe_allow_html=True)
+
             try:
                 df_night = df_with_indices[["nome_stazione", "Scii_notte"]].drop_duplicates().fillna(0)
                 if not df_night.empty:
@@ -4243,7 +4251,9 @@ def main():
                     )
                     fig_acts.update_layout(
                         xaxis_tickangle=-45,
-                        template=plotly_template
+                        template=plotly_template,
+                        paper_bgcolor="rgba(0,0,0,0)",
+                        plot_bgcolor="rgba(0,0,0,0)"
                     )
                     st.plotly_chart(fig_acts, use_container_width=True)
             except Exception:
@@ -4422,7 +4432,13 @@ def main():
                             opacity=opacity,
                         )
                     )
-                fig_lines.update_layout(xaxis_title="Data", yaxis_title="Spessore medio (cm)")
+                fig_lines.update_layout(
+                    xaxis_title="Data", 
+                    yaxis_title="Spessore medio (cm)",
+                    template=plotly_template,
+                    paper_bgcolor="rgba(0,0,0,0)",
+                    plot_bgcolor="rgba(0,0,0,0)"
+                )
                 st.plotly_chart(fig_lines, use_container_width=True)
         except Exception:
             pass
