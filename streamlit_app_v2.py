@@ -4029,6 +4029,10 @@ def main():
                         melted, x="nome_stazione", y="Valore", color="Attività",
                         barmode="group", title="Snowpark e Superpipe"
                     )
+                    fig_acts.update_layout(
+                        xaxis_tickangle=-45,
+                        template=plotly_template
+                    )
                     st.plotly_chart(fig_acts, use_container_width=True)
             except Exception:
                 pass
@@ -4323,6 +4327,10 @@ def main():
                         melted, x="nome_stazione", y="Valore", color="Attività",
                         barmode="group", title="Snowpark e Superpipe"
                     )
+                    fig_acts.update_layout(
+                        xaxis_tickangle=-45,
+                        template=plotly_template
+                    )
                     st.plotly_chart(fig_acts, use_container_width=True)
             except Exception:
                 pass
@@ -4368,7 +4376,10 @@ def main():
                         title="Numero aree bambini per impianto",
                         labels={"nome_stazione": "Impianto", "Area_bambini": "Aree bambini"}
                     )
-                    fig_kids.update_layout(xaxis_tickangle=-45)
+                    fig_kids.update_layout(
+                        xaxis_tickangle=-45,
+                        template=plotly_template
+                    )
                     st.plotly_chart(fig_kids, use_container_width=True)
                 else:
                     st.info("Dato non disponibile: 'Area_bambini'")
@@ -4448,7 +4459,10 @@ def main():
                         title="Numero aree bambini per impianto",
                         labels={"nome_stazione": "Impianto", "Area_bambini": "Aree bambini"}
                     )
-                    fig_kids.update_layout(xaxis_tickangle=-45)
+                    fig_kids.update_layout(
+                        xaxis_tickangle=-45,
+                        template=plotly_template
+                    )
                     st.plotly_chart(fig_kids, use_container_width=True)
                 else:
                     st.info("Dato non disponibile: 'Area_bambini'")
