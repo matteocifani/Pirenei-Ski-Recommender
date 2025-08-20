@@ -3486,13 +3486,15 @@ def main():
     st.write("")
     # AI overview: disattivata quando livello == "nessuno"
     if livello != "nessuno":
-        # Testo temporaneo al posto dell'LLM
-        output = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat."
-        
-        st.markdown(
-            render_ai_overview(output, model_name=DEFAULT_LLM_MODEL),
-            unsafe_allow_html=True
-        )
+        try:
+            prompt = build_llm_prompt(df_kpis, best_name, livello, profilo, data_sel)
+            output, usage = generate_overview(prompt, max_tokens=160)
+            st.markdown(
+                render_ai_overview(output, model_name=DEFAULT_LLM_MODEL),
+                unsafe_allow_html=True
+            )
+        except Exception as e:
+            st.error(f"Errore nell'AI Overview: {e}")
 
     st.markdown("---")
     # Level-specific visualizations (no raw index shown)
@@ -3670,11 +3672,15 @@ def main():
 
             # AI Overview per profilo festaiolo
             st.markdown('<h4 class="section-subtitle">🤖 AI Overview – Festaiolo</h4>', unsafe_allow_html=True)
-            out = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat."
-            st.markdown(
-                render_ai_overview(out, model_name=DEFAULT_LLM_MODEL),
-                unsafe_allow_html=True
-            )
+            try:
+                prompt_festaiolo = build_festaiolo_prompt(df_filtered_rec, best_name, livello, data_sel)
+                out, usage = generate_overview(prompt_festaiolo, max_tokens=140)
+                st.markdown(
+                    render_ai_overview(out, model_name=DEFAULT_LLM_MODEL),
+                    unsafe_allow_html=True
+                )
+            except Exception as e:
+                st.error(f"Errore nell'AI Overview Festaiolo: {e}")
 
         if profilo_norm == "familiare":
             st.markdown('<h4 class="section-subtitle">👨‍👩‍👧‍👦 Profilo: Familiare</h4>', unsafe_allow_html=True)
@@ -3731,18 +3737,17 @@ def main():
             except Exception:
                 pass
 
-            # 3) AI Overview – Famiglia (TEMPORANEAMENTE DISABILITATO)
+            # 3) AI Overview – Famiglia
             try:
                 st.markdown('<h4 class="section-subtitle">🤖 AI Overview – Famiglia</h4>', unsafe_allow_html=True)
-                # prompt_family = build_familiare_prompt(df_filtered_rec, best_name, livello, data_sel)
-                # out, usage = generate_overview(prompt_family, max_tokens=140)
-                out = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat."
+                prompt_family = build_familiare_prompt(df_filtered_rec, best_name, livello, data_sel)
+                out, usage = generate_overview(prompt_family, max_tokens=140)
                 st.markdown(
                     render_ai_overview(out, model_name=DEFAULT_LLM_MODEL),
                     unsafe_allow_html=True
                 )
-            except Exception:
-                pass
+            except Exception as e:
+                st.error(f"Errore nell'AI Overview Famiglia: {e}")
             # RIMOSSI: Snowpark/Superpipe e AI Overview – Festa (solo per profilo festaiolo)
 
     elif livello == "medio":
@@ -3954,16 +3959,15 @@ def main():
             except Exception:
                 pass
             try:
-                # prompt_f = build_festaiolo_prompt(df_filtered_rec, best_name, livello, data_sel)
+                prompt_f = build_festaiolo_prompt(df_filtered_rec, best_name, livello, data_sel)
                 st.markdown('<h4 class="section-subtitle">🤖 AI Overview – Festa</h4>', unsafe_allow_html=True)
-                # out, usage = generate_overview(prompt_f, max_tokens=140)
-                out = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat."
+                out, usage = generate_overview(prompt_f, max_tokens=140)
                 st.markdown(
                     render_ai_overview(out, model_name=DEFAULT_LLM_MODEL),
                     unsafe_allow_html=True
                 )
-            except Exception:
-                pass
+            except Exception as e:
+                st.error(f"Errore nell'AI Overview Festaiolo: {e}")
 
         # Sezione Familiare (profilo)
         if profilo_norm == "familiare":
@@ -4024,15 +4028,14 @@ def main():
             # 3) AI Overview – Famiglia
             try:
                 st.markdown('<h4 class="section-subtitle">🤖 AI Overview – Famiglia</h4>', unsafe_allow_html=True)
-                # prompt_family = build_familiare_prompt(df_filtered_rec, best_name, livello, data_sel)
-                # out, usage = generate_overview(prompt_family, max_tokens=140)
-                out = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat."
+                prompt_family = build_familiare_prompt(df_filtered_rec, best_name, livello, data_sel)
+                out, usage = generate_overview(prompt_family, max_tokens=140)
                 st.markdown(
-                    render_ai_overview(out),
+                    render_ai_overview(out, model_name=DEFAULT_LLM_MODEL),
                     unsafe_allow_html=True
                 )
-            except Exception:
-                pass
+            except Exception as e:
+                st.error(f"Errore nell'AI Overview Famiglia: {e}")
 
     elif livello == "esperto":
         st.markdown('<h2 class="section-header">⛷️ Esperti: Tecnica e Performance</h2>', unsafe_allow_html=True)
@@ -4216,11 +4219,15 @@ def main():
             
             # AI Overview – Festa
                 st.markdown('<h4 class="section-subtitle">🤖 AI Overview – Festa</h4>', unsafe_allow_html=True)
-                out = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat."
-            st.markdown(
-                render_ai_overview(out),
-                unsafe_allow_html=True
-            )
+                try:
+                    prompt_festaiolo = build_festaiolo_prompt(df_filtered_rec, best_name, livello, data_sel)
+                    out, usage = generate_overview(prompt_festaiolo, max_tokens=140)
+                    st.markdown(
+                        render_ai_overview(out, model_name=DEFAULT_LLM_MODEL),
+                        unsafe_allow_html=True
+                    )
+                except Exception as e:
+                    st.error(f"Errore nell'AI Overview Festaiolo: {e}")
 
         # Sezione Familiare (profilo)
         if profilo_norm == "familiare":
@@ -4281,15 +4288,14 @@ def main():
             # 3) AI Overview – Famiglia
             try:
                 st.markdown('<h4 class="section-subtitle">🤖 AI Overview – Famiglia</h4>', unsafe_allow_html=True)
-                # prompt_family = build_familiare_prompt(df_filtered_rec, best_name, livello, data_sel)
-                # out, usage = generate_overview(prompt_family, max_tokens=140)
-                out = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat."
+                prompt_family = build_familiare_prompt(df_filtered_rec, best_name, livello, data_sel)
+                out, usage = generate_overview(prompt_family, max_tokens=140)
                 st.markdown(
-                    render_ai_overview(out),
+                    render_ai_overview(out, model_name=DEFAULT_LLM_MODEL),
                     unsafe_allow_html=True
                 )
-            except Exception:
-                pass
+            except Exception as e:
+                st.error(f"Errore nell'AI Overview Famiglia: {e}")
 
     else:  # nessuno (panoramica base)
         st.subheader("Panoramica generale")
@@ -4583,13 +4589,15 @@ def main():
         # 3) AI Overview – Low-Cost (TEMPORANEAMENTE DISABILITATO)
         try:
             st.markdown('<h4 class="section-subtitle">🤖 AI Overview – Low-Cost</h4>', unsafe_allow_html=True)
-            # prompt_lowcost = build_lowcost_prompt(df_filtered_rec, best_name, livello, data_sel, df_ratio)
-            # out, usage = generate_overview(prompt_lowcost, max_tokens=140)
-            out = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat."
-            st.markdown(
-                render_ai_overview(out),
-                unsafe_allow_html=True
-            )
+            try:
+                prompt_lowcost = build_lowcost_prompt(df_filtered_rec, best_name, livello, data_sel, df_ratio)
+                out, usage = generate_overview(prompt_lowcost, max_tokens=140)
+                st.markdown(
+                    render_ai_overview(out, model_name=DEFAULT_LLM_MODEL),
+                    unsafe_allow_html=True
+                )
+            except Exception as e:
+                st.error(f"Errore nell'AI Overview Low-Cost: {e}")
         except Exception as e:
             st.warning(f"Errore nell'AI Overview: {e}")
     
