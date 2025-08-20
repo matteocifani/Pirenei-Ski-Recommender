@@ -441,9 +441,9 @@ body {
     display: flex;
     justify-content: center;
     align-items: flex-end;
-    gap: 20px;
-    margin: 32px 0;
-    height: 180px;
+    gap: 24px;
+    margin: 40px 0;
+    height: 220px;
 }
 
 .podium-step {
@@ -463,10 +463,10 @@ body {
 .podium-step.third { order: 3; }
 
 .podium-platform {
-    width: 140px;
-    border-radius: 16px;
-    padding: 20px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    width: 170px;
+    border-radius: 18px;
+    padding: 24px;
+    box-shadow: 0 6px 28px rgba(0, 0, 0, 0.18);
     transition: all 0.3s ease;
     position: relative;
     overflow: hidden;
@@ -478,39 +478,39 @@ body {
 }
 
 .podium-platform.first {
-    height: 140px;
+    height: 170px;
     background: linear-gradient(135deg, #f59e0b, #d97706);
-    box-shadow: 0 8px 32px rgba(245, 158, 11, 0.3);
+    box-shadow: 0 10px 36px rgba(245, 158, 11, 0.35);
 }
 
 .podium-platform.second {
-    height: 110px;
+    height: 140px;
     background: linear-gradient(135deg, #94a3b8, #64748b);
-    box-shadow: 0 6px 24px rgba(148, 163, 184, 0.3);
+    box-shadow: 0 8px 28px rgba(148, 163, 184, 0.35);
 }
 
 .podium-platform.third {
-    height: 90px;
+    height: 120px;
     background: linear-gradient(135deg, #d97706, #b45309);
-    box-shadow: 0 4px 16px rgba(217, 119, 6, 0.3);
+    box-shadow: 0 6px 22px rgba(217, 119, 6, 0.35);
 }
 
 .podium-medal {
-    font-size: 2rem;
-    margin-bottom: 8px;
+    font-size: 2.4rem;
+    margin-bottom: 10px;
     position: relative;
     z-index: 1;
 }
 
 .podium-name {
     color: white;
-    font-weight: 600;
-    font-size: 0.85rem;
+    font-weight: 700;
+    font-size: 1rem;
     text-align: center;
     position: relative;
     z-index: 1;
     line-height: 1.2;
-    max-width: 120px;
+    max-width: 150px;
     word-wrap: break-word;
 }
 
@@ -1857,11 +1857,8 @@ body {
 
 /* AI overview only with animated border, no fill */
 .ai-overview-section {
-    background: rgba(20, 24, 28, 0.9) !important;
-    border: 1px solid rgba(255, 255, 255, 0.12) !important;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28) !important;
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    background: transparent !important; /* no fill */
+    border: 0 !important;
     position: relative;
 }
 .ai-overview-section::before {
@@ -1870,15 +1867,23 @@ body {
     top: -2px; left: -2px; right: -2px; bottom: -2px;
     border-radius: 18px;
     background: conic-gradient(from 0deg, #0ea5e9, #8b5cf6, #ec4899, #ef4444, #f59e0b, #eab308, #0ea5e9);
-    z-index: -1;
+    z-index: -2;
     animation: borderBreathing 8s ease-in-out infinite;
-    opacity: 0.35;
+    opacity: 0.4;
+}
+.ai-overview-section::after {
+    content: '';
+    position: absolute;
+    top: 2px; left: 2px; right: 2px; bottom: 2px;
+    border-radius: 16px;
+    background: transparent; /* keep only the colored border visible */
+    z-index: -1;
 }
 .kpi-card .kpi-label { color: #cbd5e1 !important; }
 .kpi-card .kpi-value { color: #ffffff !important; }
 
 /* Floating Dock (interactive filters) */
-.floating-dock {
+.floating-dock, #dock-anchor ~ div:has([data-testid="stDateInput"]) {
     position: fixed;
     left: 50%;
     bottom: 18px;
@@ -1897,20 +1902,54 @@ body {
 }
 
 .floating-dock .stDateInput > div > div,
-.floating-dock .stSelectbox > div > div {
+.floating-dock .stSelectbox > div > div,
+#dock-anchor ~ div:has([data-testid="stDateInput"]) [data-testid="stDateInput"] > div > div,
+#dock-anchor ~ div:has([data-testid="stDateInput"]) [data-testid="stSelectbox"] > div > div {
     background: rgba(255, 255, 255, 0.10) !important;
     border: 1px solid rgba(255, 255, 255, 0.18) !important;
     color: #ffffff !important;
 }
-.floating-dock label { color: #e2e8f0 !important; font-size: 0.85rem; }
+.floating-dock label, #dock-anchor ~ div:has([data-testid="stDateInput"]) label { color: #e2e8f0 !important; font-size: 0.85rem; }
 
 .floating-dock .stDateInput input,
-.floating-dock .stSelectbox div[data-baseweb="select"] div {
+.floating-dock .stSelectbox div[data-baseweb="select"] div,
+#dock-anchor ~ div:has([data-testid="stDateInput"]) [data-testid="stDateInput"] input,
+#dock-anchor ~ div:has([data-testid="stDateInput"]) [data-testid="stSelectbox"] div[data-baseweb="select"] div {
     color: #f8fafc !important;
 }
 
 @media (max-width: 768px) {
-    .floating-dock { left: 12px; right: 12px; transform: none; }
+    .floating-dock, #dock-anchor ~ div:has([data-testid="stDateInput"]) { left: 12px; right: 12px; transform: none; }
+}
+
+/* Fallback: convert the block after #dock-anchor containing the widgets into a floating dock */
+.main .block-container > div:has([data-testid="stDateInput"]) {
+    position: fixed;
+    left: 50%;
+    bottom: 18px;
+    transform: translateX(-50%);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 10px 16px;
+    border-radius: 28px;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    background: linear-gradient(135deg, rgba(20,20,22,0.82), rgba(38, 43, 55, 0.78));
+    border: 1px solid rgba(255,255,255,0.14);
+    box-shadow: 0 12px 32px rgba(0,0,0,0.35);
+}
+.main .block-container > div:has([data-testid="stDateInput"]) [data-testid="stDateInput"] > div > div,
+.main .block-container > div:has([data-testid="stDateInput"]) [data-testid="stSelectbox"] > div > div {
+    background: rgba(255, 255, 255, 0.10) !important;
+    border: 1px solid rgba(255, 255, 255, 0.18) !important;
+    color: #ffffff !important;
+}
+.main .block-container > div:has([data-testid="stDateInput"]) label { color: #e2e8f0 !important; font-size: 0.85rem; }
+.main .block-container > div:has([data-testid="stDateInput"]) [data-testid="stDateInput"] input,
+.main .block-container > div:has([data-testid="stDateInput"]) [data-testid="stSelectbox"] div[data-baseweb="select"] div {
+    color: #f8fafc !important;
 }
 
 </style>
@@ -2337,9 +2376,8 @@ def main():
     if "dock_profile" not in st.session_state:
         st.session_state.dock_profile = "nessuno"
 
-    # Floating dock anchor and widgets wrapped in a floating container
+    # Floating dock anchor, the next horizontal block (the 3 columns) becomes the dock via CSS
     st.markdown('<div id="dock-anchor"></div>', unsafe_allow_html=True)
-    st.markdown('<div class="floating-dock">', unsafe_allow_html=True)
     dc1, dc2, dc3 = st.columns([1,1,1])
     with dc1:
         st.date_input("📅 Data", key="dock_date", min_value=min_date, max_value=datetime.date(2030, 12, 31))
@@ -2348,7 +2386,6 @@ def main():
         st.selectbox("🎯 Livello", level_opts, key="dock_level")
     with dc3:
         st.selectbox("👥 Profilo", SUPPORTED_PROFILES, key="dock_profile")
-    st.markdown('</div>', unsafe_allow_html=True)
 
     data_sel = st.session_state.dock_date
     livello = st.session_state.dock_level
@@ -3121,7 +3158,7 @@ def main():
             fig_risk.add_trace(go.Indicator(
                 mode="gauge+number",
                 value=risk,
-                number={"font": {"size": 40, "color": "#0f172a"}},
+                number={"font": {"size": 48, "color": "#f8fafc"}},
                 gauge={
                     "axis": {"range": [1, 5]},
                     "bar": {"color": "#ef4444"},
@@ -3138,8 +3175,8 @@ def main():
                                     text=f"Δ {d:+.2f} vs media ±15g", showarrow=False,
                                     font=dict(size=12, color="#16a34a" if d < 0 else "#ef4444"))
             fig_risk.update_layout(
-                height=200, 
-                margin=dict(l=10, r=10, t=20, b=20),
+                height=260, 
+                margin=dict(l=10, r=10, t=24, b=24),
                 template=plotly_template
             )
             st.plotly_chart(fig_risk, use_container_width=True)
