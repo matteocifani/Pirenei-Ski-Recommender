@@ -77,25 +77,22 @@ def parse_model_name(model_name: str | None) -> str:
     except:
         return model_str
 
+def clean_html_content(content):
+    """Pulisce il contenuto da tag HTML e normalizza il testo"""
+    import re
+    content_str = str(content)
+    clean_content = re.sub(r'<[^>]*>', '', content_str)
+    clean_content = re.sub(r'\s+', ' ', clean_content).strip()
+    return clean_content
+
+
 def render_ai_overview(content, note=None, model_name: str | None = None):
     """Rende una card AI overview moderna con effetto glow.
 
     model_name: se fornito, verrà mostrato nel badge "Powered by <model_name>".
     Se non fornito, viene mostrato semplicemente "Powered by AI".
     """
-    # Rimuove eventuali tag HTML dal contenuto per mostrare solo testo pulito
-    import re
-    
-    # Converti in stringa e rimuovi tutti i tag HTML in modo più aggressivo
-    content_str = str(content)
-    
-    # Rimuovi tutti i tag HTML, inclusi quelli con attributi
-    clean_content = re.sub(r'<[^>]*>', '', content_str)
-    
-    # Rimuovi anche eventuali spazi multipli, newline e caratteri speciali HTML
-    clean_content = re.sub(r'\s+', ' ', clean_content).strip()
-    clean_content = clean_content.replace('&nbsp;', ' ').replace('&amp;', '&').replace('&lt;', '<').replace('&gt;', '>')
-    
+    # Il contenuto dovrebbe essere già pulito prima di arrivare qui
     note_html = f'<div class="mb-16"><span class="stInfo">ℹ️ {note}</span></div>' if note else ""
     parsed_model = parse_model_name(model_name)
     badge_text = f"Powered by {parsed_model}"
@@ -110,7 +107,7 @@ def render_ai_overview(content, note=None, model_name: str | None = None):
             </div>
         </div>
         {note_html}
-        <div class="ai-overview-content">{clean_content}</div>
+        <div class="ai-overview-content">{content}</div>
     </div>"""
 
 
@@ -3502,8 +3499,12 @@ def main():
         try:
             prompt = build_llm_prompt(df_kpis, best_name, livello, profilo, data_sel)
             output, usage = generate_overview(prompt, max_tokens=160)
+            
+            # Pulizia del contenuto HTML prima del rendering
+            clean_output = clean_html_content(output)
+            
             st.markdown(
-                render_ai_overview(output, model_name=DEFAULT_LLM_MODEL),
+                render_ai_overview(clean_output, model_name=DEFAULT_LLM_MODEL),
                 unsafe_allow_html=True
             )
         except Exception as e:
@@ -3688,8 +3689,12 @@ def main():
             try:
                 prompt_festaiolo = build_festaiolo_prompt(df_filtered_rec, best_name, livello, data_sel)
                 out, usage = generate_overview(prompt_festaiolo, max_tokens=140)
+                
+                # Pulizia del contenuto HTML
+                clean_out = clean_html_content(out)
+                
                 st.markdown(
-                    render_ai_overview(out, model_name=DEFAULT_LLM_MODEL),
+                    render_ai_overview(clean_out, model_name=DEFAULT_LLM_MODEL),
                     unsafe_allow_html=True
                 )
             except Exception as e:
@@ -3755,8 +3760,12 @@ def main():
                 st.markdown('<h4 class="section-subtitle">🤖 AI Overview – Famiglia</h4>', unsafe_allow_html=True)
                 prompt_family = build_familiare_prompt(df_filtered_rec, best_name, livello, data_sel)
                 out, usage = generate_overview(prompt_family, max_tokens=140)
+                
+                # Pulizia del contenuto HTML
+                clean_out = clean_html_content(out)
+                
                 st.markdown(
-                    render_ai_overview(out, model_name=DEFAULT_LLM_MODEL),
+                    render_ai_overview(clean_out, model_name=DEFAULT_LLM_MODEL),
                     unsafe_allow_html=True
                 )
             except Exception as e:
