@@ -4252,8 +4252,12 @@ def main():
                 try:
                     prompt_festaiolo = build_festaiolo_prompt(df_filtered_rec, best_name, livello, data_sel)
                     out, usage = generate_overview(prompt_festaiolo, max_tokens=140)
+                    
+                    # Pulizia del contenuto HTML
+                    clean_out = clean_html_content(out)
+                    
                     st.markdown(
-                        render_ai_overview(out, model_name=DEFAULT_LLM_MODEL),
+                        render_ai_overview(clean_out, model_name=DEFAULT_LLM_MODEL),
                         unsafe_allow_html=True
                     )
                 except Exception as e:
@@ -4320,8 +4324,12 @@ def main():
                 st.markdown('<h4 class="section-subtitle">🤖 AI Overview – Famiglia</h4>', unsafe_allow_html=True)
                 prompt_family = build_familiare_prompt(df_filtered_rec, best_name, livello, data_sel)
                 out, usage = generate_overview(prompt_family, max_tokens=140)
+                
+                # Pulizia del contenuto HTML
+                clean_out = clean_html_content(out)
+                
                 st.markdown(
-                    render_ai_overview(out, model_name=DEFAULT_LLM_MODEL),
+                    render_ai_overview(clean_out, model_name=DEFAULT_LLM_MODEL),
                     unsafe_allow_html=True
                 )
             except Exception as e:
@@ -4693,8 +4701,12 @@ def main():
             try:
                 prompt_lowcost = build_lowcost_prompt(df_filtered_rec, best_name, livello, data_sel, df_ratio)
                 out, usage = generate_overview(prompt_lowcost, max_tokens=140)
+                
+                # Pulizia del contenuto HTML
+                clean_out = clean_html_content(out)
+                
                 st.markdown(
-                    render_ai_overview(out, model_name=DEFAULT_LLM_MODEL),
+                    render_ai_overview(clean_out, model_name=DEFAULT_LLM_MODEL),
                     unsafe_allow_html=True
                 )
             except Exception as e:
