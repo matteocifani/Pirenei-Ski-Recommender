@@ -815,15 +815,16 @@ section[data-testid="stSidebar"] {
     justify-content: center !important;
     display: flex !important;
     width: 100% !important;
-    font-weight: 600 !important;
-    font-size: 16px !important;
-    margin-bottom: var(--space-3) !important;
+    font-weight: 700 !important;
+    font-size: 18px !important;
+    margin-bottom: var(--space-4) !important;
+    line-height: 1.2 !important;
 }
 
 /* Vertical alignment for selector columns */
 #selectors-container {
     display: flex !important;
-    align-items: flex-start !important;
+    align-items: stretch !important;
     justify-content: space-between !important;
     gap: 20px !important;
 }
@@ -833,7 +834,7 @@ section[data-testid="stSidebar"] {
     flex-direction: column !important;
     align-items: center !important;
     justify-content: flex-start !important;
-    min-height: 120px !important;
+    min-height: 140px !important;
     flex: 1 !important;
 }
 
@@ -844,6 +845,7 @@ section[data-testid="stSidebar"] {
     flex-direction: column !important;
     align-items: center !important;
     width: 100% !important;
+    flex-grow: 1 !important;
 }
 
 /* Center input fields */
@@ -852,7 +854,7 @@ section[data-testid="stSidebar"] {
     display: flex !important;
     justify-content: center !important;
     width: 100% !important;
-    margin-bottom: 15px !important;
+    margin-bottom: 8px !important;
 }
 
 /* Tooltip container alignment */
@@ -2746,7 +2748,7 @@ def main():
             display: flex;
             justify-content: {current_justify};
             width: 100%;
-            margin: 15px 0 25px 0;
+            margin: 5px 0 25px 0;
             padding: 0 20px;
         ">
             <div class="onboarding-tooltip-flow tooltip-step-{step}" style="
@@ -2759,11 +2761,11 @@ def main():
                 font-size: 15px;
                 font-weight: 600;
                 box-shadow: 
-                    0 0 0 1px rgba(16, 185, 129, 0.2),
-                    0 0 15px rgba(16, 185, 129, 0.25),
-                    0 0 30px rgba(16, 185, 129, 0.15),
+                    0 0 0 1px rgba(16, 185, 129, 0.15),
+                    0 0 10px rgba(16, 185, 129, 0.18),
+                    0 0 20px rgba(16, 185, 129, 0.1),
                     0 25px 50px -12px rgba(0, 0, 0, 0.8);
-                filter: drop-shadow(0 0 8px rgba(16, 185, 129, 0.2));
+                filter: drop-shadow(0 0 5px rgba(16, 185, 129, 0.15));
                 max-width: 280px;
                 text-align: center;
                 animation: tooltipSlideDown 0.3s ease-out;
