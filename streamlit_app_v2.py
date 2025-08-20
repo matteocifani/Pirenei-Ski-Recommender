@@ -3882,7 +3882,7 @@ def main():
 
         # Barre: piste blu/rosse ordinate per indice_medio
         if not df_with_indices.empty and "indice_medio" in df_with_indices.columns:
-            st.subheader("Piste blu e rosse per stazione (ordinate per indice medio)")
+            st.markdown('<h4 class="section-subtitle">🎿 Piste blu e rosse per stazione (ordinate per indice medio)</h4>', unsafe_allow_html=True)
             # Raggruppa per stazione per evitare duplicazioni (un valore per stazione)
             piste = (
                 df_with_indices[["nome_stazione", "Piste_blu", "Piste_rosse", "indice_medio"]]
@@ -3898,7 +3898,7 @@ def main():
             melted = piste.melt("nome_stazione", value_vars=["Piste_blu", "Piste_rosse"], var_name="Tipo", value_name="Numero")
             fig = px.bar(
                 melted,
-                x="nome_stazione", y="Numero", color="Tipo", barmode="stack",
+                x="nome_stazione", y="Numero", color="Tipo", barmode="group",
                 color_discrete_map={"Piste_blu": "#06b6d4", "Piste_rosse": "#ef4444"},
             )
             fig.update_layout(
