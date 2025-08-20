@@ -4053,7 +4053,8 @@ def main():
                     melted = df_acts.melt("nome_stazione", value_vars=cols, var_name="Attività", value_name="Valore")
                     fig_acts = px.bar(
                         melted, x="nome_stazione", y="Valore", color="Attività",
-                        barmode="group", title="Snowpark e Superpipe"
+                        barmode="group", title="Snowpark e Superpipe",
+                        labels={"nome_stazione": "Nome stazione", "Valore": "Valore", "Attività": "Attività"}
                     )
                     fig_acts.update_layout(
                         xaxis_tickangle=-45,
@@ -4377,7 +4378,8 @@ def main():
                 melted = df_acts.melt("nome_stazione", value_vars=cols, var_name="Attività", value_name="Valore")
                 fig_acts = px.bar(
                     melted, x="nome_stazione", y="Valore", color="Attività",
-                    barmode="group", title="Snowpark e Superpipe"
+                    barmode="group", title="Snowpark e Superpipe",
+                    labels={"nome_stazione": "Nome stazione", "Valore": "Valore", "Attività": "Attività"}
                 )
                 fig_acts.update_layout(
                     xaxis_tickangle=-45,
