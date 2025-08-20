@@ -3021,7 +3021,7 @@ def main():
             grid-template-columns: 1fr 1fr 1fr;
             gap: 20px;
             width: 100%;
-            margin: 0 0 25px 0;
+            margin: 0 0 15px 0;
             padding: 0 20px;
         ">
             <div style="grid-column: {step}; justify-self: center;">
