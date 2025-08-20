@@ -1866,10 +1866,9 @@ body {
     position: absolute;
     top: -2px; left: -2px; right: -2px; bottom: -2px;
     border-radius: 18px;
-    background: conic-gradient(from 0deg, #0ea5e9, #8b5cf6, #ec4899, #ef4444, #f59e0b, #eab308, #0ea5e9);
+    background: linear-gradient(90deg, #0ea5e9, #8b5cf6, #ec4899, #ef4444, #f59e0b, #eab308, #0ea5e9);
     z-index: -2;
-    animation: borderBreathing 8s ease-in-out infinite;
-    opacity: 0.4;
+    opacity: 0.45;
 }
 .ai-overview-section::after {
     content: '';
@@ -2376,16 +2375,7 @@ def main():
     if "dock_profile" not in st.session_state:
         st.session_state.dock_profile = "nessuno"
 
-    # Floating dock anchor, the next horizontal block (the 3 columns) becomes the dock via CSS
-    st.markdown('<div id="dock-anchor"></div>', unsafe_allow_html=True)
-    dc1, dc2, dc3 = st.columns([1,1,1])
-    with dc1:
-        st.date_input("📅 Data", key="dock_date", min_value=min_date, max_value=datetime.date(2030, 12, 31))
-    with dc2:
-        level_opts = ["nessuno", "base", "medio", "esperto"]
-        st.selectbox("🎯 Livello", level_opts, key="dock_level")
-    with dc3:
-        st.selectbox("👥 Profilo", SUPPORTED_PROFILES, key="dock_profile")
+    # (spostato in fondo alla pagina come floating dock)
 
     data_sel = st.session_state.dock_date
     livello = st.session_state.dock_level
@@ -3701,6 +3691,18 @@ def main():
     
     # Chiudi theme wrapper
     st.markdown('</div>', unsafe_allow_html=True)
+
+    # Floating dock widgets (rendered at the very end and styled to float)
+    st.markdown('<div id="dock-anchor"></div>', unsafe_allow_html=True)
+    with st.container():
+        dc1, dc2, dc3 = st.columns([1,1,1])
+        with dc1:
+            st.date_input("📅 Data", key="dock_date", min_value=min_date, max_value=datetime.date(2030, 12, 31))
+        with dc2:
+            level_opts = ["nessuno", "base", "medio", "esperto"]
+            st.selectbox("🎯 Livello", level_opts, key="dock_level")
+        with dc3:
+            st.selectbox("👥 Profilo", SUPPORTED_PROFILES, key="dock_profile")
 
 
 if __name__ == "__main__":
