@@ -2667,7 +2667,7 @@ def main():
     
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # Onboarding JavaScript with SIMPLE approach
+    # Onboarding JavaScript - positioned near selectors
     if not st.session_state.onboarding_completed:
         step = st.session_state.onboarding_step
         
@@ -2678,39 +2678,87 @@ def main():
             3: "Che tipo di sciatore sei? (puoi anche saltare!) 🤙❄️"
         }
         
-        # Show tooltip directly above the page content
+        # Add the tooltip positioned near the selector
         st.markdown(f"""
-        <div style="
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: rgba(15, 23, 42, 0.95);
-            z-index: 999999;
-            pointer-events: none;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        ">
-            <div style="
+        <script>
+        setTimeout(function() {{
+            // Clean up existing tooltips
+            document.querySelectorAll('.onboarding-tooltip-positioned').forEach(el => el.remove());
+            
+            const step = {step};
+            const messages = {{
+                1: 'Dimmi quando vuoi conquistare le piste! ⛷️',
+                2: 'Sei un principiante o un pro della neve? 🏔️🎿',
+                3: 'Che tipo di sciatore sei? (puoi anche saltare!) 🤙❄️'
+            }};
+            
+            // Find the container with selectors
+            const container = document.querySelector('#selectors-container');
+            if (!container) {{
+                console.log('Container not found');
+                return;
+            }}
+            
+            const columns = container.querySelectorAll('div[data-testid="column"]');
+            if (columns.length === 0) {{
+                console.log('Columns not found');
+                return;
+            }}
+            
+            const targetColumn = columns[step - 1];
+            if (!targetColumn) {{
+                console.log('Target column not found');
+                return;
+            }}
+            
+            const rect = targetColumn.getBoundingClientRect();
+            
+            // Create tooltip
+            const tooltip = document.createElement('div');
+            tooltip.className = 'onboarding-tooltip-positioned';
+            tooltip.innerHTML = messages[step] || 'Step ' + step;
+            
+            // Style the tooltip
+            tooltip.style.cssText = `
+                position: fixed;
+                z-index: 10000;
                 background: #1f2937;
                 border: 2px solid #10b981;
                 border-radius: 16px;
-                padding: 24px 32px;
+                padding: 16px 20px;
                 color: #f8fafc;
                 font-family: Inter, sans-serif;
-                font-size: 20px;
+                font-size: 16px;
                 font-weight: 600;
-                text-align: center;
                 box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
-                max-width: 400px;
-                margin: 0 20px;
-                animation: tooltipFadeIn 0.5s ease-out;
-            ">
-                {messages.get(step, f"Step {step}")}
-            </div>
-        </div>
+                max-width: 280px;
+                left: ${{Math.max(10, rect.left + (rect.width / 2) - 140)}}px;
+                top: ${{rect.bottom + 15}}px;
+                animation: tooltipSlideIn 0.3s ease-out;
+                pointer-events: none;
+            `;
+            
+            // Add animation style
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes tooltipSlideIn {{
+                    from {{ 
+                        opacity: 0; 
+                        transform: translateY(-10px); 
+                    }}
+                    to {{ 
+                        opacity: 1; 
+                        transform: translateY(0); 
+                    }}
+                }}
+            `;
+            document.head.appendChild(style);
+            
+            document.body.appendChild(tooltip);
+            
+            console.log('Tooltip positioned at:', tooltip.style.left, tooltip.style.top);
+        }}, 300);
+        </script>
         """, unsafe_allow_html=True)
     
     # Show snowfall when onboarding completes
