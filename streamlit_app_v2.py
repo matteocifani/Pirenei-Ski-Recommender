@@ -4297,6 +4297,77 @@ def main():
             except Exception as e:
                 st.error(f"Errore nell'AI Overview Famiglia: {e}")
 
+        # Sezione Familiare (profilo) per livello esperto
+        if profilo_norm == "familiare":
+            st.markdown('<h4 class="section-subtitle">👨‍👩‍👧‍👦 Profilo: Familiare</h4>', unsafe_allow_html=True)
+            # 1) Numero aree bambini per impianto
+            try:
+                if "Area_bambini" in df_with_indices.columns:
+                    df_kids = (
+                        df_with_indices[["nome_stazione", "Area_bambini"]]
+                        .drop_duplicates().fillna(0)
+                        .sort_values("Area_bambini", ascending=False)
+                    )
+                    fig_kids = px.bar(
+                        df_kids,
+                        x="nome_stazione", y="Area_bambini",
+                        title="Numero aree bambini per impianto",
+                        labels={"nome_stazione": "Impianto", "Area_bambini": "Aree bambini"}
+                    )
+                    fig_kids.update_layout(xaxis_tickangle=-45)
+                    st.plotly_chart(fig_kids, use_container_width=True)
+                else:
+                    st.info("Dato non disponibile: 'Area_bambini'")
+            except Exception:
+                pass
+
+            # 2) Prezzi medi per impianto (skipass, scuola, noleggio)
+            try:
+                price_cols = [c for c in ["Prezzo_skipass", "Prezzo_scuola", "Prezzo_noleggio"] if c in df_with_indices.columns]
+                if price_cols:
+                    df_price = (
+                        df_with_indices[["nome_stazione"] + price_cols]
+                        .drop_duplicates().fillna(0)
+                    )
+                    melted_p = df_price.melt("nome_stazione", value_vars=price_cols, var_name="Voce", value_name="Prezzo")
+                    # Rimuovi underscore dalle label
+                    melted_p["Voce"] = melted_p["Voce"].replace({
+                        "Prezzo_skipass": "Prezzo skipass",
+                        "Prezzo_scuola": "Prezzo scuola",
+                        "Prezzo_noleggio": "Prezzo noleggio"
+                    })
+                    fig_prices = px.bar(
+                        melted_p,
+                        x="nome_stazione", y="Prezzo", color="Voce",
+                        barmode="group", title="Prezzi medi per impianto (skipass, scuola, noleggio)",
+                        color_discrete_map={
+                            "Prezzo skipass": "#06b6d4",
+                            "Prezzo scuola": "#10b981", 
+                            "Prezzo noleggio": "#f59e0b"
+                        }
+                    )
+                    fig_prices.update_layout(
+                        template=plotly_template,
+                        xaxis_tickangle=-45
+                    )
+                    st.plotly_chart(fig_prices, use_container_width=True)
+                else:
+                    st.info("Dati prezzo non disponibili (skipass/scuola/noleggio)")
+            except Exception:
+                pass
+
+            # 3) AI Overview – Famiglia (livello esperto)
+            try:
+                st.markdown('<h4 class="section-subtitle">🤖 AI Overview – Famiglia</h4>', unsafe_allow_html=True)
+                prompt_family = build_familiare_prompt(df_filtered_rec, best_name, livello, data_sel)
+                out, usage = generate_overview(prompt_family, max_tokens=140)
+                st.markdown(
+                    render_ai_overview(out, model_name=DEFAULT_LLM_MODEL),
+                    unsafe_allow_html=True
+                )
+            except Exception as e:
+                st.error(f"Errore nell'AI Overview Famiglia: {e}")
+
     else:  # nessuno (panoramica base)
         st.subheader("Panoramica generale")
         # Grafico a barre: numero piste per tipologia per impianto (stacked)
