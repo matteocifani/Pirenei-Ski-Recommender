@@ -808,6 +808,18 @@ section[data-testid="stSidebar"] {
     position: relative;
 }
 
+/* Center selectors labels */
+#selectors-container .stDateInput > label,
+#selectors-container .stSelectbox > label {
+    text-align: center !important;
+    justify-content: center !important;
+    display: flex !important;
+    width: 100% !important;
+    font-weight: 600 !important;
+    font-size: 16px !important;
+    margin-bottom: var(--space-3) !important;
+}
+
 .onboarding-selectors {
     display: flex;
     justify-content: center;
@@ -2593,7 +2605,7 @@ def main():
     with col1:
         st.markdown('<div id="date-column" class="selector-column">', unsafe_allow_html=True)
         new_date = st.date_input(
-            "📅 Data",
+            "📅 DATA",
             value=st.session_state.selected_date,
             min_value=min_date,
             max_value=datetime.date(2030, 12, 31),
@@ -2614,7 +2626,7 @@ def main():
         st.markdown('<div id="level-column" class="selector-column">', unsafe_allow_html=True)
         level_opts = ["base", "medio", "esperto"]
         new_level = st.selectbox(
-            "🎯 Livello",
+            "🎯 LIVELLO",
             level_opts,
             index=level_opts.index(st.session_state.selected_level) if st.session_state.selected_level in level_opts else None,
             key="onboard_level",
@@ -2641,7 +2653,7 @@ def main():
             current_index = profile_opts.index(st.session_state.selected_profile) + 1
             
         new_profile = st.selectbox(
-            "👥 Profilo",
+            "👥 PROFILO",
             all_profile_opts,
             index=current_index,
             key="onboard_profile",
@@ -2697,7 +2709,7 @@ def main():
             margin: 8px 0 20px 0;
             padding: 0;
         ">
-            <div class="onboarding-tooltip-flow" style="
+            <div class="onboarding-tooltip-flow tooltip-step-{step}" style="
                 background: #1f2937;
                 border: 2px solid #10b981;
                 border-radius: 16px;
@@ -2707,11 +2719,11 @@ def main():
                 font-size: 15px;
                 font-weight: 600;
                 box-shadow: 
-                    0 0 0 1px rgba(16, 185, 129, 0.3),
-                    0 0 20px rgba(16, 185, 129, 0.4),
-                    0 0 40px rgba(16, 185, 129, 0.2),
+                    0 0 0 1px rgba(16, 185, 129, 0.2),
+                    0 0 15px rgba(16, 185, 129, 0.25),
+                    0 0 30px rgba(16, 185, 129, 0.15),
                     0 25px 50px -12px rgba(0, 0, 0, 0.8);
-                filter: drop-shadow(0 0 15px rgba(16, 185, 129, 0.3));
+                filter: drop-shadow(0 0 8px rgba(16, 185, 129, 0.2));
                 max-width: 280px;
                 text-align: center;
                 animation: tooltipSlideDown 0.3s ease-out;
@@ -2719,6 +2731,33 @@ def main():
                 backdrop-filter: blur(10px);
             ">
                 {current_message}
+                
+                <!-- Freccia che punta al selettore sopra -->
+                <div class="tooltip-arrow" style="
+                    position: absolute;
+                    top: -12px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    width: 0;
+                    height: 0;
+                    border-left: 12px solid transparent;
+                    border-right: 12px solid transparent;
+                    border-bottom: 12px solid #10b981;
+                    filter: drop-shadow(0 -2px 4px rgba(16, 185, 129, 0.3));
+                "></div>
+                
+                <!-- Bordo interno della freccia -->
+                <div class="tooltip-arrow-inner" style="
+                    position: absolute;
+                    top: -9px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    width: 0;
+                    height: 0;
+                    border-left: 10px solid transparent;
+                    border-right: 10px solid transparent;
+                    border-bottom: 10px solid #1f2937;
+                "></div>
             </div>
         </div>
         
@@ -2936,7 +2975,7 @@ def main():
 
     # Mostra risultati solo dopo il completamento dell'onboarding
     if st.session_state.onboarding_completed and data_sel and livello and livello != "nessuno":
-        # Hero Section - Stazione consigliata  
+        # Hero Section - Stazione consigliata
         st.markdown("""
         <div class="hero-container">
             <div class="hero-frosted-label">
