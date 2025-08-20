@@ -324,21 +324,21 @@ html, body {
     width: 100%;
 }
 
-/* Hero Section - Complete Redesign */
+/* Hero Section - Elegant Redesign */
 .hero-section {
     background: linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%);
-    border: 2px solid rgba(16, 185, 129, 0.3);
+    border: 1px solid rgba(148, 163, 184, 0.2);
     border-radius: var(--radius-3xl);
-    padding: var(--space-48) var(--space-40);
+    padding: var(--space-40) var(--space-32);
     text-align: center;
     position: relative;
     overflow: hidden;
     box-shadow: 
-        0 0 0 1px rgba(16, 185, 129, 0.2),
-        0 0 40px rgba(16, 185, 129, 0.25),
-        0 0 80px rgba(16, 185, 129, 0.15),
+        0 0 0 1px rgba(148, 163, 184, 0.1),
+        0 0 20px rgba(100, 116, 139, 0.15),
+        0 0 40px rgba(71, 85, 105, 0.1),
         0 25px 50px -12px rgba(0, 0, 0, 0.6);
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     width: 100%;
     backdrop-filter: blur(20px);
 }
@@ -350,17 +350,17 @@ html, body {
     left: -50%;
     width: 200%;
     height: 200%;
-    background: conic-gradient(from 0deg, transparent, rgba(16, 185, 129, 0.1), transparent, rgba(6, 182, 212, 0.1), transparent);
-    animation: heroRotate 8s linear infinite;
+    background: conic-gradient(from 0deg, transparent, rgba(148, 163, 184, 0.05), transparent, rgba(203, 213, 225, 0.05), transparent);
+    animation: heroRotate 12s linear infinite;
     z-index: -1;
 }
 
 .hero-section::after {
     content: '';
     position: absolute;
-    inset: 2px;
+    inset: 1px;
     background: linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%);
-    border-radius: calc(var(--radius-3xl) - 2px);
+    border-radius: calc(var(--radius-3xl) - 1px);
     z-index: -1;
 }
 
@@ -370,45 +370,16 @@ html, body {
 }
 
 .hero-section:hover {
-    transform: translateY(-8px) scale(1.03);
+    transform: translateY(-4px) scale(1.01);
     box-shadow: 
-        0 0 0 1px rgba(16, 185, 129, 0.4),
-        0 0 60px rgba(16, 185, 129, 0.4),
-        0 0 120px rgba(16, 185, 129, 0.2),
-        0 40px 80px -20px rgba(0, 0, 0, 0.8);
-    border-color: rgba(16, 185, 129, 0.6);
+        0 0 0 1px rgba(148, 163, 184, 0.2),
+        0 0 30px rgba(100, 116, 139, 0.2),
+        0 0 60px rgba(71, 85, 105, 0.15),
+        0 30px 60px -15px rgba(0, 0, 0, 0.8);
+    border-color: rgba(148, 163, 184, 0.3);
 }
 
-.hero-frosted-label {
-    position: absolute;
-    top: -12px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: rgba(15, 23, 42, 0.9);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(16, 185, 129, 0.4);
-    border-radius: var(--radius-full);
-    padding: var(--space-10) var(--space-20);
-    display: flex;
-    align-items: center;
-    gap: var(--space-8);
-    font-family: 'Inter', sans-serif;
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: var(--emerald-300);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(16, 185, 129, 0.2);
-    z-index: 10;
-}
-
-.frosted-icon {
-    font-size: 1rem;
-    color: var(--emerald-400);
-}
-
-.frosted-text {
-    color: var(--emerald-300);
-}
+/* Removed frosted label styles - no longer needed */
 
 .hero-badge {
     display: inline-flex;
@@ -439,13 +410,13 @@ html, body {
     margin: 0 0 var(--space-16) 0;
     letter-spacing: -0.02em;
     line-height: 0.9;
-    background: linear-gradient(135deg, #ffffff 0%, #10b981 50%, #06b6d4 100%);
+    background: linear-gradient(135deg, #ffffff 0%, #e2e8f0 50%, #cbd5e1 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
     position: relative;
     z-index: 2;
-    filter: drop-shadow(0 0 20px rgba(16, 185, 129, 0.4));
+    filter: drop-shadow(0 0 15px rgba(148, 163, 184, 0.3));
 }
 
 @keyframes gradientShift {
@@ -3051,10 +3022,6 @@ def main():
         # Hero Section - Stazione consigliata
         st.markdown("""
         <div class="hero-container">
-            <div class="hero-frosted-label">
-                <span class="frosted-icon">⭐</span>
-                <span class="frosted-text">Consigliata per te</span>
-            </div>
             <div class="hero-section">
                 <h1 class="hero-title">{}</h1>
                 <p class="hero-subtitle">La migliore scelta per il tuo livello e profilo</p>
