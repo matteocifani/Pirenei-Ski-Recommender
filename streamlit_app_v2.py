@@ -3533,6 +3533,11 @@ def main():
     st.markdown("---")
     # Level-specific visualizations (no raw index shown)
     if livello == "base":
+        # Divider e titolo principale sezione livello
+        st.markdown('<hr class="profile-divider">', unsafe_allow_html=True)
+        st.markdown('<h2 class="profile-main-title">🎿 Sezione Livello: Principiante</h2>', unsafe_allow_html=True)
+        
+        # Titolo sezione livello
         st.markdown('<h2 class="section-header">🎿 Per principianti: dove trovi più piste facili e condizioni stabili</h2>', unsafe_allow_html=True)
         # Mappa con consigliata evidenziata
         st.markdown('<h4 class="section-subtitle">🗺️ Mappa delle stazioni (consigliata evidenziata)</h4>', unsafe_allow_html=True)
@@ -3682,15 +3687,15 @@ def main():
 
         # Sezione Festaiolo (profilo) – solo se selezionato
         if profilo_norm == "festaiolo":
-            # Titolo principale sezione profilo
-            st.markdown('<h2 class="profile-main-title">🎉 Sezione Profilo: Festaiolo</h2>', unsafe_allow_html=True)
-            
             # Divider e titolo sezione profilo
             st.markdown('<hr class="profile-divider">', unsafe_allow_html=True)
+            st.markdown('<h2 class="profile-main-title">🎉 Sezione Profilo: Festaiolo</h2>', unsafe_allow_html=True)
+            
+            # Titolo sezione profilo
             st.markdown('<h3 class="profile-section-title">🎉 Profilo: Festaiolo</h3>', unsafe_allow_html=True)
             
             # AI Overview per profilo festaiolo (PRIMA dei grafici)
-            st.markdown('<h4 class="section-subtitle">🤖 AI Overview della scelta per il profilo festaiolo ✨</h4>', unsafe_allow_html=True)
+            st.markdown('<h4 class="section-subtitle">🤖 AI Overview ✨</h4>', unsafe_allow_html=True)
             try:
                 prompt_festaiolo = build_festaiolo_prompt(df_filtered_rec, best_name, livello, data_sel)
                 out, usage = generate_overview(prompt_festaiolo, max_tokens=140)
@@ -3826,6 +3831,11 @@ def main():
                 pass
 
     elif livello == "medio":
+        # Divider e titolo principale sezione livello
+        st.markdown('<hr class="profile-divider">', unsafe_allow_html=True)
+        st.markdown('<h2 class="profile-main-title">🎿 Sezione Livello: Intermedio</h2>', unsafe_allow_html=True)
+        
+        # Titolo sezione livello
         st.markdown('<h3 class="section-subtitle">🎿 Per intermedi: equilibrio tra piste e sicurezza</h3>', unsafe_allow_html=True)
         # Mappa con consigliata evidenziata
         st.markdown('<h4 class="section-subtitle">🗺️ Mappa delle stazioni (consigliata evidenziata)</h4>', unsafe_allow_html=True)
@@ -4061,15 +4071,15 @@ def main():
 
         # Sezione Familiare (profilo)
         if profilo_norm == "familiare":
-            # Titolo principale sezione profilo
-            st.markdown('<h2 class="profile-main-title">👨‍👩‍👧‍👦 Sezione Profilo: Familiare</h2>', unsafe_allow_html=True)
-            
             # Divider e titolo sezione profilo
             st.markdown('<hr class="profile-divider">', unsafe_allow_html=True)
+            st.markdown('<h2 class="profile-main-title">👨‍👩‍👧‍👦 Sezione Profilo: Familiare</h2>', unsafe_allow_html=True)
+            
+            # Titolo sezione profilo
             st.markdown('<h3 class="profile-section-title">👨‍👩‍👧‍👦 Profilo: Familiare</h3>', unsafe_allow_html=True)
             
             # AI Overview per profilo familiare (PRIMA dei grafici)
-            st.markdown('<h4 class="section-subtitle">🤖 AI Overview della scelta per il profilo familiare ✨</h4>', unsafe_allow_html=True)
+            st.markdown('<h4 class="section-subtitle">🤖 AI Overview ✨</h4>', unsafe_allow_html=True)
             try:
                 prompt_family = build_familiare_prompt(df_filtered_rec, best_name, livello, data_sel)
                 out, usage = generate_overview(prompt_family, max_tokens=140)
@@ -4152,6 +4162,11 @@ def main():
                 pass
 
     elif livello == "esperto":
+        # Divider e titolo principale sezione livello
+        st.markdown('<hr class="profile-divider">', unsafe_allow_html=True)
+        st.markdown('<h2 class="profile-main-title">⛷️ Sezione Livello: Esperto</h2>', unsafe_allow_html=True)
+        
+        # Titolo sezione livello
         st.markdown('<h2 class="section-header">⛷️ Esperti: Tecnica e Performance</h2>', unsafe_allow_html=True)
         
         # Mappa centrata sui Pirenei
@@ -4529,6 +4544,11 @@ def main():
                 st.error(f"Errore nell'AI Overview Famiglia: {e}")
 
     else:  # nessuno (panoramica base)
+        # Divider e titolo principale sezione livello
+        st.markdown('<hr class="profile-divider">', unsafe_allow_html=True)
+        st.markdown('<h2 class="profile-main-title">🏔️ Sezione Livello: Panoramica Generale</h2>', unsafe_allow_html=True)
+        
+        # Titolo sezione livello
         st.subheader("Panoramica generale")
         # Grafico a barre: numero piste per tipologia per impianto (stacked)
         piste_cols = ["Piste_verdi", "Piste_blu", "Piste_rosse", "Piste_nere"]
