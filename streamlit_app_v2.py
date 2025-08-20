@@ -760,19 +760,7 @@ html, body {
     margin-bottom: var(--space-20);
 }
 
-.ai-icon {
-    width: 40px;
-    height: 40px;
-    background: var(--purple-950);
-    border-radius: var(--radius-lg);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.25rem;
-    color: var(--purple-400);
-    margin-top: 2px;
-    flex-shrink: 0;
-}
+
 
 .ai-header-text {
     display: flex;
@@ -3481,9 +3469,8 @@ def main():
             st.markdown(f"""
             <div class="ai-overview-section">
                 <div class="ai-header">
-                    <div class="ai-icon">✨</div>
                     <div class="ai-header-text">
-                        <div class="ai-title">AI Overview</div>
+                        <div class="ai-title">AI Overview ✨</div>
                         <div class="ai-badge">Powered by {parse_model_name(DEFAULT_LLM_MODEL)}</div>
                     </div>
                 </div>
@@ -3680,9 +3667,8 @@ def main():
                 st.markdown(f"""
                 <div class="ai-overview-section">
                     <div class="ai-header">
-                        <div class="ai-icon">✨</div>
                         <div class="ai-header-text">
-                            <div class="ai-title">AI Overview</div>
+                            <div class="ai-title">AI Overview ✨</div>
                             <div class="ai-badge">Powered by {parse_model_name(DEFAULT_LLM_MODEL)}</div>
                         </div>
                     </div>
@@ -3760,9 +3746,8 @@ def main():
                 st.markdown(f"""
                 <div class="ai-overview-section">
                     <div class="ai-header">
-                        <div class="ai-icon">✨</div>
                         <div class="ai-header-text">
-                            <div class="ai-title">AI Overview</div>
+                            <div class="ai-title">AI Overview ✨</div>
                             <div class="ai-badge">Powered by {parse_model_name(DEFAULT_LLM_MODEL)}</div>
                         </div>
                     </div>
@@ -3993,9 +3978,8 @@ def main():
                 st.markdown(f"""
                 <div class="ai-overview-section">
                     <div class="ai-header">
-                        <div class="ai-icon">✨</div>
                         <div class="ai-header-text">
-                            <div class="ai-title">AI Overview</div>
+                            <div class="ai-title">AI Overview ✨</div>
                             <div class="ai-badge">Powered by {parse_model_name(DEFAULT_LLM_MODEL)}</div>
                         </div>
                     </div>
@@ -4074,9 +4058,8 @@ def main():
                 st.markdown(f"""
                 <div class="ai-overview-section">
                     <div class="ai-header">
-                        <div class="ai-icon">✨</div>
                         <div class="ai-header-text">
-                            <div class="ai-title">AI Overview</div>
+                            <div class="ai-title">AI Overview ✨</div>
                             <div class="ai-badge">Powered by {parse_model_name(DEFAULT_LLM_MODEL)}</div>
                         </div>
                     </div>
@@ -4279,9 +4262,8 @@ def main():
                 st.markdown(f"""
                 <div class="ai-overview-section">
                     <div class="ai-header">
-                        <div class="ai-icon">✨</div>
                         <div class="ai-header-text">
-                            <div class="ai-title">AI Overview</div>
+                            <div class="ai-title">AI Overview ✨</div>
                             <div class="ai-badge">Powered by {parse_model_name(DEFAULT_LLM_MODEL)}</div>
                         </div>
                     </div>
@@ -4360,9 +4342,8 @@ def main():
                 st.markdown(f"""
                 <div class="ai-overview-section">
                     <div class="ai-header">
-                        <div class="ai-icon">✨</div>
                         <div class="ai-header-text">
-                            <div class="ai-title">AI Overview</div>
+                            <div class="ai-title">AI Overview ✨</div>
                             <div class="ai-badge">Powered by {parse_model_name(DEFAULT_LLM_MODEL)}</div>
                         </div>
                     </div>
@@ -4444,9 +4425,8 @@ def main():
                 st.markdown(f"""
                 <div class="ai-overview-section">
                     <div class="ai-header">
-                        <div class="ai-icon">✨</div>
                         <div class="ai-header-text">
-                            <div class="ai-title">AI Overview</div>
+                            <div class="ai-title">AI Overview ✨</div>
                             <div class="ai-badge">Powered by {parse_model_name(DEFAULT_LLM_MODEL)}</div>
                         </div>
                     </div>
@@ -4759,9 +4739,8 @@ def main():
                 st.markdown(f"""
                 <div class="ai-overview-section">
                     <div class="ai-header">
-                        <div class="ai-icon">✨</div>
                         <div class="ai-header-text">
-                            <div class="ai-title">AI Overview</div>
+                            <div class="ai-title">AI Overview ✨</div>
                             <div class="ai-badge">Powered by {parse_model_name(DEFAULT_LLM_MODEL)}</div>
                         </div>
                     </div>
