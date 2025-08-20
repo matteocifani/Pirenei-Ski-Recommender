@@ -375,15 +375,15 @@ html, body {
     position: relative;
     z-index: 2;
     
-    /* Gradient text animato */
+    /* Gradient text animato senza bianco */
     background: linear-gradient(
         45deg,
-        #ffffff 0%,
-        #e2e8f0 20%,
+        #e2e8f0 0%,
+        #cbd5e1 20%,
         #06b6d4 40%,
         #8b5cf6 60%,
         #f59e0b 80%,
-        #ffffff 100%
+        #94a3b8 100%
     );
     background-size: 400% 400%;
     -webkit-background-clip: text;
