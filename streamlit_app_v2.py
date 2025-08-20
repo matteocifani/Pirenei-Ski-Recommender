@@ -305,17 +305,18 @@ html, body {
     overflow: hidden;
     background: radial-gradient(ellipse at center, rgba(139, 92, 246, 0.03) 0%, rgba(59, 130, 246, 0.02) 50%, transparent 100%);
     padding: var(--space-64) var(--space-32);
-    margin-bottom: var(--space-64);
+    margin: calc(-1 * var(--space-24)) calc(-1 * var(--space-32)) var(--space-64) calc(-1 * var(--space-32));
+    width: calc(100% + 2 * var(--space-32));
 }
 
 /* Organic Background Movement - Ultra sottile */
 .app-header::before {
     content: '';
     position: absolute;
-    top: -20%;
-    left: -20%;
-    right: -20%;
-    bottom: -20%;
+    top: -50%;
+    left: -50%;
+    right: -50%;
+    bottom: -50%;
     background: 
         radial-gradient(ellipse 80% 60% at 30% 40%, rgba(139, 92, 246, 0.015) 0%, transparent 60%),
         radial-gradient(ellipse 70% 80% at 70% 60%, rgba(6, 182, 212, 0.012) 0%, transparent 65%),
