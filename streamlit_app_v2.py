@@ -3533,6 +3533,10 @@ def main():
     st.markdown("---")
     # Level-specific visualizations (no raw index shown)
     if livello == "base":
+        # Divider e titolo principale sezione livello
+        st.markdown('<hr class="profile-divider">', unsafe_allow_html=True)
+        st.markdown('<h2 class="profile-main-title">🎿 Sezione Livello: Principiante</h2>', unsafe_allow_html=True)
+        
         # Titolo sezione livello
         st.markdown('<h3 class="section-subtitle">🎿 Per principianti: dove trovi più piste facili e condizioni stabili</h3>', unsafe_allow_html=True)
         # Mappa con consigliata evidenziata
@@ -3830,6 +3834,10 @@ def main():
                 pass
 
     elif livello == "medio":
+        # Divider e titolo principale sezione livello
+        st.markdown('<hr class="profile-divider">', unsafe_allow_html=True)
+        st.markdown('<h2 class="profile-main-title">🎿 Sezione Livello: Intermedio</h2>', unsafe_allow_html=True)
+        
         # Titolo sezione livello
         st.markdown('<h3 class="section-subtitle">🎿 Per intermedi: equilibrio tra piste e sicurezza</h3>', unsafe_allow_html=True)
         # Mappa con consigliata evidenziata
@@ -4065,6 +4073,10 @@ def main():
                 st.error(f"Errore nell'AI Overview Festaiolo: {e}")
 
     elif livello == "esperto":
+        # Divider e titolo principale sezione livello
+        st.markdown('<hr class="profile-divider">', unsafe_allow_html=True)
+        st.markdown('<h2 class="profile-main-title">⛷️ Sezione Livello: Esperto</h2>', unsafe_allow_html=True)
+        
         # Titolo sezione livello
         st.markdown('<h3 class="section-subtitle">⛷️ Esperti: Tecnica e Performance</h3>', unsafe_allow_html=True)
         
@@ -4277,6 +4289,10 @@ def main():
 
 
     else:  # nessuno (panoramica base)
+        # Divider e titolo principale sezione livello
+        st.markdown('<hr class="profile-divider">', unsafe_allow_html=True)
+        st.markdown('<h2 class="profile-main-title">🏔️ Sezione Livello: Panoramica Generale</h2>', unsafe_allow_html=True)
+        
         # Titolo sezione livello
         st.subheader("Panoramica generale")
         # Grafico a barre: numero piste per tipologia per impianto (stacked)
