@@ -1328,7 +1328,7 @@ div[data-testid="column"] .stSelectbox > div {
     font-family: 'Inter', sans-serif;
     font-weight: 600;
     font-size: 1.1rem;
-    color: #fbbf24;
+    color: var(--text-secondary);
     margin: 0;
     opacity: 0.9;
     animation: welcomeBounce 2s ease-in-out infinite;
