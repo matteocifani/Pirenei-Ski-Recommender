@@ -3533,10 +3533,6 @@ def main():
     st.markdown("---")
     # Level-specific visualizations (no raw index shown)
     if livello == "base":
-        # Divider e titolo principale sezione livello
-        st.markdown('<hr class="profile-divider">', unsafe_allow_html=True)
-        st.markdown('<h2 class="profile-main-title">🎿 Sezione Livello: Principiante</h2>', unsafe_allow_html=True)
-        
         # Titolo sezione livello
         st.markdown('<h3 class="section-subtitle">🎿 Per principianti: dove trovi più piste facili e condizioni stabili</h3>', unsafe_allow_html=True)
         # Mappa con consigliata evidenziata
@@ -3689,13 +3685,13 @@ def main():
         if profilo_norm == "festaiolo":
             # Divider e titolo sezione profilo
             st.markdown('<hr class="profile-divider">', unsafe_allow_html=True)
-            st.markdown('<h2 class="profile-main-title">🎉 Sezione Profilo: Festaiolo</h2>', unsafe_allow_html=True)
+
             
             # Titolo sezione profilo
             st.markdown('<h3 class="profile-section-title">🎉 Profilo: Festaiolo</h3>', unsafe_allow_html=True)
             
             # AI Overview per profilo festaiolo (PRIMA dei grafici)
-            st.markdown('<h4 class="section-subtitle">🤖 AI Overview ✨</h4>', unsafe_allow_html=True)
+            st.markdown('<h4 class="section-subtitle">AI Overview</h4>', unsafe_allow_html=True)
             try:
                 prompt_festaiolo = build_festaiolo_prompt(df_filtered_rec, best_name, livello, data_sel)
                 out, usage = generate_overview(prompt_festaiolo, max_tokens=140)
@@ -3745,13 +3741,13 @@ def main():
         if profilo_norm == "familiare":
             # Divider e titolo sezione profilo
             st.markdown('<hr class="profile-divider">', unsafe_allow_html=True)
-            st.markdown('<h2 class="profile-main-title">👨‍👩‍👧‍👦 Sezione Profilo: Familiare</h2>', unsafe_allow_html=True)
+
             
             # Titolo sezione profilo
             st.markdown('<h3 class="profile-section-title">👨‍👩‍👧‍👦 Profilo: Familiare</h3>', unsafe_allow_html=True)
             
             # AI Overview per profilo familiare (PRIMA dei grafici)
-            st.markdown('<h4 class="section-subtitle">🤖 AI Overview ✨</h4>', unsafe_allow_html=True)
+            st.markdown('<h4 class="section-subtitle">AI Overview</h4>', unsafe_allow_html=True)
             try:
                 prompt_family = build_familiare_prompt(df_filtered_rec, best_name, livello, data_sel)
                 out, usage = generate_overview(prompt_family, max_tokens=140)
@@ -3834,10 +3830,6 @@ def main():
                 pass
 
     elif livello == "medio":
-        # Divider e titolo principale sezione livello
-        st.markdown('<hr class="profile-divider">', unsafe_allow_html=True)
-        st.markdown('<h2 class="profile-main-title">🎿 Sezione Livello: Intermedio</h2>', unsafe_allow_html=True)
-        
         # Titolo sezione livello
         st.markdown('<h3 class="section-subtitle">🎿 Per intermedi: equilibrio tra piste e sicurezza</h3>', unsafe_allow_html=True)
         # Mappa con consigliata evidenziata
@@ -4072,103 +4064,7 @@ def main():
             except Exception as e:
                 st.error(f"Errore nell'AI Overview Festaiolo: {e}")
 
-        # Sezione Familiare (profilo)
-        if profilo_norm == "familiare":
-            # Divider e titolo sezione profilo
-            st.markdown('<hr class="profile-divider">', unsafe_allow_html=True)
-            st.markdown('<h2 class="profile-main-title">👨‍👩‍👧‍👦 Sezione Profilo: Familiare</h2>', unsafe_allow_html=True)
-            
-            # Titolo sezione profilo
-            st.markdown('<h3 class="profile-section-title">👨‍👩‍👧‍👦 Profilo: Familiare</h3>', unsafe_allow_html=True)
-            
-            # AI Overview per profilo familiare (PRIMA dei grafici)
-            st.markdown('<h4 class="section-subtitle">🤖 AI Overview ✨</h4>', unsafe_allow_html=True)
-            try:
-                prompt_family = build_familiare_prompt(df_filtered_rec, best_name, livello, data_sel)
-                out, usage = generate_overview(prompt_family, max_tokens=140)
-                
-                # Pulizia diretta e aggressiva del contenuto HTML
-                clean_out = re.sub(r'<[^>]*>', '', str(out)).strip()
-                clean_out = re.sub(r'\s+', ' ', clean_out)
-                
-                st.markdown(f"""
-                <div class="ai-overview-section">
-                    <div class="ai-header">
-                        <div class="ai-header-text">
-                            <div class="ai-title">AI Overview ✨</div>
-                            <div class="ai-badge">Powered by {parse_model_name(DEFAULT_LLM_MODEL)}</div>
-                        </div>
-                    </div>
-                    <div class="ai-overview-content">{clean_out}</div>
-                </div>
-                """, unsafe_allow_html=True)
-            except Exception as e:
-                st.error(f"Errore nell'AI Overview Famiglia: {e}")
-            
-            # Titolo per i grafici specifici del profilo
-            st.markdown('<h4 class="section-subtitle">📊 Analisi specifica per famiglie</h4>', unsafe_allow_html=True)
-            
-            # 1) Numero aree bambini per impianto
-            try:
-                if "Area_bambini" in df_with_indices.columns:
-                    df_kids = (
-                        df_with_indices[["nome_stazione", "Area_bambini"]]
-                        .drop_duplicates().fillna(0)
-                        .sort_values("Area_bambini", ascending=False)
-                    )
-                    fig_kids = px.bar(
-                        df_kids,
-                        x="nome_stazione", y="Area_bambini",
-                        title="Numero aree bambini per impianto",
-                        labels={"nome_stazione": "Impianto", "Area_bambini": "Aree bambini"}
-                    )
-                    fig_kids.update_layout(
-                        xaxis_tickangle=-45,
-                        template=plotly_template
-                    )
-                    st.plotly_chart(fig_kids, use_container_width=True)
-                else:
-                    st.info("Dato non disponibile: 'Area_bambini'")
-            except Exception:
-                pass
-
-            # 2) Prezzi medi per impianto (skipass, scuola, noleggio)
-            try:
-                price_cols = [c for c in ["Prezzo_skipass", "Prezzo_scuola", "Prezzo_noleggio"] if c in df_with_indices.columns]
-                if price_cols:
-                    df_price = (
-                        df_with_indices[["nome_stazione"] + price_cols]
-                        .drop_duplicates().fillna(0)
-                    )
-                    melted_p = df_price.melt("nome_stazione", value_vars=price_cols, var_name="Voce", value_name="Prezzo")
-                    # Rimuovi underscore dalle label
-                    melted_p["Voce"] = melted_p["Voce"].replace({
-                        "Prezzo_skipass": "Prezzo skipass",
-                        "Prezzo_scuola": "Prezzo scuola", 
-                        "Prezzo_noleggio": "Prezzo noleggio"
-                    })
-                    fig_prices = px.bar(
-                        melted_p,
-                        x="nome_stazione", y="Prezzo", color="Voce",
-                        barmode="group",
-                        title="Prezzi medi per impianto (skipass, scuola, noleggio)",
-                        labels={"nome_stazione": "Impianto", "Prezzo": "€"}
-                    )
-                    fig_prices.update_layout(
-                        template=plotly_template,
-                        xaxis_tickangle=-45
-                    )
-                    st.plotly_chart(fig_prices, use_container_width=True)
-                else:
-                    st.info("Dati prezzo non disponibili (skipass/scuola/noleggio)")
-            except Exception:
-                pass
-
     elif livello == "esperto":
-        # Divider e titolo principale sezione livello
-        st.markdown('<hr class="profile-divider">', unsafe_allow_html=True)
-        st.markdown('<h2 class="profile-main-title">⛷️ Sezione Livello: Esperto</h2>', unsafe_allow_html=True)
-        
         # Titolo sezione livello
         st.markdown('<h3 class="section-subtitle">⛷️ Esperti: Tecnica e Performance</h3>', unsafe_allow_html=True)
         
@@ -4377,129 +4273,10 @@ def main():
             except Exception as e:
                 st.error(f"Errore nell'AI Overview Festaiolo: {e}")
 
-        # Sezione Familiare (profilo)
-        if profilo_norm == "familiare":
-            # Divider e titolo sezione profilo
-            st.markdown('<hr class="profile-divider">', unsafe_allow_html=True)
-            st.markdown('<h2 class="profile-main-title">👨‍👩‍👧‍👦 Sezione Profilo: Familiare</h2>', unsafe_allow_html=True)
-            
-            # Titolo sezione profilo
-            st.markdown('<h3 class="profile-section-title">👨‍👩‍👧‍👦 Profilo: Familiare</h3>', unsafe_allow_html=True)
-            
-            # AI Overview per profilo familiare (PRIMA dei grafici)
-            st.markdown('<h4 class="section-subtitle">🤖 AI Overview ✨</h4>', unsafe_allow_html=True)
-            try:
-                prompt_family = build_familiare_prompt(df_filtered_rec, best_name, livello, data_sel)
-                out, usage = generate_overview(prompt_family, max_tokens=140)
-                
-                # Pulizia diretta e aggressiva del contenuto HTML
-                clean_out = re.sub(r'<[^>]*>', '', str(out)).strip()
-                clean_out = re.sub(r'\s+', ' ', clean_out)
-                
-                st.markdown(f"""
-                <div class="ai-overview-section">
-                    <div class="ai-header">
-                        <div class="ai-header-text">
-                            <div class="ai-title">AI Overview ✨</div>
-                            <div class="ai-badge">Powered by {parse_model_name(DEFAULT_LLM_MODEL)}</div>
-                        </div>
-                    </div>
-                    <div class="ai-overview-content">{clean_out}</div>
-                </div>
-                """, unsafe_allow_html=True)
-            except Exception as e:
-                st.error(f"Errore nell'AI Overview Famiglia: {e}")
-            
-            # Titolo per i grafici specifici del profilo
-            st.markdown('<h4 class="section-subtitle">📊 Analisi specifica per famiglie</h4>', unsafe_allow_html=True)
-            
-            # 1) Numero aree bambini per impianto
-            try:
-                if "Area_bambini" in df_with_indices.columns:
-                    df_kids = (
-                        df_with_indices[["nome_stazione", "Area_bambini"]]
-                        .drop_duplicates().fillna(0)
-                        .sort_values("Area_bambini", ascending=False)
-                    )
-                    fig_kids = px.bar(
-                        df_kids,
-                        x="nome_stazione", y="Area_bambini",
-                        title="Numero aree bambini per impianto",
-                        labels={"nome_stazione": "Impianto", "Area_bambini": "Aree bambini"}
-                    )
-                    fig_kids.update_layout(
-                        xaxis_tickangle=-45,
-                        template=plotly_template
-                    )
-                    st.plotly_chart(fig_kids, use_container_width=True)
-                else:
-                    st.info("Dato non disponibile: 'Area_bambini'")
-            except Exception:
-                pass
-
-            # 2) Prezzi medi per impianto (skipass, scuola, noleggio)
-            try:
-                price_cols = [c for c in ["Prezzo_skipass", "Prezzo_scuola", "Prezzo_noleggio"] if c in df_with_indices.columns]
-                if price_cols:
-                    df_price = (
-                        df_with_indices[["nome_stazione"] + price_cols]
-                        .drop_duplicates().fillna(0)
-                    )
-                    melted_p = df_price.melt("nome_stazione", value_vars=price_cols, var_name="Voce", value_name="Prezzo")
-                    # Rimuovi underscore dalle label
-                    melted_p["Voce"] = melted_p["Voce"].replace({
-                        "Prezzo_skipass": "Prezzo skipass",
-                        "Prezzo_scuola": "Prezzo scuola", 
-                        "Prezzo_noleggio": "Prezzo noleggio"
-                    })
-                    fig_prices = px.bar(
-                        melted_p,
-                        x="nome_stazione", y="Prezzo", color="Voce",
-                        barmode="group",
-                        title="Prezzi medi per impianto (skipass, scuola, noleggio)",
-                        labels={"nome_stazione": "Impianto", "Prezzo": "€"}
-                    )
-                    fig_prices.update_layout(
-                        template=plotly_template,
-                        xaxis_tickangle=-45
-                    )
-                    st.plotly_chart(fig_prices, use_container_width=True)
-                else:
-                    st.info("Dati prezzo non disponibili (skipass/scuola/noleggio)")
-            except Exception:
-                pass
 
 
-
-            # 3) AI Overview – Famiglia (livello esperto)
-            try:
-                st.markdown('<h4 class="section-subtitle">🤖 AI Overview – Famiglia</h4>', unsafe_allow_html=True)
-                prompt_family = build_familiare_prompt(df_filtered_rec, best_name, livello, data_sel)
-                out, usage = generate_overview(prompt_family, max_tokens=140)
-                
-                # Pulizia diretta e aggressiva del contenuto HTML
-                clean_out = re.sub(r'<[^>]*>', '', str(out)).strip()
-                clean_out = re.sub(r'\s+', ' ', clean_out)
-                
-                st.markdown(f"""
-                <div class="ai-overview-section">
-                    <div class="ai-header">
-                        <div class="ai-header-text">
-                            <div class="ai-title">AI Overview ✨</div>
-                            <div class="ai-badge">Powered by {parse_model_name(DEFAULT_LLM_MODEL)}</div>
-                        </div>
-                    </div>
-                    <div class="ai-overview-content">{clean_out}</div>
-                </div>
-                """, unsafe_allow_html=True)
-            except Exception as e:
-                st.error(f"Errore nell'AI Overview Famiglia: {e}")
 
     else:  # nessuno (panoramica base)
-        # Divider e titolo principale sezione livello
-        st.markdown('<hr class="profile-divider">', unsafe_allow_html=True)
-        st.markdown('<h2 class="profile-main-title">🏔️ Sezione Livello: Panoramica Generale</h2>', unsafe_allow_html=True)
-        
         # Titolo sezione livello
         st.subheader("Panoramica generale")
         # Grafico a barre: numero piste per tipologia per impianto (stacked)
@@ -4652,10 +4429,10 @@ def main():
     if profilo_norm == "lowcost":
         # Divider e titolo principale sezione profilo
         st.markdown('<hr class="profile-divider">', unsafe_allow_html=True)
-        st.markdown('<h2 class="profile-main-title">💰 Sezione Profilo: Low-Cost</h2>', unsafe_allow_html=True)
+
         
         # Titolo sezione profilo
-        st.subheader("💰 Profilo: Low-Cost")
+        st.markdown('<h2 class="profile-main-title">💰 Sezione Profilo: Low-Cost</h2>', unsafe_allow_html=True)
         
         # 1) Grafico a barre: costi di ski pass, scuola sci e noleggio
         try:
