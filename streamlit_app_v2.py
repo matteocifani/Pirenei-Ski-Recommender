@@ -4024,28 +4024,7 @@ def main():
                     st.plotly_chart(fig_acts, use_container_width=True)
             except Exception:
                 pass
-            try:
-                prompt_f = build_festaiolo_prompt(df_filtered_rec, best_name, livello, data_sel)
-                st.markdown('<h4 class="section-subtitle">🤖 AI Overview – Festa</h4>', unsafe_allow_html=True)
-                out, usage = generate_overview(prompt_f, max_tokens=140)
-                
-                # Pulizia diretta e aggressiva del contenuto HTML
-                clean_out = re.sub(r'<[^>]*>', '', str(out)).strip()
-                clean_out = re.sub(r'\s+', ' ', clean_out)
-                
-                st.markdown(f"""
-                <div class="ai-overview-section">
-                    <div class="ai-header">
-                        <div class="ai-header-text">
-                            <div class="ai-title">AI Overview ✨</div>
-                            <div class="ai-badge">Powered by {parse_model_name(DEFAULT_LLM_MODEL)}</div>
-                </div>
-                    </div>
-                    <div class="ai-overview-content">{clean_out}</div>
-                </div>
-                """, unsafe_allow_html=True)
-            except Exception as e:
-                st.error(f"Errore nell'AI Overview Festaiolo: {e}")
+
 
     elif livello == "esperto":
         # Divider e titolo principale sezione livello
@@ -4237,29 +4216,7 @@ def main():
             except Exception:
                 pass
             
-            # AI Overview – Festa
-            st.markdown('<h4 class="section-subtitle">🤖 AI Overview – Festa</h4>', unsafe_allow_html=True)
-            try:
-                prompt_festaiolo = build_festaiolo_prompt(df_filtered_rec, best_name, livello, data_sel)
-                out, usage = generate_overview(prompt_festaiolo, max_tokens=140)
-                
-                # Pulizia diretta e aggressiva del contenuto HTML
-                clean_out = re.sub(r'<[^>]*>', '', str(out)).strip()
-                clean_out = re.sub(r'\s+', ' ', clean_out)
-                
-                st.markdown(f"""
-                <div class="ai-overview-section">
-                    <div class="ai-header">
-                        <div class="ai-header-text">
-                            <div class="ai-title">AI Overview ✨</div>
-                            <div class="ai-badge">Powered by {parse_model_name(DEFAULT_LLM_MODEL)}</div>
-                        </div>
-                    </div>
-                    <div class="ai-overview-content">{clean_out}</div>
-                </div>
-                """, unsafe_allow_html=True)
-            except Exception as e:
-                st.error(f"Errore nell'AI Overview Festaiolo: {e}")
+
 
 
 
