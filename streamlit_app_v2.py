@@ -311,7 +311,7 @@ html, body {
     padding: var(--space-64) var(--space-32);
     margin: calc(-1 * var(--space-32)) calc(-1 * var(--space-32)) var(--space-64) calc(-1 * var(--space-32));
     width: calc(100% + 2 * var(--space-32));
-    border-radius: 0 0 48px 48px;
+    border-radius: 48px;
     box-shadow: 
         0 0 60px rgba(139, 92, 246, 0.1),
         0 0 120px rgba(59, 130, 246, 0.05),
@@ -337,7 +337,7 @@ html, body {
     animation: organicFlow 30s ease-in-out infinite;
     z-index: 1;
     filter: blur(3px);
-    border-radius: 0 0 60px 60px;
+    border-radius: 60px;
 }
 
 /* Organic flowing animation - no geometric shapes */
