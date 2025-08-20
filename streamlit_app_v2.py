@@ -773,7 +773,7 @@ html, body {
 
 .ai-header {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: var(--space-12);
     margin-bottom: var(--space-20);
 }
@@ -788,6 +788,8 @@ html, body {
     justify-content: center;
     font-size: 1.25rem;
     color: var(--purple-400);
+    margin-top: 2px;
+    flex-shrink: 0;
 }
 
 .ai-header-text {
@@ -820,7 +822,6 @@ html, body {
     border: 1px solid var(--purple-800);
     margin: 0;
     align-self: flex-start;
-    margin-top: var(--space-2);
 }
 
 .ai-overview-content {
