@@ -17,1901 +17,63 @@ from app.llm import generate_overview
 from app.config import SUPPORTED_PROFILES
 
 
-def format_date_for_display(d):
-    """Formatta la data in italiano per la visualizzazione"""
-    mesi = ["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"]
-    return f"{d.day} {mesi[d.month-1]} {d.year}"
-
-
-def render_kpi(label, value, suffix=None, variant="primary"):
-    """Rende una card KPI centrata"""
-    suffix_html = f" {suffix}" if suffix else ""
-    return f"""
-    <div class="kpi-card">
-        <div class="kpi-label">{label}</div>
-        <div class="kpi-value">{value}{suffix_html}</div>
-    </div>"""
-
-
-def render_ai_overview(content, note=None):
-    """Rende una card AI overview con bordo gradiente animato"""
-    note_html = f'<div class="mb-16"><span class="stInfo">ℹ️ {note}</span></div>' if note else ""
-    return f"""
-    <div class="ai-overview-section">
-        {note_html}
-        {content}
-    </div>"""
-
-
-def render_podium(top3):
-    """Rende il podio con proporzioni coerenti"""
-    if len(top3) < 3:
-        return ""
-    
-    names = top3["nome_stazione"].tolist()
-    first = names[0] if len(names) > 0 else ""
-    second = names[1] if len(names) > 1 else ""
-    third = names[2] if len(names) > 2 else ""
-    
-    return f"""
-    <div class='podium-container'>
-      <div class='podium-step second'>
-        <div class='podium-platform second'>
-          <div class='podium-medal'>🥈</div>
-          <div class='podium-name'>{second}</div>
-        </div>
-      </div>
-      <div class='podium-step first'>
-        <div class='podium-platform first'>
-          <div class='podium-medal'>🥇</div>
-          <div class='podium-name'>{first}</div>
-        </div>
-      </div>
-      <div class='podium-step third'>
-        <div class='podium-platform third'>
-          <div class='podium-medal'>🥉</div>
-          <div class='podium-name'>{third}</div>
-        </div>
-      </div>
-    </div>"""
-
-
-def render_ai_dock(is_loading=False, model_name=None, has_api_key=True):
-    """Rende il pannello flottante AI dock"""
-    status = "Generazione in corso..." if is_loading else "AI pronta"
-    model_display = model_name if model_name else "Default Model"
-    disabled_class = "is-disabled" if not has_api_key else ""
-    
-    return f"""
-    <div class="ai-dock">
-        <div class="ai-dock-left">
-            <span class="ai-status">{status}</span>
-        </div>
-        <div class="ai-dock-center">
-            <button class="ai-icon-button" title="Voice mode (coming soon)">🗣️</button>
-            <button class="ai-icon-button" title="Genera riepilogo">🧠</button>
-            <button class="ai-icon-button" title="Condividi (coming soon)">🔗</button>
-        </div>
-        <div class="ai-dock-right">
-            <select class="ai-model-select" disabled>
-                <option>{model_display}</option>
-            </select>
-            <button class="ai-run-button {disabled_class}" title="Esegui" {'disabled' if not has_api_key else ''}>▶️</button>
-        </div>
-    </div>"""
-
-
 st.set_page_config(layout="wide", page_title="🎿 Sci su misura v2 - Pirenei", page_icon="🎿")
 
-# Modern Design System CSS
-st.markdown("""
-<style>
-/* Modern Design System - Complete UI Refresh */
-:root {
-    /* Design Tokens - Light Theme (Default) */
-    --space-8: 8px;
-    --space-12: 12px;
-    --space-16: 16px;
-    --space-24: 24px;
-    --space-32: 32px;
-    --space-40: 40px;
-    --space-48: 48px;
-    --space-64: 64px;
-    
-    --radius-16: 16px;
-    --radius-20: 20px;
-    --radius-24: 24px;
-    --radius-28: 28px;
-    --radius-32: 32px;
-    
-    --shadow-soft: 0 4px 12px rgba(0, 0, 0, 0.08);
-    --shadow-medium: 0 8px 24px rgba(0, 0, 0, 0.12);
-    --shadow-strong: 0 16px 48px rgba(0, 0, 0, 0.16);
-    
-    /* Color Palette - Light */
-    --bg-primary: #ffffff;
-    --bg-secondary: #f8fafc;
-    --bg-tertiary: #f1f5f9;
-    --bg-card: #ffffff;
-    --bg-overlay: rgba(255, 255, 255, 0.95);
-    
-    --text-primary: #0f172a;
-    --text-secondary: #475569;
-    --text-muted: #64748b;
-    --text-inverse: #ffffff;
-    
-    --border-light: #e2e8f0;
-    --border-medium: #cbd5e1;
-    --border-strong: #94a3b8;
-    
-    --accent-primary: #0ea5e9;
-    --accent-secondary: #8b5cf6;
-    --accent-success: #10b981;
-    --accent-warning: #f59e0b;
-    --accent-danger: #ef4444;
-    
-    --gradient-primary: linear-gradient(135deg, #0ea5e9, #8b5cf6);
-    --gradient-success: linear-gradient(135deg, #10b981, #059669);
-    --gradient-warning: linear-gradient(135deg, #f59e0b, #d97706);
-    --gradient-danger: linear-gradient(135deg, #ef4444, #dc2626);
-    
-    /* Transitions */
-    --transition-fast: 150ms ease;
-    --transition-normal: 250ms ease;
-    --transition-slow: 350ms ease;
-}
-
-/* Dark Theme Override */
-.theme-dark {
-    --bg-primary: #0f172a;
-    --bg-secondary: #1e293b;
-    --bg-tertiary: #334155;
-    --bg-card: #1e293b;
-        --bg-overlay: rgba(30, 41, 59, 0.95);
-    
-    --text-primary: #f8fafc;
-    --text-secondary: #cbd5e1;
-    --text-muted: #94a3b8;
-    
-    --border-light: #334155;
-    --border-medium: #475569;
-    --border-strong: #64748b;
-}
-
-/* System Fonts */
-body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, system-ui, sans-serif;
-    background: var(--bg-primary);
-    color: var(--text-primary);
-    line-height: 1.6;
-}
-
-/* Theme-specific body styles */
-.theme-light {
-    --bg-primary: #ffffff;
-    --bg-secondary: #f8fafc;
-    --bg-tertiary: #f1f5f9;
-    --bg-card: #ffffff;
-    --bg-overlay: rgba(255, 255, 255, 0.95);
-    
-    --text-primary: #0f172a;
-    --text-secondary: #475569;
-    --text-muted: #64748b;
-    
-    --border-light: #e2e8f0;
-    --border-medium: #cbd5e1;
-    --border-strong: #94a3b8;
-}
-
-/* Page Wrapper - Rimosso per evitare problemi di visualizzazione */
-/* .page {
-    padding-bottom: 120px;
-    min-height: 100vh;
-} */
-
-/* Modern Headers */
-.modern-header {
-    color: #0f172a;
-    font-weight: 800;
-    font-size: 3rem;
-    text-align: center;
-    margin: 48px 0 32px 0;
-    letter-spacing: -0.02em;
-    line-height: 1.1;
-}
-
-.theme-dark .modern-header {
-    color: #f8fafc;
-}
-
-.modern-subheader {
-    color: #0f172a;
-    font-weight: 700;
-    font-size: 1.75rem;
-    margin: 24px 0 16px 0;
-    letter-spacing: -0.02em;
-}
-
-.theme-dark .modern-subheader {
-    color: #f8fafc;
-}
-
-.modern-section-title {
-    color: #475569;
-    font-weight: 600;
-    font-size: 1.5rem;
-    margin: 20px 0 12px 0;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.theme-dark .modern-section-title {
-    color: #cbd5e1;
-}
-
-/* Hero Section - Stazione Consigliata */
-.hero-section {
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 24px;
-    padding: 32px;
-    margin: 32px 0;
-    text-align: center;
-    position: relative;
-    overflow: hidden;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-}
-
-.theme-dark .hero-section {
-    background: #1e293b;
-    border: 1px solid #475569;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-}
-
-.hero-section::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(14, 165, 233, 0.3), transparent);
-    opacity: 0.6;
-}
-
-.hero-label {
-    color: #64748b;
-    font-size: 0.875rem;
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin-bottom: 16px;
-    position: relative;
-    z-index: 1;
-}
-
-.theme-dark .hero-label {
-    color: #94a3b8;
-}
-
-.hero-title {
-    font-size: 2.5rem;
-    font-weight: 800;
-    color: #0f172a;
-    margin: 16px 0;
-    letter-spacing: -0.02em;
-    position: relative;
-    z-index: 1;
-}
-
-.theme-dark .hero-title {
-    color: #f8fafc;
-}
-
-/* KPI Cards - Main & Technical */
-.kpi-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 20px;
-    margin: 24px 0;
-}
-
-.kpi-grid[style*="repeat(4, 1fr)"] {
-    grid-template-columns: repeat(4, 1fr) !important;
-}
-
-.kpi-card {
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 16px;
-    padding: 24px;
-    text-align: center;
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
-}
-
-.theme-dark .kpi-card {
-    background: #1e293b;
-    border: 1px solid #475569;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
-}
-
-.kpi-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(14, 165, 233, 0.4), transparent);
-    opacity: 0;
-    transition: opacity 0.3s ease;
-}
-
-.kpi-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-    border-color: rgba(14, 165, 233, 0.6);
-}
-
-.kpi-card:hover::before {
-    opacity: 1;
-}
-
-.kpi-label {
-    color: #64748b !important;
-    font-size: 0.875rem;
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin-bottom: 12px;
-    position: relative;
-    z-index: 1;
-}
-
-.theme-dark .kpi-label {
-    color: #94a3b8 !important;
-}
-
-.kpi-value {
-    font-size: 2.25rem;
-    font-weight: 800;
-    color: #0f172a !important;
-    margin: 12px 0;
-    position: relative;
-    z-index: 1;
-}
-
-.theme-dark .kpi-value {
-    color: #f8fafc !important;
-}
-
-/* AI Overview Section */
-.ai-overview-section {
-    background: #ffffff;
-    border-radius: 16px;
-    padding: 24px;
-    margin: 20px 0;
-    position: relative;
-    overflow: hidden;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
-}
-
-.theme-dark .ai-overview-section {
-    background: #1e293b;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
-}
-
-.ai-overview-section::before {
-    content: '';
-    position: absolute;
-    top: -2px;
-    left: -2px;
-    right: -2px;
-    bottom: -2px;
-    background: conic-gradient(from 0deg, #0ea5e9, #8b5cf6, #ec4899, #ef4444, #f59e0b, #eab308, #0ea5e9);
-    border-radius: 18px;
-    z-index: -1;
-    animation: borderBreathing 8s ease-in-out infinite;
-    opacity: 0.3;
-}
-
-@keyframes borderBreathing {
-    0%, 100% { opacity: 0.2; }
-    50% { opacity: 0.4; }
-}
-
-.ai-overview-content {
-    color: #0f172a;
-    line-height: 1.7;
-    font-size: 1rem;
-    position: relative;
-    z-index: 1;
-}
-
-.theme-dark .ai-overview-content {
-    color: #f8fafc;
-}
-
-/* Modern Podium */
-.podium-container {
-    display: flex;
-    justify-content: center;
-    align-items: flex-end;
-    gap: 20px;
-    margin: 32px 0;
-    height: 180px;
-}
-
-.podium-step {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    transition: all 0.3s ease;
-    position: relative;
-}
-
-.podium-step:hover {
-    transform: translateY(-4px);
-}
-
-.podium-step.first { order: 2; }
-.podium-step.second { order: 1; }
-.podium-step.third { order: 3; }
-
-.podium-platform {
-    width: 140px;
-    border-radius: 16px;
-    padding: 20px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-}
-
-.podium-platform.first {
-    height: 140px;
-    background: linear-gradient(135deg, #f59e0b, #d97706);
-    box-shadow: 0 8px 32px rgba(245, 158, 11, 0.3);
-}
-
-.podium-platform.second {
-    height: 110px;
-    background: linear-gradient(135deg, #94a3b8, #64748b);
-    box-shadow: 0 6px 24px rgba(148, 163, 184, 0.3);
-}
-
-.podium-platform.third {
-    height: 90px;
-    background: linear-gradient(135deg, #d97706, #b45309);
-    box-shadow: 0 4px 16px rgba(217, 119, 6, 0.3);
-}
-
-.podium-medal {
-    font-size: 2rem;
-    margin-bottom: 8px;
-    position: relative;
-    z-index: 1;
-}
-
-.podium-name {
-    color: white;
-    font-weight: 600;
-    font-size: 0.85rem;
-    text-align: center;
-    position: relative;
-    z-index: 1;
-    line-height: 1.2;
-    max-width: 120px;
-    word-wrap: break-word;
-}
-
-/* Floating AI Dock */
-.ai-dock {
-    position: fixed;
-    bottom: 16px;
-    left: 16px;
-    right: 16px;
-    transform: none;
-    min-width: auto;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 12px;
-    padding: 12px 16px;
-}
-
-.theme-light .ai-dock {
-    background: rgba(255, 255, 255, 0.9);
-    border: 1px solid rgba(0, 0, 0, 0.1);
-}
-
-.floating-controls {
-    gap: 20px;
-}
-
-.control-group {
-    gap: 2px;
-}
-
-.control-group label {
-    font-size: 0.7rem;
-}
-
-.theme-light .control-group label {
-    color: #64748b;
-}
-
-.control-value {
-    font-size: 0.8rem;
-}
-
-.theme-light .control-value {
-    color: #0f172a;
-}
-
-.ai-dock:hover {
-    background: rgba(20,20,22,0.9);
-    transform: translateX(-50%) translateY(-2px);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-}
-
-.theme-light .ai-dock:hover {
-    background: rgba(255, 255, 255, 0.95);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-}
-
-.ai-dock a, .ai-dock span {
-    color: var(--text-primary);
-    text-decoration: none;
-    font-weight: 600;
-    padding: 8px 12px;
-    border-radius: 10px;
-}
-
-.ai-dock a:hover {
-    background: var(--bg-secondary);
-}
-
-.theme-dark .ai-dock {
-    background: linear-gradient(135deg, rgba(0, 180, 160, 0.22), rgba(0, 110, 255, 0.10));
-    border-color: rgba(255, 255, 255, 0.14);
-}
-
-.theme-light .ai-dock {
-    background: linear-gradient(135deg, rgba(0, 180, 160, 0.18), rgba(0, 110, 255, 0.06));
-    border-color: rgba(0, 0, 0, 0.08);
-}
-
-.ai-dock::before {
-    content: '';
-    position: absolute;
-    top: -1px;
-    left: -1px;
-    right: -1px;
-    bottom: -1px;
-    background: linear-gradient(135deg, rgba(14, 165, 233, 0.3), rgba(139, 92, 246, 0.3));
-    border-radius: var(--radius-28);
-    z-index: -1;
-    animation: borderBreathing 8s ease-in-out infinite;
-}
-
-.ai-dock:hover {
-    opacity: 1;
-    transform: translateX(-50%) translateY(-2px);
-    box-shadow: var(--shadow-strong);
-}
-
-.ai-dock-left {
-    display: flex;
-    align-items: center;
-    gap: var(--space-16);
-}
-
-.ai-dock-center {
-    display: flex;
-    gap: var(--space-16);
-}
-
-.ai-dock-right {
-    display: flex;
-    align-items: center;
-    gap: var(--space-16);
-}
-
-.ai-status {
-    color: var(--text-secondary);
-    font-size: 0.875rem;
-    font-weight: 500;
-}
-
-.ai-icon-button {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    border: none;
-    background: rgba(255, 255, 255, 0.1);
-    color: var(--text-primary);
-    font-size: 1.2rem;
-    cursor: pointer;
-    transition: all var(--transition-normal);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-}
-
-.ai-icon-button:hover {
-    background: rgba(255, 255, 255, 0.2);
-    transform: scale(1.05);
-}
-
-.ai-icon-button:focus {
-    outline: 2px solid var(--accent-primary);
-    outline-offset: 2px;
-}
-
-.ai-icon-button.is-disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
-.ai-model-select {
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: var(--radius-16);
-    padding: var(--space-8) var(--space-12);
-    color: var(--text-primary);
-    font-size: 0.875rem;
-    min-width: 120px;
-}
-
-.ai-run-button {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    border: none;
-    background: var(--gradient-primary);
-    color: white;
-    font-size: 1.2rem;
-    cursor: pointer;
-    transition: all var(--transition-normal);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.ai-run-button:hover {
-    transform: scale(1.05);
-    box-shadow: var(--shadow-medium);
-}
-
-.ai-run-button:focus {
-    outline: 2px solid var(--accent-primary);
-    outline-offset: 2px;
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-    .modern-header {
-        font-size: 2rem;
-        margin: 24px 0 16px 0;
-    }
-    
-    .hero-title {
-        font-size: 2rem;
-    }
-    
-    .hero-section {
-        padding: 20px;
-        margin: 20px 0;
-    }
-    
-    .kpi-grid {
-        grid-template-columns: 1fr;
-        gap: 16px;
-    }
-    
-    .kpi-card {
-        padding: 20px;
-    }
-    
-    .podium-container {
-        flex-direction: column;
-        align-items: center;
-        height: auto;
-        gap: 16px;
-    }
-    
-    .podium-step {
-        order: unset !important;
-    }
-    
-    .podium-platform {
-        width: 120px;
-    }
-    
-    .podium-platform.first { height: 120px; }
-    .podium-platform.second { height: 100px; }
-    .podium-platform.third { height: 80px; }
-    
-    .ai-dock {
-        position: fixed;
-        bottom: 16px;
-        left: 16px;
-        right: 16px;
-        transform: none;
-        min-width: auto;
-        flex-wrap: wrap;
-        justify-content: center;
-        gap: 12px;
-        padding: 12px 16px;
-    }
-    
-    .ai-dock-left,
-    .ai-dock-center,
-    .ai-dock-right {
-        gap: 12px;
-    }
-}
-
-/* Utility Classes */
-.text-center { text-align: center; }
-.mb-16 { margin-bottom: 16px; }
-.mb-24 { margin-bottom: 24px; }
-.mb-32 { margin-bottom: 32px; }
-
-/* Plotly Chart Styling */
-.js-plotly-plot .plotly .main-svg {
-    border-radius: 12px;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
-}
-
-/* Success/Info/Warning/Error Messages */
-.stSuccess {
-    background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.1));
-    border: 1px solid rgba(16, 185, 129, 0.2);
-    border-radius: 12px;
-}
-
-.stInfo {
-    background: linear-gradient(135deg, rgba(14, 165, 233, 0.1), rgba(139, 92, 246, 0.1));
-    border: 1px solid rgba(14, 165, 233, 0.2);
-    border-radius: 12px;
-}
-
-.stWarning {
-    background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(217, 119, 6, 0.1));
-    border: 1px solid rgba(245, 158, 11, 0.2);
-    border-radius: 12px;
-}
-
-.stError {
-    background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(220, 38, 38, 0.1));
-    border: 1px solid rgba(239, 68, 68, 0.2);
-    border-radius: 12px;
-}
-
-/* Global Styles */
-.main {
-    background: var(--bg-primary);
-    color: var(--text-primary);
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, system-ui, sans-serif;
-}
-
-/* Theme-specific main styles */
-.theme-light .main {
-    background: var(--bg-primary);
-    color: var(--text-primary);
-}
-
-.theme-dark .main {
-    background: var(--bg-primary);
-    color: var(--text-primary);
-}
-
-/* Modern Buttons */
-.stButton > button {
-    background: linear-gradient(135deg, #0ea5e9, #8b5cf6);
-    border: none;
-    border-radius: 12px;
-    color: white;
-    font-weight: 600;
-    padding: 12px 24px;
-    font-size: 0.95rem;
-    transition: all 0.3s ease;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-}
-
-.stButton > button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-}
-
-/* Modern Tables */
-.modern-table {
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(248, 250, 252, 0.95));
-    border-radius: 16px;
-    overflow: hidden;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
-    border: 1px solid rgba(226, 232, 240, 0.8);
-}
-
-.theme-dark .modern-table {
-    background: linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(51, 65, 85, 0.95));
-    border: 1px solid rgba(71, 85, 105, 0.8);
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
-}
-
-.modern-table th {
-    background: linear-gradient(135deg, #0ea5e9, #8b5cf6);
-    color: white;
-    font-weight: 600;
-    padding: 16px;
-    text-align: left;
-}
-
-.modern-table td {
-    padding: 16px;
-    border-bottom: 1px solid rgba(226, 232, 240, 0.8);
-}
-
-.theme-dark .modern-table td {
-    border-bottom: 1px solid rgba(71, 85, 105, 0.8);
-}
-
-.modern-table tr:hover {
-    background: rgba(14, 165, 233, 0.05);
-}
-
-/* Modern Cards */
-.modern-card {
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(248, 250, 252, 0.95));
-    border: 1px solid rgba(226, 232, 240, 0.8);
-    border-radius: 16px;
-    padding: 24px;
-    margin: 16px 0;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
-    transition: all 0.3s ease;
-    backdrop-filter: blur(20px);
-}
-
-.theme-dark .modern-card {
-    background: linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(51, 65, 85, 0.95));
-    border: 1px solid rgba(71, 85, 105, 0.8);
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
-}
-
-.modern-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-    border-color: #0ea5e9;
-}
-
-/* Streamlit Element Overrides */
-.stSelectbox > div > div {
-    background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(217, 119, 6, 0.05)) !important;
-    border: 1px solid rgba(245, 158, 11, 0.3) !important;
-    border-radius: 8px !important;
-}
-
-.theme-dark .stSelectbox > div > div {
-    background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(217, 119, 6, 0.1)) !important;
-    border: 1px solid rgba(245, 158, 11, 0.4) !important;
-}
-
-.stDateInput > div > div {
-    background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(217, 119, 6, 0.05)) !important;
-    border: 1px solid rgba(245, 158, 11, 0.3) !important;
-    border-radius: 8px !important;
-}
-
-.theme-dark .stDateInput > div > div {
-    background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(217, 119, 6, 0.1)) !important;
-    border: 1px solid rgba(245, 158, 11, 0.4) !important;
-}
-
-/* Modern Sidebar */
-.sidebar .sidebar-content {
-    background: linear-gradient(135deg, rgba(248, 250, 252, 0.95), rgba(241, 245, 249, 0.95)) !important;
-    border-right: 1px solid rgba(226, 232, 240, 0.8) !important;
-}
-
-.theme-dark .sidebar .sidebar-content {
-    background: linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(51, 65, 85, 0.95)) !important;
-    border-right: 1px solid rgba(71, 85, 105, 0.8) !important;
-}
-
-.sidebar .sidebar-content .block-container {
-    background: transparent;
-}
-
-/* Modern Main */
-.main .block-container {
-    background: transparent;
-    padding-top: 2rem;
-    padding-bottom: 6rem;
-}
-
-.main .block-container .stMarkdown {
-    background: transparent;
-}
-
-/* Modern Caption */
-.stCaption {
-    color: #64748b;
-    font-size: 0.875rem;
-    font-weight: 400;
-    text-align: center;
-    margin: 16px 0;
-}
-
-.theme-dark .stCaption {
-    color: #94a3b8;
-}
-
-/* Floating Control Bar */
-.ai-dock {
-    position: fixed;
-    bottom: 16px;
-    left: 16px;
-    right: 16px;
-    transform: none;
-    min-width: auto;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 12px;
-    padding: 12px 16px;
-}
-
-.theme-light .ai-dock {
-    background: rgba(255, 255, 255, 0.9);
-    border: 1px solid rgba(0, 0, 0, 0.1);
-}
-
-.floating-controls {
-    gap: 20px;
-}
-
-.control-group {
-    gap: 2px;
-}
-
-.control-group label {
-    font-size: 0.7rem;
-}
-
-.theme-light .control-group label {
-    color: #64748b;
-}
-
-.control-value {
-    font-size: 0.8rem;
-}
-
-.theme-light .control-value {
-    color: #0f172a;
-}
-
-.ai-dock:hover {
-    background: rgba(20,20,22,0.9);
-    transform: translateX(-50%) translateY(-2px);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-}
-
-.theme-light .ai-dock:hover {
-    background: rgba(255, 255, 255, 0.95);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-}
-
-.ai-dock a, .ai-dock span {
-    color: var(--text-primary);
-    text-decoration: none;
-    font-weight: 600;
-    padding: 8px 12px;
-    border-radius: 10px;
-}
-
-.ai-dock a:hover {
-    background: var(--bg-secondary);
-}
-
-.theme-dark .ai-dock {
-    background: linear-gradient(135deg, rgba(0, 180, 160, 0.22), rgba(0, 110, 255, 0.10));
-    border-color: rgba(255, 255, 255, 0.14);
-}
-
-.theme-light .ai-dock {
-    background: linear-gradient(135deg, rgba(0, 180, 160, 0.18), rgba(0, 110, 255, 0.06));
-    border-color: rgba(0, 0, 0, 0.08);
-}
-
-.ai-dock::before {
-    content: '';
-    position: absolute;
-    top: -1px;
-    left: -1px;
-    right: -1px;
-    bottom: -1px;
-    background: linear-gradient(135deg, rgba(14, 165, 233, 0.3), rgba(139, 92, 246, 0.3));
-    border-radius: var(--radius-28);
-    z-index: -1;
-    animation: borderBreathing 8s ease-in-out infinite;
-}
-
-.ai-dock:hover {
-    opacity: 1;
-    transform: translateX(-50%) translateY(-2px);
-    box-shadow: var(--shadow-strong);
-}
-
-.ai-dock-left {
-    display: flex;
-    align-items: center;
-    gap: var(--space-16);
-}
-
-.ai-dock-center {
-    display: flex;
-    gap: var(--space-16);
-}
-
-.ai-dock-right {
-    display: flex;
-    align-items: center;
-    gap: var(--space-16);
-}
-
-.ai-status {
-    color: var(--text-secondary);
-    font-size: 0.875rem;
-    font-weight: 500;
-}
-
-.ai-icon-button {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    border: none;
-    background: rgba(255, 255, 255, 0.1);
-    color: var(--text-primary);
-    font-size: 1.2rem;
-    cursor: pointer;
-    transition: all var(--transition-normal);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-}
-
-.ai-icon-button:hover {
-    background: rgba(255, 255, 255, 0.2);
-    transform: scale(1.05);
-}
-
-.ai-icon-button:focus {
-    outline: 2px solid var(--accent-primary);
-    outline-offset: 2px;
-}
-
-.ai-icon-button.is-disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
-.ai-model-select {
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: var(--radius-16);
-    padding: var(--space-8) var(--space-12);
-    color: var(--text-primary);
-    font-size: 0.875rem;
-    min-width: 120px;
-}
-
-.ai-run-button {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    border: none;
-    background: var(--gradient-primary);
-    color: white;
-    font-size: 1.2rem;
-    cursor: pointer;
-    transition: all var(--transition-normal);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.ai-run-button:hover {
-    transform: scale(1.05);
-    box-shadow: var(--shadow-medium);
-}
-
-.ai-run-button:focus {
-    outline: 2px solid var(--accent-primary);
-    outline-offset: 2px;
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-    .modern-header {
-        font-size: 2rem;
-        margin: 24px 0 16px 0;
-    }
-    
-    .hero-title {
-        font-size: 2rem;
-    }
-    
-    .hero-section {
-        padding: 20px;
-        margin: 20px 0;
-    }
-    
-    .kpi-grid {
-        grid-template-columns: 1fr;
-        gap: 16px;
-    }
-    
-    .kpi-card {
-        padding: 20px;
-    }
-    
-    .podium-container {
-        flex-direction: column;
-        align-items: center;
-        height: auto;
-        gap: 16px;
-    }
-    
-    .podium-step {
-        order: unset !important;
-    }
-    
-    .podium-platform {
-        width: 120px;
-    }
-    
-    .podium-platform.first { height: 120px; }
-    .podium-platform.second { height: 100px; }
-    .podium-platform.third { height: 80px; }
-    
-    .ai-dock {
-        position: fixed;
-        bottom: 16px;
-        left: 16px;
-        right: 16px;
-        transform: none;
-        min-width: auto;
-        flex-wrap: wrap;
-        justify-content: center;
-        gap: 12px;
-        padding: 12px 16px;
-    }
-    
-    .ai-dock-left,
-    .ai-dock-center,
-    .ai-dock-right {
-        gap: 12px;
-    }
-}
-
-/* Utility Classes */
-.text-center { text-align: center; }
-.mb-16 { margin-bottom: 16px; }
-.mb-24 { margin-bottom: 24px; }
-.mb-32 { margin-bottom: 32px; }
-
-/* Plotly Chart Styling */
-.js-plotly-plot .plotly .main-svg {
-    border-radius: 12px;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
-}
-
-/* Success/Info/Warning/Error Messages */
-.stSuccess {
-    background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.1));
-    border: 1px solid rgba(16, 185, 129, 0.2);
-    border-radius: 12px;
-}
-
-.stInfo {
-    background: linear-gradient(135deg, rgba(14, 165, 233, 0.1), rgba(139, 92, 246, 0.1));
-    border: 1px solid rgba(14, 165, 233, 0.2);
-    border-radius: 12px;
-}
-
-.stWarning {
-    background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(217, 119, 6, 0.1));
-    border: 1px solid rgba(245, 158, 11, 0.2);
-    border-radius: 12px;
-}
-
-.stError {
-    background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(220, 38, 38, 0.1));
-    border: 1px solid rgba(239, 68, 68, 0.2);
-    border-radius: 12px;
-}
-
-/* Global Styles */
-.main {
-    background: var(--bg-primary);
-    color: var(--text-primary);
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, system-ui, sans-serif;
-}
-
-/* Theme-specific main styles */
-.theme-light .main {
-    background: var(--bg-primary);
-    color: var(--text-primary);
-}
-
-.theme-dark .main {
-    background: var(--bg-primary);
-    color: var(--text-primary);
-}
-
-/* Modern Buttons */
-.stButton > button {
-    background: linear-gradient(135deg, #0ea5e9, #8b5cf6);
-    border: none;
-    border-radius: 12px;
-    color: white;
-    font-weight: 600;
-    padding: 12px 24px;
-    font-size: 0.95rem;
-    transition: all 0.3s ease;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-}
-
-.stButton > button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-}
-
-/* Modern Tables */
-.modern-table {
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(248, 250, 252, 0.95));
-    border-radius: 16px;
-    overflow: hidden;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
-    border: 1px solid rgba(226, 232, 240, 0.8);
-}
-
-.theme-dark .modern-table {
-    background: linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(51, 65, 85, 0.95));
-    border: 1px solid rgba(71, 85, 105, 0.8);
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
-}
-
-.modern-table th {
-    background: linear-gradient(135deg, #0ea5e9, #8b5cf6);
-    color: white;
-    font-weight: 600;
-    padding: 16px;
-    text-align: left;
-}
-
-.modern-table td {
-    padding: 16px;
-    border-bottom: 1px solid rgba(226, 232, 240, 0.8);
-}
-
-.theme-dark .modern-table td {
-    border-bottom: 1px solid rgba(71, 85, 105, 0.8);
-}
-
-.modern-table tr:hover {
-    background: rgba(14, 165, 233, 0.05);
-}
-
-/* Modern Cards */
-.modern-card {
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(248, 250, 252, 0.95));
-    border: 1px solid rgba(226, 232, 240, 0.8);
-    border-radius: 16px;
-    padding: 24px;
-    margin: 16px 0;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
-    transition: all 0.3s ease;
-    backdrop-filter: blur(20px);
-}
-
-.theme-dark .modern-card {
-    background: linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(51, 65, 85, 0.95));
-    border: 1px solid rgba(71, 85, 105, 0.8);
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
-}
-
-.modern-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-    border-color: #0ea5e9;
-}
-
-/* Streamlit Element Overrides */
-.stSelectbox > div > div {
-    background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(217, 119, 6, 0.05)) !important;
-    border: 1px solid rgba(245, 158, 11, 0.3) !important;
-    border-radius: 8px !important;
-}
-
-.theme-dark .stSelectbox > div > div {
-    background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(217, 119, 6, 0.1)) !important;
-    border: 1px solid rgba(245, 158, 11, 0.4) !important;
-}
-
-.stDateInput > div > div {
-    background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(217, 119, 6, 0.05)) !important;
-    border: 1px solid rgba(245, 158, 11, 0.3) !important;
-    border-radius: 8px !important;
-}
-
-.theme-dark .stDateInput > div > div {
-    background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(217, 119, 6, 0.1)) !important;
-    border: 1px solid rgba(245, 158, 11, 0.4) !important;
-}
-
-/* Modern Sidebar */
-.sidebar .sidebar-content {
-    background: linear-gradient(135deg, rgba(248, 250, 252, 0.95), rgba(241, 245, 249, 0.95)) !important;
-    border-right: 1px solid rgba(226, 232, 240, 0.8) !important;
-}
-
-.theme-dark .sidebar .sidebar-content {
-    background: linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(51, 65, 85, 0.95)) !important;
-    border-right: 1px solid rgba(71, 85, 105, 0.8) !important;
-}
-
-.sidebar .sidebar-content .block-container {
-    background: transparent;
-}
-
-/* Modern Main */
-.main .block-container {
-    background: transparent;
-    padding-top: 2rem;
-    padding-bottom: 2rem;
-}
-
-.main .block-container .stMarkdown {
-    background: transparent;
-}
-
-/* Modern Caption */
-.stCaption {
-    color: #64748b;
-    font-size: 0.875rem;
-    font-weight: 400;
-    text-align: center;
-    margin: 16px 0;
-}
-
-.theme-dark .stCaption {
-    color: #94a3b8;
-}
-
-/* Floating Control Bar */
-.ai-dock {
-    position: fixed;
-    bottom: 16px;
-    left: 16px;
-    right: 16px;
-    transform: none;
-    min-width: auto;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 12px;
-    padding: 12px 16px;
-}
-
-.theme-light .ai-dock {
-    background: rgba(255, 255, 255, 0.9);
-    border: 1px solid rgba(0, 0, 0, 0.1);
-}
-
-.floating-controls {
-    gap: 20px;
-}
-
-.control-group {
-    gap: 2px;
-}
-
-.control-group label {
-    font-size: 0.7rem;
-}
-
-.theme-light .control-group label {
-    color: #64748b;
-}
-
-.control-value {
-    font-size: 0.8rem;
-}
-
-.theme-light .control-value {
-    color: #0f172a;
-}
-
-.ai-dock:hover {
-    background: rgba(20,20,22,0.9);
-    transform: translateX(-50%) translateY(-2px);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-}
-
-.theme-light .ai-dock:hover {
-    background: rgba(255, 255, 255, 0.95);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-}
-
-.ai-dock a, .ai-dock span {
-    color: var(--text-primary);
-    text-decoration: none;
-    font-weight: 600;
-    padding: 8px 12px;
-    border-radius: 10px;
-}
-
-.ai-dock a:hover {
-    background: var(--bg-secondary);
-}
-
-.theme-dark .ai-dock {
-    background: linear-gradient(135deg, rgba(0, 180, 160, 0.22), rgba(0, 110, 255, 0.10));
-    border-color: rgba(255, 255, 255, 0.14);
-}
-
-.theme-light .ai-dock {
-    background: linear-gradient(135deg, rgba(0, 180, 160, 0.18), rgba(0, 110, 255, 0.06));
-    border-color: rgba(0, 0, 0, 0.08);
-}
-
-.ai-dock::before {
-    content: '';
-    position: absolute;
-    top: -1px;
-    left: -1px;
-    right: -1px;
-    bottom: -1px;
-    background: linear-gradient(135deg, rgba(14, 165, 233, 0.3), rgba(139, 92, 246, 0.3));
-    border-radius: var(--radius-28);
-    z-index: -1;
-    animation: borderBreathing 8s ease-in-out infinite;
-}
-
-.ai-dock:hover {
-    opacity: 1;
-    transform: translateX(-50%) translateY(-2px);
-    box-shadow: var(--shadow-strong);
-}
-
-.ai-dock-left {
-    display: flex;
-    align-items: center;
-    gap: var(--space-16);
-}
-
-.ai-dock-center {
-    display: flex;
-    gap: var(--space-16);
-}
-
-.ai-dock-right {
-    display: flex;
-    align-items: center;
-    gap: var(--space-16);
-}
-
-.ai-status {
-    color: var(--text-secondary);
-    font-size: 0.875rem;
-    font-weight: 500;
-}
-
-.ai-icon-button {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    border: none;
-    background: rgba(255, 255, 255, 0.1);
-    color: var(--text-primary);
-    font-size: 1.2rem;
-    cursor: pointer;
-    transition: all var(--transition-normal);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-}
-
-.ai-icon-button:hover {
-    background: rgba(255, 255, 255, 0.2);
-    transform: scale(1.05);
-}
-
-.ai-icon-button:focus {
-    outline: 2px solid var(--accent-primary);
-    outline-offset: 2px;
-}
-
-.ai-icon-button.is-disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
-.ai-model-select {
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: var(--radius-16);
-    padding: var(--space-8) var(--space-12);
-    color: var(--text-primary);
-    font-size: 0.875rem;
-    min-width: 120px;
-}
-
-.ai-run-button {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    border: none;
-    background: var(--gradient-primary);
-    color: white;
-    font-size: 1.2rem;
-    cursor: pointer;
-    transition: all var(--transition-normal);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.ai-run-button:hover {
-    transform: scale(1.05);
-    box-shadow: var(--shadow-medium);
-}
-
-.ai-run-button:focus {
-    outline: 2px solid var(--accent-primary);
-    outline-offset: 2px;
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-    .modern-header {
-        font-size: 2rem;
-        margin: 24px 0 16px 0;
-    }
-    
-    .hero-title {
-        font-size: 2rem;
-    }
-    
-    .hero-section {
-        padding: 20px;
-        margin: 20px 0;
-    }
-    
-    .kpi-grid {
-        grid-template-columns: 1fr;
-        gap: 16px;
-    }
-    
-    .kpi-card {
-        padding: 20px;
-    }
-    
-    .podium-container {
-        flex-direction: column;
-        align-items: center;
-        height: auto;
-        gap: 16px;
-    }
-    
-    .podium-step {
-        order: unset !important;
-    }
-    
-    .podium-platform {
-        width: 120px;
-    }
-    
-    .podium-platform.first { height: 120px; }
-    .podium-platform.second { height: 100px; }
-    .podium-platform.third { height: 80px; }
-    
-    .ai-dock {
-        position: fixed;
-        bottom: 16px;
-        left: 16px;
-        right: 16px;
-        transform: none;
-        min-width: auto;
-        flex-wrap: wrap;
-        justify-content: center;
-        gap: 12px;
-        padding: 12px 16px;
-    }
-    
-    .ai-dock-left,
-    .ai-dock-center,
-    .ai-dock-right {
-        gap: 12px;
-    }
-}
-
-/* Utility Classes */
-.text-center { text-align: center; }
-.mb-16 { margin-bottom: 16px; }
-.mb-24 { margin-bottom: 24px; }
-.mb-32 { margin-bottom: 32px; }
-
-/* Plotly Chart Styling */
-.js-plotly-plot .plotly .main-svg {
-    border-radius: 12px;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
-}
-
-/* Success/Info/Warning/Error Messages */
-.stSuccess {
-    background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.1));
-    border: 1px solid rgba(16, 185, 129, 0.2);
-    border-radius: 12px;
-}
-
-.stInfo {
-    background: linear-gradient(135deg, rgba(14, 165, 233, 0.1), rgba(139, 92, 246, 0.1));
-    border: 1px solid rgba(14, 165, 233, 0.2);
-    border-radius: 12px;
-}
-
-.stWarning {
-    background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(217, 119, 6, 0.1));
-    border: 1px solid rgba(245, 158, 11, 0.2);
-    border-radius: 12px;
-}
-
-.stError {
-    background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(220, 38, 38, 0.1));
-    border: 1px solid rgba(239, 68, 68, 0.2);
-    border-radius: 12px;
-}
-
-/* Global Styles */
-.main {
-    background: var(--bg-primary);
-    color: var(--text-primary);
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, system-ui, sans-serif;
-}
-
-/* Theme-specific main styles */
-.theme-light .main {
-    background: var(--bg-primary);
-    color: var(--text-primary);
-}
-
-.theme-dark .main {
-    background: var(--bg-primary);
-    color: var(--text-primary);
-}
-
-/* Modern Buttons */
-.stButton > button {
-    background: linear-gradient(135deg, #0ea5e9, #8b5cf6);
-    border: none;
-    border-radius: 12px;
-    color: white;
-    font-weight: 600;
-    padding: 12px 24px;
-    font-size: 0.95rem;
-    transition: all 0.3s ease;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-}
-
-.stButton > button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-}
-
-/* Modern Tables */
-.modern-table {
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(248, 250, 252, 0.95));
-    border-radius: 16px;
-    overflow: hidden;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
-    border: 1px solid rgba(226, 232, 240, 0.8);
-}
-
-.theme-dark .modern-table {
-    background: linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(51, 65, 85, 0.95));
-    border: 1px solid rgba(71, 85, 105, 0.8);
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
-}
-
-.modern-table th {
-    background: linear-gradient(135deg, #0ea5e9, #8b5cf6);
-    color: white;
-    font-weight: 600;
-    padding: 16px;
-    text-align: left;
-}
-
-.modern-table td {
-    padding: 16px;
-    border-bottom: 1px solid rgba(226, 232, 240, 0.8);
-}
-
-.theme-dark .modern-table td {
-    border-bottom: 1px solid rgba(71, 85, 105, 0.8);
-}
-
-.modern-table tr:hover {
-    background: rgba(14, 165, 233, 0.05);
-}
-
-/* Modern Cards */
-.modern-card {
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(248, 250, 252, 0.95));
-    border: 1px solid rgba(226, 232, 240, 0.8);
-    border-radius: 16px;
-    padding: 24px;
-    margin: 16px 0;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
-    transition: all 0.3s ease;
-    backdrop-filter: blur(20px);
-}
-
-.theme-dark .modern-card {
-    background: linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(51, 65, 85, 0.95));
-    border: 1px solid rgba(71, 85, 105, 0.8);
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
-}
-
-.modern-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-    border-color: #0ea5e9;
-}
-
-/* Streamlit Element Overrides */
-.stSelectbox > div > div {
-    background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(217, 119, 6, 0.05)) !important;
-    border: 1px solid rgba(245, 158, 11, 0.3) !important;
-    border-radius: 8px !important;
-}
-
-.theme-dark .stSelectbox > div > div {
-    background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(217, 119, 6, 0.1)) !important;
-    border: 1px solid rgba(245, 158, 11, 0.4) !important;
-}
-
-.stDateInput > div > div {
-    background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(217, 119, 6, 0.05)) !important;
-    border: 1px solid rgba(245, 158, 11, 0.3) !important;
-    border-radius: 8px !important;
-}
-
-.theme-dark .stDateInput > div > div {
-    background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(217, 119, 6, 0.1)) !important;
-    border: 1px solid rgba(245, 158, 11, 0.4) !important;
-}
-
-/* Modern Sidebar */
-.sidebar .sidebar-content {
-    background: linear-gradient(135deg, rgba(248, 250, 252, 0.95), rgba(241, 245, 249, 0.95)) !important;
-    border-right: 1px solid rgba(226, 232, 240, 0.8) !important;
-}
-
-.theme-dark .sidebar .sidebar-content {
-    background: linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(51, 65, 85, 0.95)) !important;
-    border-right: 1px solid rgba(71, 85, 105, 0.8) !important;
-}
-
-.sidebar .sidebar-content .block-container {
-    background: transparent;
-}
-
-/* Modern Main */
-.main .block-container {
-    background: transparent;
-    padding-top: 2rem;
-    padding-bottom: 2rem;
-}
-
-.main .block-container .stMarkdown {
-    background: transparent;
-}
-
-/* Modern Caption */
-.stCaption {
-    color: #64748b;
-    font-size: 0.875rem;
-    font-weight: 400;
-    text-align: center;
-    margin: 16px 0;
-}
-
-.theme-dark .stCaption {
-    color: #94a3b8;
-}
-/* Dark modern boxes overrides */
-.hero-section,
-.kpi-card {
-    background: rgba(20, 24, 28, 0.9) !important;
-    border: 1px solid rgba(255, 255, 255, 0.12) !important;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28) !important;
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-}
-
-.hero-title { color: #ffffff !important; }
-.ai-overview-section { color: #ffffff !important; }
-
-/* AI overview only with animated border, no fill */
-.ai-overview-section {
-    background: transparent !important;
-    border: 0 !important;
-    position: relative;
-}
-.ai-overview-section::before {
-    content: '';
-    position: absolute;
-    top: -2px; left: -2px; right: -2px; bottom: -2px;
-    border-radius: 18px;
-    background: conic-gradient(from 0deg, #0ea5e9, #8b5cf6, #ec4899, #ef4444, #f59e0b, #eab308, #0ea5e9);
-    z-index: -1;
-    animation: borderBreathing 8s ease-in-out infinite;
-    opacity: 0.35;
-}
-.kpi-card .kpi-label { color: #cbd5e1 !important; }
-.kpi-card .kpi-value { color: #ffffff !important; }
-
-/* Floating Dock (interactive filters) */
-#dock-anchor + div {
-    position: fixed;
-    left: 50%;
-    bottom: 18px;
-    transform: translateX(-50%);
-    z-index: 9999;
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    padding: 10px 16px;
-    border-radius: 28px;
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    background: linear-gradient(135deg, rgba(20,20,22,0.82), rgba(38, 43, 55, 0.78));
-    border: 1px solid rgba(255,255,255,0.14);
-    box-shadow: 0 12px 32px rgba(0,0,0,0.35);
-}
-
-#dock-anchor + div .stDateInput > div > div,
-#dock-anchor + div .stSelectbox > div > div {
-    background: rgba(255, 255, 255, 0.10) !important;
-    border: 1px solid rgba(255, 255, 255, 0.18) !important;
-    color: #ffffff !important;
-}
-#dock-anchor + div label { color: #e2e8f0 !important; font-size: 0.85rem; }
-
-#dock-anchor + div .stDateInput input,
-#dock-anchor + div .stSelectbox div[data-baseweb="select"] div {
-    color: #f8fafc !important;
-}
-
-@media (max-width: 768px) {
-    #dock-anchor + div { left: 12px; right: 12px; transform: none; }
-}
-
-</style>
-""", unsafe_allow_html=True)
+# Minimal modern styling
+st.markdown(
+    """
+    <style>
+      .main {
+        background: radial-gradient(1200px 600px at 10% 10%, rgba(0, 140, 255, 0.08), transparent 60%),
+                    radial-gradient(1000px 500px at 90% 20%, rgba(0, 255, 200, 0.06), transparent 60%),
+                    linear-gradient(180deg, #0b1020, #0f1426 40%, #0b1020);
+        color: #e6efff;
+      }
+      .glass-wrap { display: flex; gap: 16px; }
+      .glass-card {
+        width: 100%;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 16px;
+        padding: 14px 16px;
+        position: relative;
+        overflow: hidden;
+      }
+      .glass-card:before {
+        content: "";
+        position: absolute; inset: -2px;
+        background: radial-gradient(600px 200px at 20% -20%, rgba(0,255,200,0.12), transparent 60%),
+                    radial-gradient(500px 200px at 120% 120%, rgba(0,170,255,0.12), transparent 60%);
+        filter: blur(20px);
+        z-index: 0;
+      }
+      .glass-card .content { position: relative; z-index: 1; }
+      .kpi-card { min-height: 120px; display: flex; }
+      .hero {
+        background: linear-gradient(135deg, rgba(0, 170, 255, 0.22), rgba(0, 255, 170, 0.12));
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        box-shadow: 0 10px 40px rgba(0, 200, 255, 0.15), 0 10px 40px rgba(0, 255, 160, 0.12);
+        border-radius: 18px;
+        padding: 18px 20px;
+      }
+      .kpi {font-size: 24px; font-weight: 700;}
+      .subtle {color:#a9b8d0; font-size:13px}
+      .good {color:#6ef7c8}
+      .warn {color:#ffd27e}
+      .bad {color:#ff7e7e}
+      /* podium styles */
+      .podium {display:flex; align-items:flex-end; gap:12px; margin: 8px 0 18px}
+      .podium .col {flex:1; text-align:center}
+      .podium .step {background: rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.12); border-radius:10px; padding:10px 8px}
+      .podium .s1 {height: 180px}
+      .podium .s2 {height: 120px}
+      .podium .s3 {height: 120px}
+      .podium .name {font-weight:700}
+      .podium .medal {font-size: 22px; opacity:0.9}
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
 
 
 def aggregate_station_kpis(df: pd.DataFrame) -> pd.DataFrame:
@@ -2030,10 +192,9 @@ def build_llm_prompt(df_kpis: pd.DataFrame, best_name: str, livello: str, profil
             f"ALT {o['nome_stazione']}: km {o_km}, % {o_pct}, nebbia {o_neb}, vento {o_ven}, valanghe {o_av}"
         )
     context = "\n".join(lines)
-    target_date_italian = format_date_for_display(target_date)
     prompt = (
-        f"Per la data {target_date_italian} l'app ha selezionato la stazione migliore: {best_name}. "
-        f"Scrivi un'overview molto breve (max 2 frasi, 35–45 parole), chiara e utile, che spieghi perché {best_name} è preferibile rispetto alle altre. "
+        f"Per la data {target_date} l'app ha selezionato la stazione migliore: {best_name}. "
+        f"Scrivi un’overview molto breve (max 2 frasi, 35–45 parole), chiara e utile, che spieghi perché {best_name} è preferibile rispetto alle altre. "
         f"Usa informazioni concrete: km/% piste, meteo (nebbia/vento/sole/pioggia), rischio valanghe e coerenza con livello '{livello}' e profilo '{profilo}'. "
         f"Non fare elenchi; evita superlativi generici. Se non emergono differenze nette, evidenzia il miglior compromesso. "
         f"Sii coerente con i dati della dashboard e spiega chiaramente perché {best_name} è consigliata.\n"
@@ -2051,9 +212,8 @@ def build_festaiolo_prompt(df_rec: pd.DataFrame, best_name: str, livello: str, t
     ]
     
     # Costruisci il prompt con focus sulla stazione consigliata
-    target_date_italian = format_date_for_display(target_date)
     prompt_parts = [
-        f"Per la data {target_date_italian} e livello '{livello}', {best_name} è la stazione consigliata dal sistema.",
+        f"Per la data {target_date} e livello '{livello}', {best_name} è la stazione consigliata dal sistema.",
         f"Scrivi un mini-riassunto (max 3 frasi) che spieghi perché {best_name} è consigliata per il profilo festaiolo."
     ]
     
@@ -2097,9 +257,8 @@ def build_familiare_prompt(df_rec: pd.DataFrame, best_name: str, livello: str, t
     ]
     
     # Costruisci il prompt con focus sulla stazione consigliata
-    target_date_italian = format_date_for_display(target_date)
     prompt_parts = [
-        f"Per la data {target_date_italian} e livello '{livello}', {best_name} è la stazione consigliata dal sistema.",
+        f"Per la data {target_date} e livello '{livello}', {best_name} è la stazione consigliata dal sistema.",
         f"Scrivi un mini-riassunto (max 3 frasi) che spieghi perché {best_name} è consigliata per il profilo familiare."
     ]
     
@@ -2145,9 +304,8 @@ def build_lowcost_prompt(df_rec: pd.DataFrame, best_name: str, livello: str, tar
     ]
     
     # Costruisci il prompt con focus sulla stazione consigliata
-    target_date_italian = format_date_for_display(target_date)
     prompt_parts = [
-        f"Per la data {target_date_italian} e livello '{livello}', {best_name} è la stazione consigliata dal sistema.",
+        f"Per la data {target_date} e livello '{livello}', {best_name} è la stazione consigliata dal sistema.",
         f"Scrivi un mini-riassunto (max 3 frasi) che spieghi perché {best_name} è consigliata per il profilo low-cost."
     ]
     
@@ -2309,13 +467,7 @@ def render_map_with_best(df_coords: pd.DataFrame, best_name: str, tooltip_km: bo
 
 
 def main():
-    st.markdown('<h1 class="modern-header">🏔️ Pirenei Ski Recommender v2</h1>', unsafe_allow_html=True)
-
-    # Set theme to light by default
-    theme = "light"
-    
-    # Apply theme class to body
-    st.markdown(f'<div class="theme-{theme}">', unsafe_allow_html=True)
+    st.title("🏔️ Pirenei Ski Recommender v2")
 
     with st.spinner("Caricamento dati..."):
         df_infonieve, df_valanghe, df_meteo, df_recensioni = load_datasets()
@@ -2324,38 +476,13 @@ def main():
         st.error("Impossibile caricare i dati. Verifica i CSV.")
         return
 
-    # Floating dock state (replaces sidebar filters)
+    st.sidebar.header("Filtri")
     min_date = df_infonieve["date"].min().date()
     default_date = datetime.date(2025, 12, 17)
-    if "dock_date" not in st.session_state:
-        st.session_state.dock_date = default_date
-    if "dock_level" not in st.session_state:
-        st.session_state.dock_level = "esperto"
-    if "dock_profile" not in st.session_state:
-        st.session_state.dock_profile = "nessuno"
-
-    # Floating dock anchor and widgets wrapped in a floating container
-    st.markdown('<div id="dock-anchor"></div>', unsafe_allow_html=True)
-    st.markdown('<div class="floating-dock">', unsafe_allow_html=True)
-    dc1, dc2, dc3 = st.columns([1,1,1])
-    with dc1:
-        st.date_input("📅 Data", key="dock_date", min_value=min_date, max_value=datetime.date(2030, 12, 31))
-    with dc2:
-        level_opts = ["nessuno", "base", "medio", "esperto"]
-        st.selectbox("🎯 Livello", level_opts, key="dock_level")
-    with dc3:
-        st.selectbox("👥 Profilo", SUPPORTED_PROFILES, key="dock_profile")
-    st.markdown('</div>', unsafe_allow_html=True)
-
-    data_sel = st.session_state.dock_date
-    livello = st.session_state.dock_level
-    profilo = st.session_state.dock_profile
+    data_sel = st.sidebar.date_input("Data", value=default_date, min_value=min_date, max_value=datetime.date(2030, 12, 31))
+    livello = st.sidebar.selectbox("Livello", ["nessuno", "base", "medio", "esperto"], index=3)
+    profilo = st.sidebar.selectbox("Profilo (opzionale)", SUPPORTED_PROFILES, index=0)
     profilo_norm = str(profilo).strip().lower()
-
-    # Plotly theme synchronization
-    plotly_template = "plotly_white" if theme == "light" else "plotly_dark"
-
-
 
     # Considera sempre tutte le stazioni
     df_filtered_infonieve = df_infonieve.copy()
@@ -2437,9 +564,6 @@ def main():
                 table = avg[["nome_stazione", "Apertura media", "Chiusura media"]].rename(
                     columns={"nome_stazione": "Impianto"}
                 )
-                # Messaggio guida solo quando nessun filtro è selezionato
-                if livello == "nessuno" and profilo == "nessuno":
-                    st.markdown("Consulta la tabella seguente per sapere quando le piste da sci si vestono di bianco")
                 st.dataframe(table, use_container_width=True, hide_index=True)
         except Exception:
             pass
@@ -2456,38 +580,45 @@ def main():
 
     # Mostra raccomandazione solo se almeno un filtro è selezionato
     if not (livello == "nessuno" and profilo == "nessuno"):
-        # Hero Section - Stazione consigliata
-        st.markdown(
-            f"""
-            <div class="hero-section">
-                <div class="hero-label">Stazione consigliata per il tuo livello</div>
-                <h1 class="hero-title">{best_name}</h1>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-        
-        # KPI Grid
-        st.markdown('<h2 class="modern-subheader">📊 Indicatori chiave</h2>', unsafe_allow_html=True)
-        
+        st.subheader(f"✅ Stazione consigliata: {best_name}")
         k_row = (
             df_kpis[df_kpis["nome_stazione"] == best_name].iloc[0]
             if not df_kpis.empty
             else None
         )
-        
         if k_row is not None:
-            # KPI Grid con layout centrato
-            st.markdown(
-                f"""
-                <div class="kpi-grid">
-                    {render_kpi("Km piste aperte stimati", f"{float(k_row.get('km_open_est', k_row.get('kmopen', 0) or 0)):.0f}", "km")}
-                    {render_kpi("% piste aperte (stima)", f"{float(k_row.get('pct_open', 0) or 0) * 100:.0f}", "%")}
-                    {render_kpi("Probabilità impianto aperto", f"{float(k_row.get('open_prob', k_row.get('is_open', 0) or 0)) * 100:.0f}", "%")}
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                st.markdown(
+                    f"""
+                        <div class='glass-card kpi-card'><div class='content'>
+                      <div class='subtle'>Km piste aperte stimati</div>
+                      <div class='kpi'>{k_row.km_open_est:.0f} km</div>
+                    </div></div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+            with col2:
+                pct = k_row.pct_open * 100 if k_row.pct_open == k_row.pct_open else 0
+                st.markdown(
+                    f"""
+                        <div class='glass-card kpi-card'><div class='content'>
+                      <div class='subtle'>% piste aperte (stima)</div>
+                      <div class='kpi'>{pct:.0f}%</div>
+                    </div></div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+            with col3:
+                st.markdown(
+                    f"""
+                        <div class='glass-card kpi-card'><div class='content'>
+                      <div class='subtle'>Probabilità impianto aperto</div>
+                      <div class='kpi'>{k_row.open_prob*100:.0f}%</div>
+                    </div></div>
+                    """,
+                    unsafe_allow_html=True,
+                )
     # end header cards
 
     # Map with highlight (solo per livelli diversi da "nessuno"; per "nessuno" la mostriamo più sotto)
@@ -2495,10 +626,9 @@ def main():
         base_coords = ensure_lat_lon(df_filtered_infonieve[["nome_stazione"] + [c for c in df_filtered_infonieve.columns if c.lower() in ("lat","latitude","latitudine","lon","lng","long","longitude","longitudine")]].drop_duplicates())
         map_data = df_kpis.merge(base_coords, on="nome_stazione", how="left").dropna(subset=["lat", "lon"])
         if not map_data.empty:
-            # Coordinate centrate sui Pirenei (Francia-Spagna)
-            center_lat = 42.5  # Latitudine media dei Pirenei
-            center_lon = 1.0   # Longitudine media dei Pirenei
-            view_state = pdk.ViewState(latitude=center_lat, longitude=center_lon, zoom=6, pitch=0)
+            center_lat = map_data["lat"].mean()
+            center_lon = map_data["lon"].mean()
+            view_state = pdk.ViewState(latitude=center_lat, longitude=center_lon, zoom=7, pitch=0)
 
             def color_for_avalanche(x: float) -> List[int]:
                 if x <= 2:
@@ -2535,84 +665,57 @@ def main():
                 line_width_min_pixels=2,
                 pickable=False,
             )
-            # Prova corona, fallback pallino verde
-            crown_layer = None
-            try:
-                if not best_pt.empty:
-                    best_pt["crown"] = "👑"
-                    crown_layer = pdk.Layer(
+            star_layer = pdk.Layer(
                 "TextLayer",
                 data=best_pt,
                 get_position='[lon, lat]',
-                        get_text='crown',
-                        get_size=32,
+                get_text='star',
+                get_size=28,
                 get_color='[255,255,255,255]',
                 get_angle=0,
                 pickable=False,
             )
-            except:
-                # Fallback pallino verde + ring
-                if not best_pt.empty:
-                    green_layer = pdk.Layer(
-                        "ScatterplotLayer",
-                        data=best_pt,
-                        get_position='[lon, lat]',
-                        get_radius=15000,
-                        get_fill_color='[0, 200, 0, 220]',
-                        pickable=False,
-                    )
-                    crown_layer = green_layer
-            
-            layers_list = [layer_all, ring_layer]
-            if crown_layer:
-                layers_list.append(crown_layer)
-            deck = pdk.Deck(layers=layers_list, initial_view_state=view_state, tooltip={"text": "{nome_stazione}\nKm aperti: {km_open_est}"})
+            deck = pdk.Deck(layers=[layer_all, ring_layer, star_layer], initial_view_state=view_state, tooltip={"text": "{nome_stazione}\nKm aperti: {km_open_est}"})
             st.pydeck_chart(deck, use_container_width=True)
 
     # Space for separation (avoid redundant horizontal rule under caption)
     st.write("")
     # AI overview: disattivata quando livello == "nessuno"
     if livello != "nessuno":
-        st.markdown('<h2 class="modern-subheader">✨ AI overview</h2>', unsafe_allow_html=True)
-        
-        # AI Overview (TEMPORANEAMENTE DISABILITATO)
-        # try:
-        #     prompt = build_llm_prompt(df_kpis, best_name, livello, profilo, data_sel)
-        #     with st.spinner("Generazione riepilogo AI..."):
-        #         output, usage = generate_overview(prompt, max_tokens=160)
-        #     
-        #     if output:
-        #         st.markdown(
-        #             f"""
-        #             <div class="ai-overview-section">
-        #             <div class="ai-overview-content">{output}</div>
-        #             </div>
-        #             """,
-        #             unsafe_allow_html=True
-        #             )
-        #             
-        #             if isinstance(usage, dict) and usage.get("model"):
-        #             st.caption(f"Modello: {usage['model']}")
-        #     else:
-        #         st.error("Nessuna risposta dal modello.")
-        # except Exception as e:
-        #     st.error(f"LLM non disponibile: {e}")
-        
-        # Testo temporaneo al posto dell'LLM
-        output = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum"
-        usage = {}
-        
-        st.markdown(
-            render_ai_overview(output),
-            unsafe_allow_html=True
-        )
+        st.subheader("✨ AI overview")
+        api_key_present = True
+        try:
+            if not api_key_present:
+                st.info("Configura OPENROUTER_API_KEY per abilitare l'overview AI.")
+            else:
+                prompt = build_llm_prompt(df_kpis, best_name, livello, profilo, data_sel)
+                with st.spinner("Generazione riepilogo AI..."):
+                    output, usage = generate_overview(prompt, max_tokens=160)
+                model_used = usage.get("model") if isinstance(usage, dict) else None
+                if isinstance(usage, dict) and usage.get("error"):
+                    error_msg = usage['error']
+                    if "401" in str(error_msg) or "User not found" in str(error_msg):
+                        st.warning("🔑 Chiave API OpenRouter non valida o scaduta. Aggiorna la chiave per abilitare l'AI overview.")
+                        st.info("💡 Vai su https://openrouter.ai/ per generare una nuova chiave API gratuita.")
+                    else:
+                        st.error(f"Errore modello: {error_msg}")
+                    if model_used:
+                        st.caption(f"Modello: {model_used}")
+                elif output:
+                    st.write(output)
+                    if model_used:
+                        st.caption(f"Modello: {model_used}")
+                else:
+                    st.error("Nessuna risposta dal modello.")
+        except Exception as e:
+            st.error(f"LLM non disponibile: {e}")
 
     st.markdown("---")
     # Level-specific visualizations (no raw index shown)
     if livello == "base":
-        st.markdown('<h3 class="modern-section-title">🎿 Per principianti: dove trovi più piste facili e condizioni stabili</h3>', unsafe_allow_html=True)
+        st.subheader("Per principianti: dove trovi più piste facili e condizioni stabili")
         # Mappa con consigliata evidenziata
-        st.markdown('<h4 class="modern-section-title">🗺️ Mappa delle stazioni (consigliata evidenziata)</h4>', unsafe_allow_html=True)
+        st.subheader("Mappa delle stazioni (consigliata evidenziata)")
         render_map_with_best(df_with_indices, best_name)
 
         # Podio Top 3 (estetico, senza esporre il valore indice)
@@ -2620,11 +723,32 @@ def main():
             top3 = (df_with_indices.groupby("nome_stazione")["indice_base"].mean()
                     .sort_values(ascending=False).head(3).reset_index())
             if len(top3) > 0:
-                st.markdown('<h4 class="modern-section-title">🏆 Classifica Top 3</h4>', unsafe_allow_html=True)
-                st.markdown(
-                    render_podium(top3),
-                    unsafe_allow_html=True
-                )
+                names = top3["nome_stazione"].tolist()
+                first = names[0] if len(names) > 0 else ""
+                second = names[1] if len(names) > 1 else ""
+                third = names[2] if len(names) > 2 else ""
+                st.markdown("""
+                <div class='podium'>
+                  <div class='col'>
+                    <div class='step s2'>
+                      <div class='medal'>🥈</div>
+                      <div class='name'>%s</div>
+                    </div>
+                  </div>
+                  <div class='col'>
+                    <div class='step s1'>
+                      <div class='medal'>🥇</div>
+                      <div class='name'>%s</div>
+                    </div>
+                  </div>
+                  <div class='col'>
+                    <div class='step s3'>
+                      <div class='medal'>🥉</div>
+                      <div class='name'>%s</div>
+                    </div>
+                  </div>
+                </div>
+                """ % (second, first, third), unsafe_allow_html=True)
 
         # Probabilità meteo (±3 giorni su anni precedenti per date future)
         from datetime import date as _date
@@ -2632,8 +756,8 @@ def main():
             indicator = go.Indicator(
                 mode="gauge+number",
                 value=max(0, min(100, value_pct)),
-                title={"text": title, "font": {"size": 20}},
-                number={"suffix": "%", "font": {"size": 28, "color": "#e6efff"}},
+                title={"text": title, "font": {"size": 30}},
+                number={"suffix": "%", "font": {"size": 36, "color": "#e6efff"}},
                 gauge={
                     "axis": {"range": [0, 100]},
                     "bar": {"color": color},
@@ -2649,21 +773,17 @@ def main():
             if reference_pct is not None:
                 delta_val = max(0, min(100, value_pct)) - max(0, min(100, reference_pct))
                 fig.add_annotation(
-                    x=0.5, y=0.08, xref="paper", yref="paper",
+                    x=0.5, y=0.10, xref="paper", yref="paper",
                     text=f"{delta_val:+.2f}%", showarrow=False,
-                    font=dict(size=14, color="#16a34a" if delta_val < 0 else "#ef4444")
+                    font=dict(size=16, color="#16a34a" if delta_val < 0 else "#ef4444")
                 )
-            fig.update_layout(
-                height=250, 
-                margin=dict(l=10, r=10, t=30, b=30),
-                template=plotly_template
-            )
+            fig.update_layout(height=260, margin=dict(l=10, r=10, t=30, b=20))
             return fig
 
         # Dati meteo correnti/previsti (±3 giorni) sempre da storico per coerenza
         meteo_data = get_historical_data_for_date(df_filtered_meteo, data_sel, days_range=3)
         if not meteo_data.empty:
-            st.markdown('<h4 class="modern-section-title">🌤️ Probabilità condizioni meteo (storico ±3 giorni)</h4>', unsafe_allow_html=True)
+            st.subheader("Probabilità condizioni meteo (storico ±3 giorni)")
             # baseline ±15 giorni sugli anni precedenti
             baseline = get_historical_data_for_date(df_filtered_meteo, data_sel, days_range=15)
             col1, col2 = st.columns(2)
@@ -2683,7 +803,7 @@ def main():
 
         # Barre impilate piste verdi/blu ordinate per indice_base
         if not df_with_indices.empty and "indice_base" in df_with_indices.columns:
-            st.markdown('<h4 class="modern-section-title">🎿 Distribuzione piste verdi e blu</h4>', unsafe_allow_html=True)
+            st.subheader("Distribuzione piste verdi e blu")
             piste_base = df_with_indices[["nome_stazione", "Piste_verdi", "Piste_blu", "indice_base"]].drop_duplicates()
             piste_base = piste_base.sort_values("indice_base", ascending=False)
             fig_piste_base = px.bar(
@@ -2693,15 +813,12 @@ def main():
                 title="Piste verdi e blu per stazione (ordinate per indice base)",
                 color_discrete_map={"Piste_verdi": "#4CAF50", "Piste_blu": "#2196F3"}
             )
-            fig_piste_base.update_layout(
-                xaxis_tickangle=-45,
-                template=plotly_template
-            )
+            fig_piste_base.update_layout(xaxis_tickangle=-45)
             st.plotly_chart(fig_piste_base, use_container_width=True)
 
         # Sezione Festaiolo (profilo) – solo se selezionato
         if profilo_norm == "festaiolo":
-            st.markdown('<h4 class="modern-section-title">🎉 Profilo: Festaiolo</h4>', unsafe_allow_html=True)
+            st.subheader("Profilo: Festaiolo")
             # Grafico 1: km di sci notturno (asse X), impianti su Y
             try:
                 df_night = df_with_indices[["nome_stazione", "Scii_notte"]].drop_duplicates().fillna(0)
@@ -2710,28 +827,14 @@ def main():
                         df_night.sort_values("Scii_notte", ascending=False),
                         x="nome_stazione", y="Scii_notte",
                         title="Km di sci notturno per impianto",
-                        labels={"Scii_notte": "Km sci notturno", "nome_stazione": "Impianto"},
-                        text="Scii_notte"
-                    )
-                    fig_night.update_traces(texttemplate='%{text:.0f} km', textposition='outside')
-                    fig_night.update_layout(
-                        xaxis_tickangle=-45,
-                        template=plotly_template
+                        labels={"Scii_notte": "Km sci notturno", "nome_stazione": "Impianto"}
                     )
                     st.plotly_chart(fig_night, use_container_width=True)
             except Exception:
                 pass
 
-            # AI Overview per profilo festaiolo
-            st.markdown('<h4 class="modern-section-title">🤖 AI Overview – Festaiolo</h4>', unsafe_allow_html=True)
-            out = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat."
-            st.markdown(
-                render_ai_overview(out),
-                unsafe_allow_html=True
-            )
-
         if profilo_norm == "familiare":
-            st.markdown('<h4 class="modern-section-title">👨‍👩‍👧‍👦 Profilo: Familiare</h4>', unsafe_allow_html=True)
+            st.subheader("Profilo: Familiare")
             # 1) Numero aree bambini per impianto
             try:
                 if "Area_bambini" in df_with_indices.columns:
@@ -2762,22 +865,12 @@ def main():
                         .drop_duplicates().fillna(0)
                     )
                     melted_p = df_price.melt("nome_stazione", value_vars=price_cols, var_name="Voce", value_name="Prezzo")
-                    # Rimuovi underscore dalle label
-                    melted_p["Voce"] = melted_p["Voce"].replace({
-                        "Prezzo_skipass": "Prezzo skipass",
-                        "Prezzo_scuola": "Prezzo scuola", 
-                        "Prezzo_noleggio": "Prezzo noleggio"
-                    })
                     fig_prices = px.bar(
                         melted_p,
-                        x="nome_stazione", y="Prezzo", color="Voce",
+                        x="Prezzo", y="nome_stazione", color="Voce",
                         barmode="group",
                         title="Prezzi medi per impianto (skipass, scuola, noleggio)",
                         labels={"nome_stazione": "Impianto", "Prezzo": "€"}
-                    )
-                    fig_prices.update_layout(
-                        template=plotly_template,
-                        xaxis_tickangle=-45
                     )
                     st.plotly_chart(fig_prices, use_container_width=True)
                 else:
@@ -2785,24 +878,22 @@ def main():
             except Exception:
                 pass
 
-            # 3) AI Overview – Famiglia (TEMPORANEAMENTE DISABILITATO)
+            # 3) AI Overview – Famiglia
             try:
-                st.markdown('<h4 class="modern-section-title">🤖 AI Overview – Famiglia</h4>', unsafe_allow_html=True)
-                # prompt_family = build_familiare_prompt(df_filtered_rec, best_name, livello, data_sel)
-                # out, usage = generate_overview(prompt_family, max_tokens=140)
-                out = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat."
-                st.markdown(
-                    render_ai_overview(out),
-                    unsafe_allow_html=True
-                )
+                st.subheader("AI Overview – Famiglia")
+                prompt_family = build_familiare_prompt(df_filtered_rec, best_name, livello, data_sel)
+                out, usage = generate_overview(prompt_family, max_tokens=140)
+                st.write(out or "Nessun contenuto disponibile ora.")
+                if isinstance(usage, dict) and usage.get("model"):
+                    st.caption(f"Modello: {usage['model']}")
             except Exception:
                 pass
             # RIMOSSI: Snowpark/Superpipe e AI Overview – Festa (solo per profilo festaiolo)
 
     elif livello == "medio":
-        st.markdown('<h3 class="modern-section-title">🎿 Per intermedi: equilibrio tra piste e sicurezza</h3>', unsafe_allow_html=True)
+        st.subheader("Per intermedi: equilibrio tra piste e sicurezza")
         # Mappa con consigliata evidenziata
-        st.markdown('<h4 class="modern-section-title">🗺️ Mappa delle stazioni (consigliata evidenziata)</h4>', unsafe_allow_html=True)
+        st.subheader("Mappa delle stazioni (consigliata evidenziata)")
         render_map_with_best(df_with_indices, best_name)
 
         # Podio Top 3 per indice_medio
@@ -2816,25 +907,24 @@ def main():
                 first = names[0] if len(names) > 0 else ""
                 second = names[1] if len(names) > 1 else ""
                 third = names[2] if len(names) > 2 else ""
-                st.markdown('<h4 class="modern-section-title">🏆 Classifica Top 3</h4>', unsafe_allow_html=True)
                 st.markdown(
                     f"""
-                    <div class='podium-container'>
-                      <div class='podium-step second'>
-                        <div class='podium-platform second'>
-                          <div class='podium-medal'>🥈</div>
+                    <div class='podium'>
+                      <div class='col'>
+                        <div class='step s2'>
+                          <div class='medal'>🥈</div>
                           <div class='name'>{second}</div>
                         </div>
                       </div>
-                      <div class='podium-step first'>
-                        <div class='podium-platform first'>
-                          <div class='podium-medal'>🥇</div>
+                      <div class='col'>
+                        <div class='step s1'>
+                          <div class='medal'>🥇</div>
                           <div class='name'>{first}</div>
                         </div>
                       </div>
-                      <div class='podium-step third'>
-                        <div class='podium-platform third'>
-                          <div class='podium-medal'>🥉</div>
+                      <div class='col'>
+                        <div class='step s3'>
+                          <div class='medal'>🥉</div>
                           <div class='name'>{third}</div>
                         </div>
                       </div>
@@ -2978,15 +1068,12 @@ def main():
             except Exception:
                 pass
             try:
-                # prompt_f = build_festaiolo_prompt(df_filtered_rec, best_name, livello, data_sel)
-                st.markdown('<h4 class="modern-section-title">🤖 AI Overview – Festa</h4>', unsafe_allow_html=True)
-                # out, usage = generate_overview(prompt_f, max_tokens=140)
-                out = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat."
-                st.markdown("""
-                <div class="ai-overview-section">
-                    <div class="ai-overview-content">{output}</div>
-                </div>
-                """.format(output=out), unsafe_allow_html=True)
+                prompt_f = build_festaiolo_prompt(df_filtered_rec, best_name, livello, data_sel)
+                st.subheader("AI Overview – Festa")
+                out, usage = generate_overview(prompt_f, max_tokens=140)
+                st.write(out or "Nessun contenuto disponibile ora.")
+                if isinstance(usage, dict) and usage.get("model"):
+                    st.caption(f"Modello: {usage['model']}")
             except Exception:
                 pass
 
@@ -3023,22 +1110,12 @@ def main():
                         .drop_duplicates().fillna(0)
                     )
                     melted_p = df_price.melt("nome_stazione", value_vars=price_cols, var_name="Voce", value_name="Prezzo")
-                    # Rimuovi underscore dalle label
-                    melted_p["Voce"] = melted_p["Voce"].replace({
-                        "Prezzo_skipass": "Prezzo skipass",
-                        "Prezzo_scuola": "Prezzo scuola", 
-                        "Prezzo_noleggio": "Prezzo noleggio"
-                    })
                     fig_prices = px.bar(
                         melted_p,
-                        x="nome_stazione", y="Prezzo", color="Voce",
+                        x="Prezzo", y="nome_stazione", color="Voce",
                         barmode="group",
                         title="Prezzi medi per impianto (skipass, scuola, noleggio)",
                         labels={"nome_stazione": "Impianto", "Prezzo": "€"}
-                    )
-                    fig_prices.update_layout(
-                        template=plotly_template,
-                        xaxis_tickangle=-45
                     )
                     st.plotly_chart(fig_prices, use_container_width=True)
                 else:
@@ -3048,21 +1125,19 @@ def main():
 
             # 3) AI Overview – Famiglia
             try:
-                st.markdown('<h4 class="modern-section-title">🤖 AI Overview – Famiglia</h4>', unsafe_allow_html=True)
-                # prompt_family = build_familiare_prompt(df_filtered_rec, best_name, livello, data_sel)
-                # out, usage = generate_overview(prompt_family, max_tokens=140)
-                out = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat."
-                st.markdown(
-                    render_ai_overview(out),
-                    unsafe_allow_html=True
-                )
+                st.subheader("AI Overview – Famiglia")
+                prompt_family = build_familiare_prompt(df_filtered_rec, best_name, livello, data_sel)
+                out, usage = generate_overview(prompt_family, max_tokens=140)
+                st.write(out or "Nessun contenuto disponibile ora.")
+                if isinstance(usage, dict) and usage.get("model"):
+                    st.caption(f"Modello: {usage['model']}")
             except Exception:
                 pass
 
     elif livello == "esperto":
-        st.markdown('<h3 class="modern-section-title">🏂 Per esperti: caratteristiche tecniche e chilometri</h3>', unsafe_allow_html=True)
+        st.subheader("Per esperti: caratteristiche tecniche e chilometri")
         # Mappa con consigliata evidenziata
-        st.markdown('<h4 class="modern-section-title">🗺️ Mappa delle stazioni (consigliata evidenziata)</h4>', unsafe_allow_html=True)
+        st.subheader("Mappa delle stazioni (consigliata evidenziata)")
         render_map_with_best(df_with_indices, best_name)
 
         # Podio Top 3 per indice_esperto
@@ -3076,25 +1151,24 @@ def main():
                 first = names[0] if len(names) > 0 else ""
                 second = names[1] if len(names) > 1 else ""
                 third = names[2] if len(names) > 2 else ""
-                st.markdown('<h4 class="modern-section-title">🏆 Classifica Top 3</h4>', unsafe_allow_html=True)
                 st.markdown(
                     f"""
-                    <div class='podium-container'>
-                      <div class='podium-step second'>
-                        <div class='podium-platform second'>
-                          <div class='podium-medal'>🥈</div>
+                    <div class='podium'>
+                      <div class='col'>
+                        <div class='step s2'>
+                          <div class='medal'>🥈</div>
                           <div class='name'>{second}</div>
                         </div>
                       </div>
-                      <div class='podium-step first'>
-                        <div class='podium-platform first'>
-                          <div class='podium-medal'>🥇</div>
+                      <div class='col'>
+                        <div class='step s1'>
+                          <div class='medal'>🥇</div>
                           <div class='name'>{first}</div>
                         </div>
                       </div>
-                      <div class='podium-step third'>
-                        <div class='podium-platform third'>
-                          <div class='podium-medal'>🥉</div>
+                      <div class='col'>
+                        <div class='step s3'>
+                          <div class='medal'>🥉</div>
                           <div class='name'>{third}</div>
                         </div>
                       </div>
@@ -3113,12 +1187,12 @@ def main():
             baseline = float(bstation.get("danger_level_avg", 0).mean()) if not bstation.empty else 0.0
             # Due livelli: subheader esterno e delta in basso, numero centrato
             d = risk - baseline
-            st.markdown('<h4 class="modern-section-title">⚠️ Rischio valanghe (1-5)</h4>', unsafe_allow_html=True)
+            st.subheader("Rischio valanghe (1-5)")
             fig_risk = go.Figure()
             fig_risk.add_trace(go.Indicator(
                 mode="gauge+number",
                 value=risk,
-                number={"font": {"size": 40, "color": "#0f172a"}},
+                number={"font": {"size": 30, "color": "#e6efff"}},
                 gauge={
                     "axis": {"range": [1, 5]},
                     "bar": {"color": "#ef4444"},
@@ -3128,23 +1202,14 @@ def main():
                         {"range": [3, 5], "color": "#7f1d1d"},
                     ],
                 },
-                domain={"x": [0, 1], "y": [0.2, 1]}
+                domain={"x": [0, 1], "y": [0.15, 1]}
             ))
             # Delta come annotation molto in basso
             fig_risk.add_annotation(x=0.5, y=0.05, xref="paper", yref="paper",
                                     text=f"Δ {d:+.2f} vs media ±15g", showarrow=False,
                                     font=dict(size=12, color="#16a34a" if d < 0 else "#ef4444"))
-            fig_risk.update_layout(
-                height=200, 
-                margin=dict(l=10, r=10, t=20, b=20),
-                template=plotly_template
-            )
+            fig_risk.update_layout(height=230, margin=dict(l=10, r=10, t=20, b=40))
             st.plotly_chart(fig_risk, use_container_width=True)
-            
-            # Disclaimer rischio valanghe
-            st.markdown("""
-            L'indice di valanghe, conosciuto come Scala Europea del Pericolo di Valanghe, è uno strumento a 5 livelli utilizzato per valutare e comunicare il rischio di valanghe (0=basso, 5=molto alto).
-            """)
         except Exception:
             pass
 
@@ -3152,21 +1217,17 @@ def main():
         try:
             top_best = df_with_indices[df_with_indices["nome_stazione"] == best_name]
             if not top_best.empty:
-                st.markdown('<h4 class="modern-section-title">🎯 KPI tecnici</h4>', unsafe_allow_html=True)
+                st.subheader("KPI tecnici")
                 vals = top_best[["Snowpark", "Area_gare", "Slalom", "Superpipe"]].fillna(0).mean()
-                
-                # KPI Grid per KPI tecnici con layout uniformi - 4 colonne su una riga
-                st.markdown(
-                    f"""
-                    <div class="kpi-grid" style="grid-template-columns: repeat(4, 1fr);">
-                        {render_kpi("Snowpark", f"{vals.get('Snowpark',0):.0f}")}
-                        {render_kpi("Area gare", f"{vals.get('Area_gare',0):.0f}")}
-                        {render_kpi("Slalom", f"{vals.get('Slalom',0):.0f}")}
-                        {render_kpi("Superpipe", f"{vals.get('Superpipe',0):.0f}")}
-                    </div>
-                    """,
-                    unsafe_allow_html=True
-                )
+                c1, c2, c3, c4 = st.columns(4)
+                with c1:
+                    st.markdown(f"""<div class='glass-card kpi-card'><div class='content'><div class='subtle'><b>Snowpark</b></div><div class='kpi'>{vals.get('Snowpark',0):.0f}</div></div></div>""", unsafe_allow_html=True)
+                with c2:
+                    st.markdown(f"""<div class='glass-card kpi-card'><div class='content'><div class='subtle'><b>Area gare</b></div><div class='kpi'>{vals.get('Area_gare',0):.0f}</div></div></div>""", unsafe_allow_html=True)
+                with c3:
+                    st.markdown(f"""<div class='glass-card kpi-card'><div class='content'><div class='subtle'><b>Slalom</b></div><div class='kpi'>{vals.get('Slalom',0):.0f}</div></div></div>""", unsafe_allow_html=True)
+                with c4:
+                    st.markdown(f"""<div class='glass-card kpi-card'><div class='content'><div class='subtle'><b>Superpipe</b></div><div class='kpi'>{vals.get('Superpipe',0):.0f}</div></div></div>""", unsafe_allow_html=True)
         except Exception:
             pass
 
@@ -3176,43 +1237,20 @@ def main():
                 df_with_indices.groupby("nome_stazione")["Quota_max"].mean().dropna().sort_values(ascending=False).head(10).reset_index()
             )
             if not quota.empty:
-                fig_quota = px.bar(
-                    quota, 
-                    x="nome_stazione", 
-                    y="Quota_max", 
-                    title="Quota max per stazione", 
-                    labels={"nome_stazione": "Stazione", "Quota_max": "Quota max (m)"},
-                    text="Quota_max"
-                )
-                fig_quota.update_traces(texttemplate='%{text:.0f} m', textposition='outside')
-                fig_quota.update_layout(
-                    xaxis_tickangle=-45, 
-                    yaxis=dict(range=[2000, 2800]),
-                    template=plotly_template
-                )
+                fig_quota = px.bar(quota, x="nome_stazione", y="Quota_max", title="Quota max per stazione", labels={"nome_stazione": "Stazione", "Quota_max": "Quota max (m)"})
+                fig_quota.update_layout(xaxis_tickangle=-45, yaxis=dict(range=[2000, 2800]))
                 st.plotly_chart(fig_quota, use_container_width=True)
         except Exception:
             pass
 
         # Km totali: solo totali per le prime 8 stazioni
         top_total = df_kpis.sort_values("km_total_est", ascending=False).head(8)
-        fig_bar_total = px.bar(
-            top_total, 
-            x="nome_stazione", 
-            y="km_total_est", 
-            title="Km piste totali", 
-            labels={"nome_stazione": "Stazione", "km_total_est": "Km totali"},
-            text="km_total_est"
-        )
-        fig_bar_total.update_traces(texttemplate='%{text:.0f} km', textposition='outside')
-        fig_bar_total.update_layout(
-            xaxis_tickangle=-45,
-            template=plotly_template
-        )
+        fig_bar_total = px.bar(top_total, x="nome_stazione", y="km_total_est", title="Km piste totali", labels={"nome_stazione": "Stazione", "km_total_est": "Km totali"})
+        fig_bar_total.update_layout(xaxis_tickangle=-45)
         st.plotly_chart(fig_bar_total, use_container_width=True)
 
         if profilo_norm == "festaiolo":
-            st.markdown('<h4 class="modern-section-title">🎉 Profilo: Festaiolo</h4>', unsafe_allow_html=True)
+            st.subheader("Profilo: Festaiolo")
             try:
                 df_night = df_with_indices[["nome_stazione", "Scii_notte"]].drop_duplicates().fillna(0)
                 if not df_night.empty:
@@ -3237,14 +1275,15 @@ def main():
                     st.plotly_chart(fig_acts, use_container_width=True)
             except Exception:
                 pass
-            
-            # AI Overview – Festa
-                st.markdown('<h4 class="modern-section-title">🤖 AI Overview – Festa</h4>', unsafe_allow_html=True)
-                out = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat."
-            st.markdown(
-                render_ai_overview(out),
-                unsafe_allow_html=True
-            )
+            try:
+                prompt_f = build_festaiolo_prompt(df_filtered_rec, best_name, livello, data_sel)
+                st.subheader("AI Overview – Festa")
+                out, usage = generate_overview(prompt_f, max_tokens=140)
+                st.write(out or "Nessun contenuto disponibile ora.")
+                if isinstance(usage, dict) and usage.get("model"):
+                    st.caption(f"Modello: {usage['model']}")
+            except Exception:
+                pass
 
         # Sezione Familiare (profilo)
         if profilo_norm == "familiare":
@@ -3279,22 +1318,12 @@ def main():
                         .drop_duplicates().fillna(0)
                     )
                     melted_p = df_price.melt("nome_stazione", value_vars=price_cols, var_name="Voce", value_name="Prezzo")
-                    # Rimuovi underscore dalle label
-                    melted_p["Voce"] = melted_p["Voce"].replace({
-                        "Prezzo_skipass": "Prezzo skipass",
-                        "Prezzo_scuola": "Prezzo scuola", 
-                        "Prezzo_noleggio": "Prezzo noleggio"
-                    })
                     fig_prices = px.bar(
                         melted_p,
-                        x="nome_stazione", y="Prezzo", color="Voce",
+                        x="Prezzo", y="nome_stazione", color="Voce",
                         barmode="group",
                         title="Prezzi medi per impianto (skipass, scuola, noleggio)",
                         labels={"nome_stazione": "Impianto", "Prezzo": "€"}
-                    )
-                    fig_prices.update_layout(
-                        template=plotly_template,
-                        xaxis_tickangle=-45
                     )
                     st.plotly_chart(fig_prices, use_container_width=True)
                 else:
@@ -3304,14 +1333,12 @@ def main():
 
             # 3) AI Overview – Famiglia
             try:
-                st.markdown('<h4 class="modern-section-title">🤖 AI Overview – Famiglia</h4>', unsafe_allow_html=True)
-                # prompt_family = build_familiare_prompt(df_filtered_rec, best_name, livello, data_sel)
-                # out, usage = generate_overview(prompt_family, max_tokens=140)
-                out = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat."
-                st.markdown(
-                    render_ai_overview(out),
-                    unsafe_allow_html=True
-                )
+                st.subheader("AI Overview – Famiglia")
+                prompt_family = build_familiare_prompt(df_filtered_rec, best_name, livello, data_sel)
+                out, usage = generate_overview(prompt_family, max_tokens=140)
+                st.write(out or "Nessun contenuto disponibile ora.")
+                if isinstance(usage, dict) and usage.get("model"):
+                    st.caption(f"Modello: {usage['model']}")
             except Exception:
                 pass
 
@@ -3381,10 +1408,9 @@ def main():
                 )
                 map_data = base_coords.dropna(subset=["lat", "lon"]).copy()
             if not map_data.empty:
-                # Coordinate centrate sui Pirenei
-                center_lat = 42.5
-                center_lon = 1.0
-                view_state = pdk.ViewState(latitude=center_lat, longitude=center_lon, zoom=6, pitch=0)
+                center_lat = map_data["lat"].mean()
+                center_lon = map_data["lon"].mean()
+                view_state = pdk.ViewState(latitude=center_lat, longitude=center_lon, zoom=7, pitch=0)
                 layer_all = pdk.Layer(
                     "ScatterplotLayer",
                     data=map_data,
@@ -3586,17 +1612,14 @@ def main():
             st.warning(f"Errore nel calcolo del rapporto: {e}")
             st.write(f"Errore completo: {str(e)}")
         
-        # 3) AI Overview – Low-Cost (TEMPORANEAMENTE DISABILITATO)
+        # 3) AI Overview – Low-Cost
         try:
-            st.markdown('<h4 class="modern-section-title">🤖 AI Overview – Low-Cost</h4>', unsafe_allow_html=True)
-            # prompt_lowcost = build_lowcost_prompt(df_filtered_rec, best_name, livello, data_sel, df_ratio)
-            # out, usage = generate_overview(prompt_lowcost, max_tokens=140)
-            out = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat."
-            st.markdown("""
-            <div class="ai-overview-section">
-                <div class="ai-overview-content">{output}</div>
-            </div>
-            """.format(output=out), unsafe_allow_html=True)
+            st.subheader("🤖 AI Overview – Low-Cost")
+            prompt_lowcost = build_lowcost_prompt(df_filtered_rec, best_name, livello, data_sel, df_ratio)
+            out, usage = generate_overview(prompt_lowcost, max_tokens=140)
+            st.write(out or "Nessun contenuto disponibile ora.")
+            if isinstance(usage, dict) and usage.get("model"):
+                st.caption(f"Modello: {usage['model']}")
         except Exception as e:
             st.warning(f"Errore nell'AI Overview: {e}")
     
@@ -3658,9 +1681,6 @@ def main():
         pass
 
     st.caption("v2 – Stazione consigliata, overview AI e viste dedicate per livello")
-    
-    # Chiudi theme wrapper
-    st.markdown('</div>', unsafe_allow_html=True)
 
 
 if __name__ == "__main__":
