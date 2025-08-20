@@ -3530,15 +3530,13 @@ def main():
         except Exception as e:
             st.error(f"Errore nell'AI Overview: {e}")
 
-    st.markdown("---")
     # Level-specific visualizations (no raw index shown)
     if livello == "base":
         # Divider e titolo principale sezione livello
         st.markdown('<hr class="profile-divider">', unsafe_allow_html=True)
         st.markdown('<h2 class="profile-main-title">🎿 Sezione Livello: Principiante</h2>', unsafe_allow_html=True)
         
-        # Titolo sezione livello
-        st.markdown('<h3 class="section-subtitle">🎿 Per principianti: dove trovi più piste facili e condizioni stabili</h3>', unsafe_allow_html=True)
+
         # Mappa con consigliata evidenziata
         st.markdown('<h4 class="section-subtitle">🗺️ Mappa delle stazioni (consigliata evidenziata)</h4>', unsafe_allow_html=True)
         render_map_with_best(df_with_indices, best_name)
@@ -3689,10 +3687,7 @@ def main():
         if profilo_norm == "festaiolo":
             # Divider e titolo sezione profilo
             st.markdown('<hr class="profile-divider">', unsafe_allow_html=True)
-
-            
-            # Titolo sezione profilo
-            st.markdown('<h3 class="profile-section-title">🎉 Profilo: Festaiolo</h3>', unsafe_allow_html=True)
+            st.markdown('<h2 class="profile-main-title">🎉 Sezione Profilo: Festaiolo</h2>', unsafe_allow_html=True)
             
             # AI Overview per profilo festaiolo (PRIMA dei grafici)
             try:
@@ -3744,10 +3739,7 @@ def main():
         if profilo_norm == "familiare":
             # Divider e titolo sezione profilo
             st.markdown('<hr class="profile-divider">', unsafe_allow_html=True)
-
-            
-            # Titolo sezione profilo
-            st.markdown('<h3 class="profile-section-title">👨‍👩‍👧‍👦 Profilo: Familiare</h3>', unsafe_allow_html=True)
+            st.markdown('<h2 class="profile-main-title">👨‍👩‍👧‍👦 Sezione Profilo: Familiare</h2>', unsafe_allow_html=True)
             
             # AI Overview per profilo familiare (PRIMA dei grafici)
             try:
@@ -3836,8 +3828,7 @@ def main():
         st.markdown('<hr class="profile-divider">', unsafe_allow_html=True)
         st.markdown('<h2 class="profile-main-title">🎿 Sezione Livello: Intermedio</h2>', unsafe_allow_html=True)
         
-        # Titolo sezione livello
-        st.markdown('<h3 class="section-subtitle">🎿 Per intermedi: equilibrio tra piste e sicurezza</h3>', unsafe_allow_html=True)
+
         # Mappa con consigliata evidenziata
         st.markdown('<h4 class="section-subtitle">🗺️ Mappa delle stazioni (consigliata evidenziata)</h4>', unsafe_allow_html=True)
         render_map_with_best(df_with_indices, best_name)
@@ -4075,8 +4066,7 @@ def main():
         st.markdown('<hr class="profile-divider">', unsafe_allow_html=True)
         st.markdown('<h2 class="profile-main-title">⛷️ Sezione Livello: Esperto</h2>', unsafe_allow_html=True)
         
-        # Titolo sezione livello
-        st.markdown('<h3 class="section-subtitle">⛷️ Esperti: Tecnica e Performance</h3>', unsafe_allow_html=True)
+
         
         # Mappa centrata sui Pirenei
         st.markdown('<h4 class="section-subtitle">🗺️ Mappa delle stazioni</h4>', unsafe_allow_html=True)
@@ -4447,6 +4437,32 @@ def main():
         
         # Titolo sezione profilo
         st.markdown('<h2 class="profile-main-title">💰 Sezione Profilo: Low-Cost</h2>', unsafe_allow_html=True)
+        
+        # AI Overview per profilo low-cost (PRIMA dei grafici)
+        try:
+            prompt_lowcost = build_lowcost_prompt(df_filtered_rec, best_name, livello, data_sel)
+            out, usage = generate_overview(prompt_lowcost, max_tokens=140)
+            
+            # Pulizia diretta e aggressiva del contenuto HTML
+            clean_out = re.sub(r'<[^>]*>', '', str(out)).strip()
+            clean_out = re.sub(r'\s+', ' ', clean_out)
+            
+            st.markdown(f"""
+            <div class="ai-overview-section">
+                <div class="ai-header">
+                    <div class="ai-header-text">
+                        <div class="ai-title">AI Overview ✨</div>
+                        <div class="ai-badge">Powered by {parse_model_name(DEFAULT_LLM_MODEL)}</div>
+                    </div>
+                </div>
+                <div class="ai-overview-content">{clean_out}</div>
+            </div>
+            """, unsafe_allow_html=True)
+        except Exception as e:
+            st.error(f"Errore nell'AI Overview Low-Cost: {e}")
+        
+        # Titolo per i grafici specifici del profilo
+        st.markdown('<h4 class="section-subtitle">📊 Analisi specifica per low-cost</h4>', unsafe_allow_html=True)
         
         # 1) Grafico a barre: costi di ski pass, scuola sci e noleggio
         try:
