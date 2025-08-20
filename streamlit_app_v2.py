@@ -97,9 +97,7 @@ def render_ai_overview(content, note=None, model_name: str | None = None):
             </div>
         </div>
         {note_html}
-        <div class="ai-overview-content">
-        {content}
-        </div>
+        <div class="ai-overview-content">{content}</div>
     </div>"""
 
 
@@ -820,6 +818,8 @@ html, body {
     text-transform: uppercase;
     letter-spacing: 0.05em;
     border: 1px solid var(--purple-800);
+    margin: 0;
+    align-self: flex-start;
 }
 
 .ai-overview-content {
