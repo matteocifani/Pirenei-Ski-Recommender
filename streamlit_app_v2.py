@@ -3870,160 +3870,9 @@ def main():
             )
             st.plotly_chart(fig, use_container_width=True)
 
-        # Sezione Familiare (profilo)
-        if profilo_norm == "familiare":
-            # Divider e titolo sezione profilo
-            st.markdown('<hr class="profile-divider">', unsafe_allow_html=True)
-            st.markdown('<h2 class="profile-main-title">👨‍👩‍👧‍👦 Sezione Profilo: Familiare</h2>', unsafe_allow_html=True)
-            
-            # AI Overview per profilo familiare (PRIMA dei grafici)
-            try:
-                prompt_family = build_familiare_prompt(df_filtered_rec, best_name, livello, data_sel)
-                out, usage = generate_overview(prompt_family, max_tokens=140)
-                
-                # Pulizia diretta e aggressiva del contenuto HTML
-                clean_out = re.sub(r'<[^>]*>', '', str(out)).strip()
-                clean_out = re.sub(r'\s+', ' ', clean_out)
-                
-                st.markdown(f"""
-                <div class="ai-overview-section">
-                    <div class="ai-header">
-                        <div class="ai-header-text">
-                            <div class="ai-title">AI Overview ✨</div>
-                            <div class="ai-badge">Powered by {parse_model_name(DEFAULT_LLM_MODEL)}</div>
-                        </div>
-                    </div>
-                    <div class="ai-overview-content">{clean_out}</div>
-                </div>
-                """, unsafe_allow_html=True)
-            except Exception as e:
-                st.error(f"Errore nell'AI Overview Famiglia: {e}")
-            
-            # Titolo per i grafici specifici del profilo
-            st.markdown('<h4 class="section-subtitle">📊 Analisi specifica per famiglie</h4>', unsafe_allow_html=True)
-            
-            # 1) Numero aree bambini per impianto
-            try:
-                if "Area_bambini" in df_with_indices.columns:
-                    df_kids = (
-                        df_with_indices[["nome_stazione", "Area_bambini"]]
-                        .drop_duplicates().fillna(0)
-                        .sort_values("Area_bambini", ascending=False)
-                    )
-                    fig_kids = px.bar(
-                        df_kids,
-                        x="nome_stazione", y="Area_bambini",
-                        title="Numero aree bambini per impianto",
-                        labels={"nome_stazione": "Impianto", "Area_bambini": "Aree bambini"}
-                    )
-                    fig_kids.update_layout(
-                        xaxis_tickangle=-45,
-                        template=plotly_template,
-                        paper_bgcolor="rgba(0,0,0,0)",
-                        plot_bgcolor="rgba(0,0,0,0)"
-                    )
-                    st.plotly_chart(fig_kids, use_container_width=True)
-                else:
-                    st.info("Dato non disponibile: 'Area_bambini'")
-            except Exception:
-                pass
 
-            # 2) Prezzi medi per impianto (skipass, scuola, noleggio)
-            try:
-                price_cols = [c for c in ["Prezzo_skipass", "Prezzo_scuola", "Prezzo_noleggio"] if c in df_with_indices.columns]
-                if price_cols:
-                    df_price = (
-                        df_with_indices[["nome_stazione"] + price_cols]
-                        .drop_duplicates().fillna(0)
-                    )
-                    melted_p = df_price.melt("nome_stazione", value_vars=price_cols, var_name="Voce", value_name="Prezzo")
-                    # Rimuovi underscore dalle label
-                    melted_p["Voce"] = melted_p["Voce"].replace({
-                        "Prezzo_skipass": "Prezzo skipass",
-                        "Prezzo_scuola": "Prezzo scuola", 
-                        "Prezzo_noleggio": "Prezzo noleggio"
-                    })
-                    fig_prices = px.bar(
-                        melted_p,
-                        x="nome_stazione", y="Prezzo", color="Voce",
-                        barmode="group",
-                        title="Prezzi medi per impianto (skipass, scuola, noleggio)",
-                        labels={"nome_stazione": "Impianto", "Prezzo": "€"}
-                    )
-                    fig_prices.update_layout(
-                        template=plotly_template,
-                        xaxis_tickangle=-45,
-                        paper_bgcolor="rgba(0,0,0,0)",
-                        plot_bgcolor="rgba(0,0,0,0)"
-                    )
-                    st.plotly_chart(fig_prices, use_container_width=True)
-                else:
-                    st.info("Dati prezzo non disponibili (skipass/scuola/noleggio)")
-            except Exception:
-                pass
 
-        # Sezione Festaiolo (profilo)
-        if profilo_norm == "festaiolo":
-            # Divider e titolo sezione profilo
-            st.markdown('<hr class="profile-divider">', unsafe_allow_html=True)
-            st.markdown('<h2 class="profile-main-title">🎉 Sezione Profilo: Festaiolo</h2>', unsafe_allow_html=True)
-            
-            # AI Overview per profilo festaiolo (PRIMA dei grafici)
-            try:
-                prompt_festaiolo = build_festaiolo_prompt(df_filtered_rec, best_name, livello, data_sel)
-                out, usage = generate_overview(prompt_festaiolo, max_tokens=140)
-                
-                # Pulizia diretta e aggressiva del contenuto HTML
-                clean_out = re.sub(r'<[^>]*>', '', str(out)).strip()
-                clean_out = re.sub(r'\s+', ' ', clean_out)
-                
-                st.markdown(f"""
-                <div class="ai-overview-section">
-                    <div class="ai-header">
-                        <div class="ai-header-text">
-                            <div class="ai-title">AI Overview ✨</div>
-                            <div class="ai-badge">Powered by {parse_model_name(DEFAULT_LLM_MODEL)}</div>
-                        </div>
-                    </div>
-                    <div class="ai-overview-content">{clean_out}</div>
-                </div>
-                """, unsafe_allow_html=True)
-            except Exception as e:
-                st.error(f"Errore nell'AI Overview Festaiolo: {e}")
-            
-            # Titolo per i grafici specifici del profilo
-            st.markdown('<h4 class="section-subtitle">📊 Analisi specifica per festaioli</h4>', unsafe_allow_html=True)
-            
-            try:
-                df_night = df_with_indices[["nome_stazione", "Scii_notte"]].drop_duplicates().fillna(0)
-                if not df_night.empty:
-                    fig_night = px.bar(
-                        df_night.sort_values("Scii_notte", ascending=False),
-                        x="nome_stazione", y="Scii_notte",
-                        title="Km di sci notturno per impianto",
-                        labels={"Scii_notte": "Km sci notturno", "nome_stazione": "Impianto"}
-                    )
-                    st.plotly_chart(fig_night, use_container_width=True)
-            except Exception:
-                pass
-            try:
-                cols = [c for c in ["Snowpark", "Superpipe"] if c in df_with_indices.columns]
-                df_acts = df_with_indices[["nome_stazione"] + cols].drop_duplicates().fillna(0)
-                if not df_acts.empty:
-                    melted = df_acts.melt("nome_stazione", value_vars=cols, var_name="Attività", value_name="Valore")
-                    fig_acts = px.bar(
-                        melted, x="nome_stazione", y="Valore", color="Attività",
-                        barmode="group", title="Snowpark e Superpipe"
-                    )
-                    fig_acts.update_layout(
-                        xaxis_tickangle=-45,
-                        template=plotly_template,
-                        paper_bgcolor="rgba(0,0,0,0)",
-                        plot_bgcolor="rgba(0,0,0,0)"
-                    )
-                    st.plotly_chart(fig_acts, use_container_width=True)
-            except Exception:
-                pass
+
 
 
     elif livello == "esperto":
@@ -4379,6 +4228,166 @@ def main():
             pass
 
     # --- Sezione finale: classifiche semplici per livello e profilo ---
+    
+    # Sezione Profilo Familiare (dopo tutti i livelli)
+    if profilo_norm == "familiare":
+        # Divider e titolo sezione profilo
+        st.markdown('<hr class="profile-divider">', unsafe_allow_html=True)
+        st.markdown('<h2 class="profile-main-title">👨‍👩‍👧‍👦 Sezione Profilo: Familiare</h2>', unsafe_allow_html=True)
+        
+        # AI Overview per profilo familiare (PRIMA dei grafici)
+        try:
+            prompt_family = build_familiare_prompt(df_filtered_rec, best_name, livello, data_sel)
+            out, usage = generate_overview(prompt_family, max_tokens=140)
+            
+            # Pulizia diretta e aggressiva del contenuto HTML
+            clean_out = re.sub(r'<[^>]*>', '', str(out)).strip()
+            clean_out = re.sub(r'\s+', ' ', clean_out)
+            
+            st.markdown(f"""
+            <div class="ai-overview-section">
+                <div class="ai-header">
+                    <div class="ai-header-text">
+                        <div class="ai-title">AI Overview ✨</div>
+                        <div class="ai-badge">Powered by {parse_model_name(DEFAULT_LLM_MODEL)}</div>
+                    </div>
+                </div>
+                <div class="ai-overview-content">{clean_out}</div>
+            </div>
+            """, unsafe_allow_html=True)
+        except Exception as e:
+            st.error(f"Errore nell'AI Overview Famiglia: {e}")
+        
+        # Titolo per i grafici specifici del profilo
+        st.markdown('<h4 class="section-subtitle">📊 Analisi specifica per famiglie</h4>', unsafe_allow_html=True)
+        
+        # 1) Numero aree bambini per impianto
+        try:
+            if "Area_bambini" in df_with_indices.columns:
+                df_kids = (
+                    df_with_indices[["nome_stazione", "Area_bambini"]]
+                    .drop_duplicates().fillna(0)
+                    .sort_values("Area_bambini", ascending=False)
+                )
+                fig_kids = px.bar(
+                    df_kids,
+                    x="nome_stazione", y="Area_bambini",
+                    title="Numero aree bambini per impianto",
+                    labels={"nome_stazione": "Impianto", "Area_bambini": "Aree bambini"}
+                )
+                fig_kids.update_layout(
+                    xaxis_tickangle=-45,
+                    template=plotly_template,
+                    paper_bgcolor="rgba(0,0,0,0)",
+                    plot_bgcolor="rgba(0,0,0,0)"
+                )
+                st.plotly_chart(fig_kids, use_container_width=True)
+            else:
+                st.info("Dato non disponibile: 'Area_bambini'")
+        except Exception:
+            pass
+
+        # 2) Prezzi medi per impianto (skipass, scuola, noleggio)
+        try:
+            price_cols = [c for c in ["Prezzo_skipass", "Prezzo_scuola", "Prezzo_noleggio"] if c in df_with_indices.columns]
+            if price_cols:
+                df_price = (
+                    df_with_indices[["nome_stazione"] + price_cols]
+                    .drop_duplicates().fillna(0)
+                )
+                melted_p = df_price.melt("nome_stazione", value_vars=price_cols, var_name="Voce", value_name="Prezzo")
+                # Rimuovi underscore dalle label
+                melted_p["Voce"] = melted_p["Voce"].replace({
+                    "Prezzo_skipass": "Prezzo skipass",
+                    "Prezzo_scuola": "Prezzo scuola", 
+                    "Prezzo_noleggio": "Prezzo noleggio"
+                })
+                fig_prices = px.bar(
+                    melted_p,
+                    x="nome_stazione", y="Prezzo", color="Voce",
+                    barmode="group",
+                    title="Prezzi medi per impianto (skipass, scuola, noleggio)",
+                    labels={"nome_stazione": "Impianto", "Prezzo": "€"}
+                )
+                fig_prices.update_layout(
+                    template=plotly_template,
+                    xaxis_tickangle=-45,
+                    paper_bgcolor="rgba(0,0,0,0)",
+                    plot_bgcolor="rgba(0,0,0,0)"
+                )
+                st.plotly_chart(fig_prices, use_container_width=True)
+            else:
+                st.info("Dati prezzo non disponibili (skipass/scuola/noleggio)")
+        except Exception:
+            pass
+
+    # Sezione Profilo Festaiolo (dopo tutti i livelli)
+    if profilo_norm == "festaiolo":
+        # Divider e titolo sezione profilo
+        st.markdown('<hr class="profile-divider">', unsafe_allow_html=True)
+        st.markdown('<h2 class="profile-main-title">🎉 Sezione Profilo: Festaiolo</h2>', unsafe_allow_html=True)
+        
+        # AI Overview per profilo festaiolo (PRIMA dei grafici)
+        try:
+            prompt_festaiolo = build_festaiolo_prompt(df_filtered_rec, best_name, livello, data_sel)
+            out, usage = generate_overview(prompt_festaiolo, max_tokens=140)
+            
+            # Pulizia diretta e aggressiva del contenuto HTML
+            clean_out = re.sub(r'<[^>]*>', '', str(out)).strip()
+            clean_out = re.sub(r'\s+', ' ', clean_out)
+            
+            st.markdown(f"""
+            <div class="ai-overview-section">
+                <div class="ai-header">
+                    <div class="ai-header-text">
+                        <div class="ai-title">AI Overview ✨</div>
+                        <div class="ai-badge">Powered by {parse_model_name(DEFAULT_LLM_MODEL)}</div>
+                    </div>
+                </div>
+                <div class="ai-overview-content">{clean_out}</div>
+            </div>
+            """, unsafe_allow_html=True)
+        except Exception as e:
+            st.error(f"Errore nell'AI Overview Festaiolo: {e}")
+        
+        # Titolo per i grafici specifici del profilo
+        st.markdown('<h4 class="section-subtitle">📊 Analisi specifica per festaioli</h4>', unsafe_allow_html=True)
+        
+        try:
+            df_night = df_with_indices[["nome_stazione", "Scii_notte"]].drop_duplicates().fillna(0)
+            if not df_night.empty:
+                fig_night = px.bar(
+                    df_night.sort_values("Scii_notte", ascending=False),
+                    x="nome_stazione", y="Scii_notte",
+                    title="Km di sci notturno per impianto",
+                    labels={"Scii_notte": "Km sci notturno", "nome_stazione": "Impianto"}
+                )
+                fig_night.update_layout(
+                    template=plotly_template,
+                    paper_bgcolor="rgba(0,0,0,0)",
+                    plot_bgcolor="rgba(0,0,0,0)"
+                )
+                st.plotly_chart(fig_night, use_container_width=True)
+        except Exception:
+            pass
+        try:
+            cols = [c for c in ["Snowpark", "Superpipe"] if c in df_with_indices.columns]
+            df_acts = df_with_indices[["nome_stazione"] + cols].drop_duplicates().fillna(0)
+            if not df_acts.empty:
+                melted = df_acts.melt("nome_stazione", value_vars=cols, var_name="Attività", value_name="Valore")
+                fig_acts = px.bar(
+                    melted, x="nome_stazione", y="Valore", color="Attività",
+                    barmode="group", title="Snowpark e Superpipe"
+                )
+                fig_acts.update_layout(
+                    xaxis_tickangle=-45,
+                    template=plotly_template,
+                    paper_bgcolor="rgba(0,0,0,0)",
+                    plot_bgcolor="rgba(0,0,0,0)"
+                )
+                st.plotly_chart(fig_acts, use_container_width=True)
+        except Exception:
+            pass
     
     # Sezione Profilo Low-Cost (solo se selezionato, dopo tutti i livelli)
     if profilo_norm == "lowcost":
