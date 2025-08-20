@@ -99,10 +99,6 @@ def render_ai_overview(content, note=None, model_name: str | None = None):
     # Rimuovi anche eventuali spazi multipli e newline
     clean_content = re.sub(r'\s+', ' ', clean_content).strip()
     
-    # Debug: stampa il contenuto originale e pulito per verificare
-    print(f"DEBUG - Contenuto originale: {repr(content)}")
-    print(f"DEBUG - Contenuto pulito: {repr(clean_content)}")
-    
     note_html = f'<div class="mb-16"><span class="stInfo">ℹ️ {note}</span></div>' if note else ""
     parsed_model = parse_model_name(model_name)
     badge_text = f"Powered by {parsed_model}"
