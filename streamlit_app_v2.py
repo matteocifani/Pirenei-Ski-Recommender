@@ -93,8 +93,10 @@ def render_ai_overview(content, note=None, model_name: str | None = None):
             <div class="ai-icon">✨</div>
             <div class="ai-header-text">
                 <div class="ai-title">AI Overview</div>
-                <div class="ai-badge">{badge_text}</div>
             </div>
+        </div>
+        <div class="ai-badge-container">
+            <div class="ai-badge">{badge_text}</div>
         </div>
         {note_html}
         <div class="ai-overview-content">{content}</div>
@@ -801,6 +803,12 @@ html, body {
     width: 100%;
 }
 
+.ai-badge-container {
+    margin-left: 52px; /* Allinea con il testo (40px icona + 12px gap) */
+    margin-top: var(--space-4);
+    margin-bottom: var(--space-16);
+}
+
 .ai-title {
     font-family: 'Inter', sans-serif;
     font-weight: 700;
@@ -821,7 +829,7 @@ html, body {
     letter-spacing: 0.05em;
     border: 1px solid var(--purple-800);
     margin: 0;
-    align-self: flex-start;
+    display: inline-block;
 }
 
 .ai-overview-content {
