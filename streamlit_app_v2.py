@@ -3044,7 +3044,7 @@ def main():
             <div style="grid-column: {step}; justify-self: center;">
                 <div class="onboarding-tooltip-flow tooltip-step-{step}" style="
                 background: #1f2937;
-                border: 2px solid #64748b;
+                border: 2px solid #10b981;
                 border-radius: 16px;
                 padding: 12px 18px;
                 color: #f8fafc;
@@ -3080,8 +3080,8 @@ def main():
             height: 0;
             border-left: 12px solid transparent;
             border-right: 12px solid transparent;
-            border-bottom: 12px solid #64748b;
-            filter: drop-shadow(0 -2px 4px rgba(100, 116, 139, 0.3));
+            border-bottom: 12px solid #10b981;
+            filter: drop-shadow(0 -2px 4px rgba(16, 185, 129, 0.3));
         }}
         
         .tooltip-step-{step}::after {{
