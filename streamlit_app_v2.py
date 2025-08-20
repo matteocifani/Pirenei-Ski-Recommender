@@ -3119,11 +3119,8 @@ def main():
         </style>
         """, unsafe_allow_html=True)
     
-    # Onboarding completato - semplice messaggio di successo
+    # Onboarding completato - auto-scroll silenzioso ai risultati
     if st.session_state.onboarding_completed:
-        st.success("🎉 Onboarding completato con successo!")
-        
-        # Auto-scroll semplice ai risultati
         st.markdown("""
         <script>
         setTimeout(() => {
