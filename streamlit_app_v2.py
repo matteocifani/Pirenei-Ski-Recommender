@@ -1211,28 +1211,7 @@ div[data-testid="column"] .stSelectbox > div {
     }
 }
 
-/* Snow Effect */
-.snowflake {
-        position: fixed;
-    top: -10px;
-    color: #fff;
-    user-select: none;
-    pointer-events: none;
-    z-index: 10000;
-    animation: snowfall linear infinite;
-    font-size: 1rem;
-}
-
-@keyframes snowfall {
-    from {
-        transform: translateY(-10vh) rotate(0deg);
-        opacity: 1;
-    }
-    to {
-        transform: translateY(110vh) rotate(360deg);
-        opacity: 0;
-    }
-}
+/* CSS per snow effect rimosso per semplificazione */
 
 /* Welcome Message */
 .welcome-message {
@@ -1382,35 +1361,7 @@ div[data-testid="column"] .stSelectbox > div {
     animation: welcomeBounce 2s ease-in-out infinite;
 }
 
-/* CELEBRATION SNOWFALL - Animazione Spettacolare */
-.celebration-snowflake {
-    position: fixed;
-    top: -50px;
-    z-index: 10000;
-    pointer-events: none;
-    user-select: none;
-    color: white;
-    text-shadow: 
-        0 0 10px rgba(255, 255, 255, 0.8),
-        0 0 20px rgba(139, 92, 246, 0.6),
-        0 0 30px rgba(59, 130, 246, 0.4);
-    filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.5));
-}
-
-@keyframes celebrationSnowfall {
-    0% {
-        transform: translateY(-50px) translateX(0) rotate(0deg) scale(0);
-        opacity: 0;
-    }
-    10% {
-        opacity: 1;
-        transform: translateY(10vh) translateX(0) rotate(90deg) scale(1);
-    }
-    100% {
-        transform: translateY(110vh) translateX(30px) rotate(360deg) scale(0.8);
-        opacity: 0;
-    }
-}
+/* CSS per celebrazione snow rimosso per semplificazione */
 
 /* Responsive - Ottimizzato */
 @media (max-width: 768px) {
@@ -3056,7 +3007,7 @@ def main():
             
             if not st.session_state.onboarding_completed:
                 st.session_state.onboarding_completed = True
-                st.rerun()
+                # Non fare rerun immediato per permettere alla celebrazione di essere visualizzata
             elif st.session_state.onboarding_completed:
                 st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
@@ -3168,84 +3119,19 @@ def main():
         </style>
         """, unsafe_allow_html=True)
     
-    # Show snowfall when onboarding completes
-    if st.session_state.onboarding_completed and "snowfall_shown" not in st.session_state:
-        st.session_state.snowfall_shown = True
+    # Onboarding completato - semplice messaggio di successo
+    if st.session_state.onboarding_completed:
+        st.success("🎉 Onboarding completato con successo!")
+        
+        # Auto-scroll semplice ai risultati
         st.markdown("""
         <script>
-        // Snowfall celebration
-        function createSnowflake() {
-            const snowflake = document.createElement('div');
-            snowflake.className = 'snowflake';
-            snowflake.innerHTML = '❄️';
-            snowflake.style.left = Math.random() * 100 + 'vw';
-            snowflake.style.animationDuration = Math.random() * 3 + 2 + 's';
-            snowflake.style.opacity = Math.random();
-            snowflake.style.fontSize = Math.random() * 10 + 10 + 'px';
-            document.body.appendChild(snowflake);
-            
-            setTimeout(() => {
-                snowflake.remove();
-            }, 5000);
-        }
-        
-        // Create snowflakes
-        for (let i = 0; i < 50; i++) {
-            setTimeout(() => createSnowflake(), i * 100);
-        }
-        
-        // CELEBRATION FIOCCHI DI NEVE SPETTACOLARE! 
-        function createCelebrationSnowfall() {
-            const container = document.body;
-            const snowflakeCount = 150; // Molti più fiocchi!
-            
-            for (let i = 0; i < snowflakeCount; i++) {
-                setTimeout(() => {
-                    const snowflake = document.createElement('div');
-                    snowflake.classList.add('celebration-snowflake');
-                    
-                    // Varietà di simboli invernali
-                    const symbols = ['❄️', '⭐', '✨', '🌟', '💫', '❅', '🔥'];
-                    snowflake.innerHTML = symbols[Math.floor(Math.random() * symbols.length)];
-                    
-                    // Posizione e stile randomici
-                    snowflake.style.left = Math.random() * 100 + 'vw';
-                    snowflake.style.fontSize = (Math.random() * 1.5 + 0.8) + 'rem';
-                    snowflake.style.opacity = Math.random() * 0.8 + 0.6;
-                    
-                    // Velocità e rotazione casuali
-                    const duration = Math.random() * 3 + 4; // 4-7 secondi
-                    const rotation = Math.random() * 360;
-                    
-                    snowflake.style.animation = `
-                        celebrationSnowfall ${duration}s linear forwards,
-                        sparkleRotate ${duration * 0.7}s ease-in-out infinite
-                    `;
-                    
-                    snowflake.style.transform = `rotate(${rotation}deg)`;
-                    
-                    container.appendChild(snowflake);
-                    
-                    // Rimozione automatica
-                    setTimeout(() => {
-                        if (snowflake && snowflake.parentNode) {
-                            snowflake.remove();
-                        }
-                    }, duration * 1000 + 500);
-                }, i * 30); // Rilascio graduale
-            }
-        }
-        
-        // Avvia celebrazione
-        createCelebrationSnowfall();
-        
-        // Auto scroll to results con ritardo per godersi l'animazione
         setTimeout(() => {
             const resultsSection = document.querySelector('.hero-section');
             if (resultsSection) {
                 resultsSection.scrollIntoView({ behavior: 'smooth' });
             }
-        }, 2000);
+        }, 500);
         </script>
         """, unsafe_allow_html=True)
 
