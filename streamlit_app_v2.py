@@ -375,17 +375,14 @@ html, body {
     position: relative;
     z-index: 2;
     
-    /* Gradient text animato senza bianco - solo colori eleganti */
+    /* Gradient text animato - solo colori vivaci senza bianco */
     background: linear-gradient(
         45deg,
-        #f1f5f9 0%,      /* Grigio molto chiaro (quasi bianco ma non bianco) */
-        #e2e8f0 15%,     /* Grigio chiaro elegante */
-        #cbd5e1 30%,     /* Grigio medio chiaro */
-        #06b6d4 45%,     /* Azzurro */
-        #8b5cf6 60%,     /* Viola */
-        #f59e0b 75%,     /* Arancione */
-        #94a3b8 90%,     /* Grigio medio sofisticato */
-        #64748b 100%     /* Grigio scuro elegante */
+        #06b6d4 0%,      /* Azzurro */
+        #8b5cf6 25%,     /* Viola */
+        #ec4899 50%,     /* Magenta */
+        #f59e0b 75%,     /* Giallo/Arancione */
+        #06b6d4 100%     /* Azzurro (chiude il ciclo) */
     );
     background-size: 400% 400%;
     -webkit-background-clip: text;
