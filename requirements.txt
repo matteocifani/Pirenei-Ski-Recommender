@@ -10,9 +10,8 @@ pydeck>=0.8.0
 # Machine Learning e Preprocessing
 scikit-learn>=1.3.0
 
-# AI e LLM Integration
+# AI e LLM Integration (via OpenRouter)
 openai>=1.30.0
-anthropic>=0.7.0
 
 # Grafici e Visualizzazioni
 matplotlib>=3.8.0

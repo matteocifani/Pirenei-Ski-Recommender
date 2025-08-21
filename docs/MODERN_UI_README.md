@@ -41,8 +41,8 @@ This project has been completely redesigned with a modern, professional UI inspi
 
 ### 🧠 **AI Integration** (NEW in V4)
 - **AI Dock**: Floating control panel for AI features
-- **Multi-provider support**: OpenAI, Mistral, Anthropic, Google, Meta
-- **Smart caching**: Performance optimization for AI calls
+- **Mistral AI**: Primary model via OpenRouter
+- **Smart fallbacks**: Automatic retry on free alternative models
 - **Contextual prompts**: Specialized AI overviews for each profile
 
 ## 🎭 Component Library
