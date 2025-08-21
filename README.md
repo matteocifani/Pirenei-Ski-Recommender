@@ -1,8 +1,26 @@
 # 🎿 Sci su misura - Dashboard Interattiva Pirenei
 
-Dashboard interattiva per l'analisi delle stazioni sciistiche dei Pirenei con selezione dinamica di data, livello sciistico e profilo utente.
+Dashboard interattiva per l'analisi delle stazioni sciistiche dei Pirenei con selezione dinamica di data, livello sciistico e profilo utente. **Versione 2** con interfaccia moderna e sistema AI integrato.
 
-## 🚀 Funzionalità
+## 🚀 Funzionalità Principali
+
+### 🎯 **Sistema di Onboarding Intelligente**
+- **Guida Step-by-Step**: Selezione progressiva di data, livello e profilo
+- **Tooltip Interattivi**: Suggerimenti contestuali per ogni fase
+- **Validazione Dinamica**: Controlli in tempo reale delle selezioni
+- **Celebrazione Completamento**: Feedback visivo per l'utente
+
+### 🧠 **AI Overview Integrato**
+- **Generazione Automatica**: Riepiloghi personalizzati per ogni stazione
+- **Modelli Multi-Provider**: Supporto per OpenAI, Mistral AI, Anthropic
+- **Prompt Specializzati**: Contesti specifici per ogni profilo utente
+- **Cache Intelligente**: Ottimizzazione performance per chiamate AI
+
+### 🎨 **Interfaccia Utente Moderna**
+- **Design System Coerente**: Stile tech startup con animazioni fluide
+- **Tema Dark/Light**: Supporto automatico per preferenze sistema
+- **Responsive Design**: Ottimizzato per mobile e desktop
+- **Componenti Reutilizzabili**: KPI cards, podium, hero sections
 
 ### 📊 Dashboard Generale (nessun livello selezionato)
 - **Grafico a barre (stacked)**: Piste per tipologia (verde, blu, rossa, nera) con colori coerenti e ordinamento per impianti con più piste aperte
@@ -57,18 +75,34 @@ Avvia la versione v2 (snella, con effetti grafici moderni e overview AI):
 streamlit run streamlit_app_v2.py
 ```
 
+### 🔑 Configurazione AI
+
 Per usare l'overview AI configura la chiave OpenRouter in ambiente prima di lanciare:
 
 ```bash
 export OPENROUTER_API_KEY="<la_tua_chiave>"
 ```
 
+**Provider Supportati:**
+- OpenAI (GPT-4, GPT-3.5)
+- Mistral AI (Mistral, Nemo)
+- Anthropic (Claude)
+- Google (Gemini)
+- Meta (Llama)
+
 ## 🎯 Utilizzo
 
-1. **Seleziona una data** nella sidebar (anche futura per previsioni)
-2. **Scegli il livello sciistico**: nessuno, base, medio, esperto
-3. **Esplora le visualizzazioni** che cambiano dinamicamente
-4. **Interagisci con i grafici** (hover, zoom, pan)
+### **Onboarding Iniziale**
+1. **Seleziona una data** (anche futura per previsioni)
+2. **Scegli il livello sciistico**: base, medio, esperto
+3. **Definisci il profilo**: panoramico, familiare, festaiolo, lowcost
+4. **Completa l'onboarding** per accedere ai risultati
+
+### **Dashboard Interattiva**
+- **Esplora le visualizzazioni** che cambiano dinamicamente
+- **Interagisci con i grafici** (hover, zoom, pan)
+- **Usa l'AI Overview** per riassunti personalizzati
+- **Ricomincia l'onboarding** con il pulsante dedicato
 
 ## 📊 Calcolo Indici
 
@@ -85,18 +119,35 @@ export OPENROUTER_API_KEY="<la_tua_chiave>"
 
 ## 🎨 Tecnologie Utilizzate
 
-- **Streamlit**: Interfaccia web
-- **Pandas**: Manipolazione dati
-- **Plotly**: Grafici interattivi
-- **PyDeck**: Mappe interattive
-- **Scikit-learn**: Normalizzazione dati
+- **Streamlit**: Interfaccia web moderna
+- **Pandas**: Manipolazione dati ottimizzata
+- **Plotly**: Grafici interattivi avanzati
+- **PyDeck**: Mappe interattive 3D
+- **Scikit-learn**: Normalizzazione dati e ML
+- **OpenRouter**: Integrazione AI multi-provider
+- **CSS Moderno**: Design system con variabili CSS e animazioni
+
+## 🚀 Performance e Ottimizzazioni
+
+### **Caching Intelligente**
+- **Cache dati**: 30 minuti per dataset principali
+- **Cache LLM**: 1 ora per chiamate AI
+- **Cache template**: Permanente per componenti HTML/CSS
+
+### **Lazy Loading**
+- **Import dinamici**: Plotly e PyDeck caricati solo quando necessari
+- **Componenti condizionali**: UI mostrata solo quando richiesta
+- **Ottimizzazione grafici**: Template Plotly unificati e ottimizzati
 
 ## 📝 Note
 
 - Tutti i grafici sono **interattivi** e responsive
 - Mappa **centrata sui Pirenei** con zoom ottimizzato
 - Giorni chiusi: tabella con aperture/chiusure medie per stazione (regola 5/5)
+- **Sistema di onboarding** per utenti principianti
+- **AI Overview** per spiegazioni personalizzate
+- **Design moderno** ispirato alle migliori startup tech
 
 ## 🎿 Buon divertimento!
 
-La dashboard è progettata per fornire insights personalizzati per sciatori di tutti i livelli, aiutando nella scelta della destinazione ideale per le vacanze sulla neve. 
+La dashboard è progettata per fornire insights personalizzati per sciatori di tutti i livelli, aiutando nella scelta della destinazione ideale per le vacanze sulla neve. Con l'interfaccia moderna e l'intelligenza artificiale integrata, ogni utente può trovare la stazione perfetta per le proprie esigenze. 
