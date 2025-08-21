@@ -1,4 +1,4 @@
-# 🎿 Sci su misura - Dashboard Interattiva Pirenei
+# 🏔️ Pirenei Ski Recommender
 
 Dashboard interattiva per l'analisi delle stazioni sciistiche dei Pirenei con selezione dinamica di data, livello sciistico e profilo utente. **Versione 2** con interfaccia moderna e sistema AI integrato.
 
