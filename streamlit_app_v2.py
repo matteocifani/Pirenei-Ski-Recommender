@@ -8,14 +8,14 @@ import pandas as pd
 # Lazy imports - caricati solo quando necessari
 def get_plotly():
     """Lazy import Plotly per ridurre tempo di startup"""
-    import plotly.express as px
-    import plotly.graph_objects as go
+import plotly.express as px
+import plotly.graph_objects as go
     from plotly.subplots import make_subplots
     return px, go, make_subplots
 
 def get_pydeck():
     """Lazy import PyDeck per mappe"""
-    import pydeck as pdk
+import pydeck as pdk
     return pdk
 import streamlit as st
 
@@ -820,7 +820,7 @@ html, body {
     align-items: flex-start;
     justify-content: flex-start;
     gap: var(--space-8);
-    margin-bottom: var(--space-32);
+    margin-bottom: var(--space-40);
     padding: 0;
     margin: 0;
 }
