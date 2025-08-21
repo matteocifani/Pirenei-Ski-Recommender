@@ -8,14 +8,14 @@ import pandas as pd
 # Lazy imports - caricati solo quando necessari
 def get_plotly():
     """Lazy import Plotly per ridurre tempo di startup"""
-    import plotly.express as px
-    import plotly.graph_objects as go
+import plotly.express as px
+import plotly.graph_objects as go
     from plotly.subplots import make_subplots
     return px, go, make_subplots
 
 def get_pydeck():
     """Lazy import PyDeck per mappe"""
-    import pydeck as pdk
+import pydeck as pdk
     return pdk
 import streamlit as st
 
@@ -816,11 +816,13 @@ html, body {
 
 .ai-header {
     display: flex;
-    align-items: flex-start;
-    gap: var(--space-12);
-    margin-bottom: var(--space-20);
-    justify-content: flex-start;
     flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: var(--space-8);
+    margin-bottom: var(--space-20);
+    padding: 0;
+    margin: 0;
 }
 
 .ai-header-text {
@@ -830,6 +832,8 @@ html, body {
     justify-content: flex-start;
     gap: var(--space-4);
     width: 100%;
+    padding: 0;
+    margin: 0;
 }
 
 .ai-title {
@@ -838,7 +842,9 @@ html, body {
     font-size: 1.125rem;
     color: var(--text-primary);
     margin: 0;
+    padding: 0;
     line-height: 1.2;
+    text-align: left;
 }
 
 .ai-badge {
@@ -853,8 +859,10 @@ html, body {
     letter-spacing: 0.05em;
     border: 1px solid var(--purple-800);
     margin: 0;
-    padding-left: var(--space-8);
+    padding: 0;
     line-height: 1;
+    text-align: left;
+    width: fit-content;
 }
 
 .ai-overview-content {
