@@ -1,3 +1,13 @@
+import streamlit as st
+
+# Configurazione pagina Streamlit - DEVE essere la prima chiamata Streamlit
+st.set_page_config(
+    page_title="Pirenei Ski Recommender",
+    page_icon="🏔️",
+    layout="wide",
+    initial_sidebar_state="collapsed"
+)
+
 import datetime
 import os
 from typing import List, Tuple
@@ -18,7 +28,6 @@ def get_pydeck():
     """Lazy import PyDeck per mappe"""
     import pydeck as pdk
     return pdk
-import streamlit as st
 
 from app.data_loader import load_datasets
 from app.prediction import compute_indices, get_historical_data_for_date
@@ -154,7 +163,6 @@ def render_ai_dock(is_loading=False, model_name=None, has_api_key=True):
     </div>"""
 
 
-st.set_page_config(layout="wide", page_title="🎿 Sci su misura v2 - Pirenei", page_icon="🎿")
 
 # Modern Tech Startup Design System
 st.markdown("""
@@ -1161,7 +1169,7 @@ div[data-testid="column"] .stSelectbox > div {
     border: 1px solid var(--border-primary);
     border-radius: var(--radius-xl);
     padding: var(--space-20) var(--space-24);
-    box-shadow: var(--shadow-xl);
+    box-shadow: var(--shadow-sm);
     z-index: 9999;
     min-width: 250px;
     backdrop-filter: blur(20px);
@@ -2946,13 +2954,12 @@ def main():
                 font-weight: 600;
                 box-shadow: 
                     0 0 0 1px rgba(16, 185, 129, 0.3),
-                    0 0 8px rgba(16, 185, 129, 0.18),
                     0 0 16px rgba(16, 185, 129, 0.15),
-                    0 0 24px rgba(16, 185, 129, 0.12),
-                    0 0 32px rgba(16, 185, 129, 0.08),
-                    0 0 40px rgba(16, 185, 129, 0.05),
-                    0 25px 50px -12px rgba(0, 0, 0, 0.8);
-                filter: drop-shadow(0 0 8px rgba(16, 185, 129, 0.25));
+                    0 0 32px rgba(16, 185, 129, 0.1),
+                    0 0 48px rgba(16, 185, 129, 0.07),
+                    0 0 64px rgba(16, 185, 129, 0.05),
+                    0 0 80px rgba(16, 185, 129, 0.03);
+                filter: drop-shadow(0 0 12px rgba(16, 185, 129, 0.12));
                 max-width: 280px;
                 text-align: center;
                 animation: tooltipSlideDown 0.3s ease-out;
@@ -2977,7 +2984,7 @@ def main():
             border-left: 12px solid transparent;
             border-right: 12px solid transparent;
             border-bottom: 12px solid #10b981;
-            filter: drop-shadow(0 -2px 4px rgba(16, 185, 129, 0.3));
+            filter: drop-shadow(0 -2px 6px rgba(16, 185, 129, 0.18));
         }}
         
         .tooltip-step-{step}::after {{
