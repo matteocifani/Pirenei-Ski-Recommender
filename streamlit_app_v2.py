@@ -820,7 +820,7 @@ html, body {
     align-items: flex-start;
     justify-content: flex-start;
     gap: var(--space-8);
-    margin-bottom: var(--space-20);
+    margin-bottom: var(--space-32);
     padding: 0;
     margin: 0;
 }
