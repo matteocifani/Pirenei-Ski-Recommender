@@ -8,14 +8,14 @@ import pandas as pd
 # Lazy imports - caricati solo quando necessari
 def get_plotly():
     """Lazy import Plotly per ridurre tempo di startup"""
-    import plotly.express as px
-    import plotly.graph_objects as go
+import plotly.express as px
+import plotly.graph_objects as go
     from plotly.subplots import make_subplots
     return px, go, make_subplots
 
 def get_pydeck():
     """Lazy import PyDeck per mappe"""
-    import pydeck as pdk
+import pydeck as pdk
     return pdk
 import streamlit as st
 
@@ -816,17 +816,18 @@ html, body {
 
 .ai-header {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: var(--space-12);
     margin-bottom: var(--space-20);
     justify-content: flex-start;
+    flex-direction: column;
 }
 
 .ai-header-text {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    justify-content: center;
+    justify-content: flex-start;
     gap: var(--space-4);
     width: 100%;
 }
@@ -852,8 +853,7 @@ html, body {
     letter-spacing: 0.05em;
     border: 1px solid var(--purple-800);
     margin: 0;
-    align-self: flex-start;
-    margin-left: 0;
+    padding-left: var(--space-8);
     line-height: 1;
 }
 
@@ -2100,7 +2100,7 @@ div[data-testid="column"] .stSelectbox > div {
     
     .podium-container {
         flex-direction: column;
-    align-items: center;
+        align-items: center;
         height: auto;
         gap: var(--space-20);
         padding: var(--space-20);
@@ -2670,7 +2670,7 @@ def render_map_with_best(df_coords: pd.DataFrame, best_name: str, tooltip_km: bo
     """Rendering mappa ottimizzato con lazy import"""
     pdk = get_pydeck()  # Lazy import
     
-    # Prepara DF con coordinate di tutte le stazioni  
+    # Prepara DF con coordinate di tutte le stazioni
     base_coords = df_coords.copy()
     def _norm(s: str) -> str:
         try:
