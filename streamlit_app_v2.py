@@ -8,8 +8,8 @@ import pandas as pd
 # Lazy imports - caricati solo quando necessari
 def get_plotly():
     """Lazy import Plotly per ridurre tempo di startup"""
-import plotly.express as px
-import plotly.graph_objects as go
+    import plotly.express as px
+    import plotly.graph_objects as go
     from plotly.subplots import make_subplots
     return px, go, make_subplots
 
