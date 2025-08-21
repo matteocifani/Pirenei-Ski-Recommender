@@ -873,6 +873,8 @@ html, body {
     font-size: 1rem;
     font-weight: 400;
     letter-spacing: -0.01em;
+    padding-top: var(--space-16);
+    margin-top: var(--space-8);
 }
 
 /* Modern Podium - Apple/Tech Inspired */
