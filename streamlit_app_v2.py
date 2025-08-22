@@ -3580,41 +3580,40 @@ def main():
         render_map_with_best(df_with_indices, best_name)
 
         # Speedometers meteo (come in base) per la stazione consigliata
-        try:
-            meteo_win = get_historical_data_for_date(df_filtered_meteo, data_sel, days_range=3)
-            if not meteo_win.empty:
-                m_best = meteo_win[meteo_win.get("nome_stazione", "").astype(str) == best_name]
-                if m_best.empty:
-                    m_best = meteo_win
-                baseline = get_historical_data_for_date(df_filtered_meteo, data_sel, days_range=15)
-                
-                st.markdown('<h4 class="section-subtitle">🌤️ Probabilità condizioni meteo (storico ±3 giorni)</h4>', unsafe_allow_html=True)
-                col1, col2 = st.columns(2)
-                with col1:
-                    prob_nebbia = float(m_best.get("nebbia", 0).mean() * 100)
-                    baseline_nebbia = float((baseline.get("nebbia", 0).mean() * 100) if not baseline.empty else 0)
-                    fig_n = create_speedometer(prob_nebbia, "Prob. Nebbia", "#6b7280", reference_pct=baseline_nebbia)
-                    st.plotly_chart(fig_n, use_container_width=True)
-                with col2:
-                    prob_pioggia = float(m_best.get("pioggia", 0).mean() * 100)
-                    baseline_pioggia = float((baseline.get("pioggia", 0).mean() * 100) if not baseline.empty else 0)
-                    fig_p = create_speedometer(prob_pioggia, "Prob. Pioggia", "#06b6d4", reference_pct=baseline_pioggia)
-                    st.plotly_chart(fig_p, use_container_width=True)
+        meteo_win = get_historical_data_for_date(df_filtered_meteo, data_sel, days_range=3)
+        if not meteo_win.empty:
+            m_best = meteo_win[meteo_win.get("nome_stazione", "").astype(str) == best_name]
+            if m_best.empty:
+                m_best = meteo_win
+            baseline = get_historical_data_for_date(df_filtered_meteo, data_sel, days_range=15)
+            
+            st.markdown('<h4 class="section-subtitle">🌤️ Probabilità condizioni meteo (storico ±3 giorni)</h4>', unsafe_allow_html=True)
+            col1, col2 = st.columns(2)
+            with col1:
+                prob_nebbia = float(m_best.get("nebbia", 0).mean() * 100)
+                baseline_nebbia = float((baseline.get("nebbia", 0).mean() * 100) if not baseline.empty else 0)
+                fig_n = create_speedometer(prob_nebbia, "Prob. Nebbia", "#6b7280", reference_pct=baseline_nebbia)
+                st.plotly_chart(fig_n, use_container_width=True)
+            with col2:
+                prob_pioggia = float(m_best.get("pioggia", 0).mean() * 100)
+                baseline_pioggia = float((baseline.get("pioggia", 0).mean() * 100) if not baseline.empty else 0)
+                fig_p = create_speedometer(prob_pioggia, "Prob. Pioggia", "#06b6d4", reference_pct=baseline_pioggia)
+                st.plotly_chart(fig_p, use_container_width=True)
 
-                # Speedometers aggiuntivi: Vento, Sole, Neve
-                colv, cols, coln = st.columns(3)
-                with colv:
-                    prob_vento = float(m_best.get("vento", 0).mean() * 100)
-                    baseline_vento = float((baseline.get("vento", 0).mean() * 100) if not baseline.empty else 0)
-                    fig_v = create_speedometer(prob_vento, "Prob. Vento", "#00C8FF", reference_pct=baseline_vento)
-                    st.plotly_chart(fig_v, use_container_width=True)
-                with cols:
-                    prob_sole = float(m_best.get("sole", 0).mean() * 100) if "sole" in m_best.columns else 0.0
-                    baseline_sole = float((baseline.get("sole", 0).mean() * 100) if (not baseline.empty and "sole" in baseline.columns) else 0)
-                    fig_s = create_speedometer(prob_sole, "Prob. Sole", "#F59E0B", reference_pct=baseline_sole)
-                    st.plotly_chart(fig_s, use_container_width=True)
-                with coln:
-                    neve_pct = 0.0
+            # Speedometers aggiuntivi: Vento, Sole, Neve
+            colv, cols, coln = st.columns(3)
+            with colv:
+                prob_vento = float(m_best.get("vento", 0).mean() * 100)
+                baseline_vento = float((baseline.get("vento", 0).mean() * 100) if not baseline.empty else 0)
+                fig_v = create_speedometer(prob_vento, "Prob. Vento", "#00C8FF", reference_pct=baseline_vento)
+                st.plotly_chart(fig_v, use_container_width=True)
+            with cols:
+                prob_sole = float(m_best.get("sole", 0).mean() * 100) if "sole" in m_best.columns else 0.0
+                baseline_sole = float((baseline.get("sole", 0).mean() * 100) if (not baseline.empty and "sole" in baseline.columns) else 0)
+                fig_s = create_speedometer(prob_sole, "Prob. Sole", "#F59E0B", reference_pct=baseline_sole)
+                st.plotly_chart(fig_s, use_container_width=True)
+            with coln:
+                neve_pct = 0.0
                 snow_win = get_historical_data_for_date(df_filtered_infonieve, data_sel, days_range=3)
                 if not snow_win.empty:
                     s_best = snow_win[snow_win.get("nome_stazione", "").astype(str) == best_name]
@@ -3624,18 +3623,16 @@ def main():
                     if not cm.empty:
                         cmin, cmax = cm.min(), cm.max()
                         neve_pct = float(((cm.mean() - cmin) / (cmax - cmin) * 100) if cmax > cmin else 0)
-                    fig_neve = create_speedometer(neve_pct, "Prob. Neve", "#6EE7B7")
-                    st.plotly_chart(fig_neve, use_container_width=True)
+                fig_neve = create_speedometer(neve_pct, "Prob. Neve", "#6EE7B7")
+                st.plotly_chart(fig_neve, use_container_width=True)
 
-                st.markdown(
-                    '<div style="text-align: center; margin-top: 20px; margin-bottom: 30px;">'
-                    '<p style="font-size: 14px; color: #94a3b8; font-family: Inter, sans-serif; font-style: italic; margin: 0;">'
-                    'Nota: probabilità calcolate sui dati storici per periodi simili; il delta confronta con la media degli anni precedenti nella finestra ±15 giorni.'
-                    '</p></div>',
-                    unsafe_allow_html=True
-                )
-        except Exception:
-            pass
+            st.markdown(
+                '<div style="text-align: center; margin-top: 20px; margin-bottom: 30px;">'
+                '<p style="font-size: 14px; color: #94a3b8; font-family: Inter, sans-serif; font-style: italic; margin: 0;">'
+                'Nota: probabilità calcolate sui dati storici per periodi simili; il delta confronta con la media degli anni precedenti nella finestra ±15 giorni.'
+                '</p></div>',
+                unsafe_allow_html=True
+            )
 
         # Mappa delle stazioni (con evidenza della consigliata)
         try:
@@ -3692,14 +3689,56 @@ def main():
                 .reset_index()
                 .sort_values("indice_medio", ascending=False)
             )
-            melted = piste.melt("nome_stazione", value_vars=["Piste_verdi", "Piste_blu", "Piste_rosse"], var_name="Tipo", value_name="Numero")
+            
+            # Calcola il totale delle piste per ogni stazione
+            piste["totale_piste"] = piste["Piste_verdi"] + piste["Piste_blu"] + piste["Piste_rosse"]
+            
+            # Crea barre con colori proporzionali
             px, go, make_subplots = get_plotly()  # Lazy import
-            fig = px.bar(
-                melted,
-                x="nome_stazione", y="Numero", color="Tipo", barmode="group",
-                color_discrete_map={"Piste_verdi": "#10b981", "Piste_blu": "#06b6d4", "Piste_rosse": "#ef4444"},
-            )
+            
+            # Crea figure con barre impilate per ogni stazione
+            fig = go.Figure()
+            
+            for idx, row in piste.iterrows():
+                stazione = row["nome_stazione"]
+                verdi = row["Piste_verdi"]
+                blu = row["Piste_blu"]
+                rosse = row["Piste_rosse"]
+                
+                # Aggiungi barra per piste verdi
+                if verdi > 0:
+                    fig.add_trace(go.Bar(
+                        name=f"{stazione} - Verdi",
+                        x=[stazione],
+                        y=[verdi],
+                        marker_color="#10b981",
+                        showlegend=False,
+                        hovertemplate=f"{stazione}<br>Piste verdi: {verdi}<extra></extra>"
+                    ))
+                
+                # Aggiungi barra per piste blu (impilata)
+                if blu > 0:
+                    fig.add_trace(go.Bar(
+                        name=f"{stazione} - Blu",
+                        x=[stazione],
+                        y=[blu],
+                        marker_color="#06b6d4",
+                        showlegend=False,
+                        hovertemplate=f"{stazione}<br>Piste blu: {blu}<extra></extra>"
+                    ))
+                
+                # Aggiungi barra per piste rosse (impilata)
+                if rosse > 0:
+                    fig.add_trace(go.Bar(
+                        name=f"{stazione} - Rosse",
+                        x=[stazione],
+                        y=[rosse],
+                        marker_color="#ef4444",
+                        showlegend=False,
+                        hovertemplate=f"{stazione}<br>Piste rosse: {rosse}<extra></extra>"
+                    ))
             fig.update_layout(
+                barmode='stack',  # Impila le barre
                 xaxis_tickangle=-45,
                 template=plotly_template,
                 paper_bgcolor="rgba(0,0,0,0)",
@@ -3711,7 +3750,7 @@ def main():
                     tickfont=dict(color="#d1d5db", family="Inter")
                 ),
                 yaxis=dict(
-                    title="Numero piste",
+                    title="Numero totale piste (verdi + blu + rosse)",
                     gridcolor="#374151",
                     tickfont=dict(color="#d1d5db", family="Inter")
                 ),
