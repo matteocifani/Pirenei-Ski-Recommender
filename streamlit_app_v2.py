@@ -3371,7 +3371,8 @@ def main():
 
         # Probabilità meteo (±3 giorni su anni precedenti per date future)
         from datetime import date as _date
-        def create_speedometer(value_pct: float, title: str, color: str, reference_pct: float | None = None) -> go.Figure:
+        def create_speedometer(value_pct: float, title: str, color: str, reference_pct: float | None = None):
+            px, go, make_subplots = get_plotly()  # Lazy import - spostato all'inizio
             indicator = go.Indicator(
                 mode="gauge+number",
                 value=max(0, min(100, value_pct)),
@@ -3404,7 +3405,6 @@ def main():
                     }
                 },
             )
-            px, go, make_subplots = get_plotly()  # Lazy import
             fig = go.Figure(indicator)
             
             # Delta migliorato per dark mode - posizionato sotto al numero principale
