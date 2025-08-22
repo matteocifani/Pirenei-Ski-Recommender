@@ -2237,10 +2237,6 @@ div[data-testid="column"] .stSelectbox > div {
     margin: var(--space-16) 0 !important;
 }
 
-</style>
-""", unsafe_allow_html=True)
-
-
 @st.cache_data(show_spinner=False)  # Cache permanente per template
 def get_unified_plotly_template():
     """Template Plotly ultra-ottimizzato - meno codice, più performance"""
