@@ -3354,10 +3354,6 @@ def main():
         st.markdown('<h2 class="profile-main-title">🎿 Sezione Livello: Principiante</h2>', unsafe_allow_html=True)
         
 
-        # Mappa con consigliata evidenziata
-        st.markdown('<h4 class="section-subtitle">🗺️ Mappa delle stazioni (consigliata evidenziata)</h4>', unsafe_allow_html=True)
-        render_map_with_best(df_with_indices, best_name)
-
         # Podio Top 3 (estetico, senza esporre il valore indice)
         if not df_with_indices.empty and "indice_base" in df_with_indices.columns:
             top3 = (df_with_indices.groupby("nome_stazione")["indice_base"].mean()
@@ -3369,8 +3365,13 @@ def main():
                     unsafe_allow_html=True
                 )
 
+        # Mappa con consigliata evidenziata
+        st.markdown('<h4 class="section-subtitle">🗺️ Mappa delle stazioni (consigliata evidenziata)</h4>', unsafe_allow_html=True)
+        render_map_with_best(df_with_indices, best_name)
+
         # Probabilità meteo (±3 giorni su anni precedenti per date future)
         from datetime import date as _date
+        px, go, make_subplots = get_plotly()  # Lazy import so 'go' exists for type hints
         def create_speedometer(value_pct: float, title: str, color: str, reference_pct: float | None = None) -> go.Figure:
             indicator = go.Indicator(
                 mode="gauge+number",
@@ -3404,7 +3405,6 @@ def main():
                     }
                 },
             )
-            px, go, make_subplots = get_plotly()  # Lazy import
             fig = go.Figure(indicator)
             
             # Delta migliorato per dark mode - posizionato sotto al numero principale
@@ -3454,6 +3454,32 @@ def main():
                 '</p></div>',
                 unsafe_allow_html=True
             )
+
+            # Speedometers aggiuntivi: Vento, Sole, Neve
+            colv, cols, coln = st.columns(3)
+            with colv:
+                prob_vento = float(meteo_data.get("vento", 0).mean() * 100)
+                baseline_vento = float((baseline.get("vento", 0).mean() * 100) if not baseline.empty else 0)
+                fig_v = create_speedometer(prob_vento, "Prob. Vento", "#00C8FF", reference_pct=baseline_vento)
+                st.plotly_chart(fig_v, use_container_width=True)
+            with cols:
+                prob_sole = float(meteo_data.get("sole", 0).mean() * 100) if "sole" in meteo_data.columns else 0.0
+                baseline_sole = float((baseline.get("sole", 0).mean() * 100) if (not baseline.empty and "sole" in baseline.columns) else 0)
+                fig_s = create_speedometer(prob_sole, "Prob. Sole", "#F59E0B", reference_pct=baseline_sole)
+                st.plotly_chart(fig_s, use_container_width=True)
+            with coln:
+                neve_pct = 0.0
+                snow_win = get_historical_data_for_date(df_filtered_infonieve, data_sel, days_range=3)
+                if not snow_win.empty:
+                    s_best = snow_win[snow_win.get("nome_stazione", "").astype(str) == best_name]
+                    if s_best.empty:
+                        s_best = snow_win
+                    cm = s_best.get("espesor_medio", 0).fillna(0)
+                    if not cm.empty:
+                        cmin, cmax = cm.min(), cm.max()
+                        neve_pct = float(((cm.mean() - cmin) / (cmax - cmin) * 100) if cmax > cmin else 0)
+                fig_neve = create_speedometer(neve_pct, "Prob. Neve", "#6EE7B7")
+                st.plotly_chart(fig_neve, use_container_width=True)
         else:
             st.warning("Dati meteo non disponibili per questa data")
 
@@ -3479,7 +3505,7 @@ def main():
                 y=["Piste_verdi", "Piste_blu"],
                 title="Piste verdi e blu per stazione (ordinate per indice base)",
                 color_discrete_map={"Piste_verdi": "#10b981", "Piste_blu": "#06b6d4"},
-                barmode="group"
+                barmode="stack"
             )
             fig_piste_base.update_layout(
                 xaxis_tickangle=-45,
@@ -4399,28 +4425,8 @@ def main():
     try:
         if df_with_indices is not None and not df_with_indices.empty:
             st.markdown("---")
-            # Classifica per livello
-            st.subheader("Classifica e indici – Livello")
-            level_to_col = {"base": "indice_base", "medio": "indice_medio", "esperto": "indice_esperto"}
-            level_col = level_to_col.get(livello)
-            if level_col and level_col in df_with_indices.columns:
-                df_level_rank = (
-                    df_with_indices.groupby("nome_stazione")[level_col]
-                    .mean()
-                    .reset_index()
-                    .sort_values(level_col, ascending=False)
-                )
-                fig_lvl = px.bar(
-                    df_level_rank,
-                    x="nome_stazione",
-                    y=level_col,
-                    title=f"Ranking (livello: {livello})",
-                    labels={"nome_stazione": "Impianto", level_col: "Indice livello"},
-                )
-                fig_lvl.update_layout(xaxis_tickangle=-45)
-                st.plotly_chart(fig_lvl, use_container_width=True)
-            else:
-                st.info("Seleziona un livello per vedere la classifica per livello.")
+            # RIMOSSO: Classifica e indici – Livello (richiesta utente)
+            pass
 
             # Classifica per profilo
             st.subheader("Classifica e indici – Profilo")
