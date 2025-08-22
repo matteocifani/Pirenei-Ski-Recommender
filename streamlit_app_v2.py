@@ -117,21 +117,21 @@ def render_podium(top3):
       <div class='podium-step second'>
         <div class='podium-platform second'>
           <div class='podium-rank'>2</div>
-          <div class='podium-medal'>🥈</div>
+          <div class='podium-medal'>2</div>
           <div class='podium-name'>{second}</div>
         </div>
       </div>
       <div class='podium-step first'>
         <div class='podium-platform first'>
           <div class='podium-rank'>1</div>
-          <div class='podium-medal'>🥇</div>
+          <div class='podium-medal'>1</div>
           <div class='podium-name'>{first}</div>
         </div>
       </div>
       <div class='podium-step third'>
         <div class='podium-platform third'>
           <div class='podium-rank'>3</div>
-          <div class='podium-medal'>🥉</div>
+          <div class='podium-medal'>3</div>
           <div class='podium-name'>{third}</div>
         </div>
       </div>
@@ -2599,6 +2599,8 @@ def _llm_overview_cached(prompt: str, max_tokens: int) -> tuple[str, dict]:
     """Cache delle chiamate LLM per evitare ripetizioni costose"""
     return generate_overview(prompt, max_tokens)
 
+""", unsafe_allow_html=True)
+
 # Template HTML/CSS cached per performance
 @st.cache_data(ttl=3600, show_spinner=False)  # Cache per 1 ora
 def _get_cached_templates():
@@ -2819,9 +2821,9 @@ def main():
         st.markdown("""
         <div class="welcome-message">
             <div class="welcome-content">
-                <h2 class="welcome-title">Benvenuto su Pirenei Ski Recommender! 🎿</h2>
+                <h2 class="welcome-title">Benvenuto su Pirenei Ski Recommender!</h2>
                 <p class="welcome-subtitle">Analizziamo condizioni meteo storiche, apertura piste e qualità della neve per suggerirti la stazione sciistica più adatta al tuo livello e profilo.</p>
-                <p class="welcome-guide">👇 Inizia selezionando le tue preferenze qui sotto</p>
+                <p class="welcome-guide">Inizia selezionando le tue preferenze qui sotto</p>
             </div>
         </div>
         """, unsafe_allow_html=True)
@@ -2833,7 +2835,7 @@ def main():
     with col1:
         st.markdown('<div id="date-column" class="selector-column">', unsafe_allow_html=True)
         new_date = st.date_input(
-            "📅 DATA",
+            "DATA",
             value=st.session_state.selected_date,
             min_value=min_date,
             max_value=datetime.date(2030, 12, 31),
@@ -2854,7 +2856,7 @@ def main():
         st.markdown('<div id="level-column" class="selector-column">', unsafe_allow_html=True)
         level_opts = ["base", "medio", "esperto"]
         new_level = st.selectbox(
-            "🎯 LIVELLO",
+            "LIVELLO",
             level_opts,
             index=level_opts.index(st.session_state.selected_level) if st.session_state.selected_level in level_opts else None,
             key="onboard_level",
@@ -2881,7 +2883,7 @@ def main():
             current_index = profile_opts.index(st.session_state.selected_profile) + 1
             
         new_profile = st.selectbox(
-            "👥 PROFILO",
+            "PROFILO",
             all_profile_opts,
             index=current_index,
             key="onboard_profile",
@@ -2913,9 +2915,9 @@ def main():
         
         # Tooltip messages
         messages = {
-            1: "Quando vorresti conquistare le piste? ⛷️",
-            2: "Sei un principiante o un pro della neve? 🏔️🎿", 
-            3: "Che tipo di sciatore sei? (puoi anche saltare!) 🤙❄️"
+            1: "Quando vorresti conquistare le piste?",
+            2: "Sei un principiante o un pro della neve?", 
+            3: "Che tipo di sciatore sei? (puoi anche saltare!)"
         }
         
         # Position tooltip based on step with flex
@@ -2930,85 +2932,13 @@ def main():
         
         # Show tooltip in normal document flow - allineato con i selettori  
         st.markdown(f"""
-        <div id="tooltip-container" style="
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 20px;
-            width: 100%;
-            margin: 0 0 8px 0;
-            padding: 0 20px;
-        ">
+        <div id="tooltip-container" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; width: 100%; margin: 0 0 8px 0; padding: 0 20px;">
             <div style="grid-column: {step}; justify-self: center;">
-                <div class="onboarding-tooltip-flow tooltip-step-{step}" style="
-                background: #1f2937;
-                border: 2px solid #10b981;
-                border-radius: 16px;
-                padding: 12px 18px;
-                color: #f8fafc;
-                font-family: Inter, sans-serif;
-                font-size: 15px;
-                font-weight: 600;
-                box-shadow: 
-                    0 0 0 1px rgba(16, 185, 129, 0.3),
-                    0 0 16px rgba(16, 185, 129, 0.15),
-                    0 0 32px rgba(16, 185, 129, 0.1),
-                    0 0 48px rgba(16, 185, 129, 0.07),
-                    0 0 64px rgba(16, 185, 129, 0.05),
-                    0 0 80px rgba(16, 185, 129, 0.03);
-                filter: drop-shadow(0 0 12px rgba(16, 185, 129, 0.12));
-                max-width: 280px;
-                text-align: center;
-                animation: tooltipSlideDown 0.3s ease-out;
-                position: relative;
-                backdrop-filter: blur(10px);
-            ">
+                <div class="onboarding-tooltip-flow" style="background: #1f2937; border: 2px solid #10b981; border-radius: 16px; padding: 12px 18px; color: #f8fafc; font-family: Inter, sans-serif; font-size: 15px; font-weight: 600; max-width: 280px; text-align: center;">
                     {current_message}
                 </div>
             </div>
         </div>
-        
-        <!-- Freccia separata con CSS -->
-        <style>
-        .tooltip-step-{step}::before {{
-            content: '';
-            position: absolute;
-            top: -12px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 0;
-            height: 0;
-            border-left: 12px solid transparent;
-            border-right: 12px solid transparent;
-            border-bottom: 12px solid #10b981;
-            filter: drop-shadow(0 -2px 6px rgba(16, 185, 129, 0.18));
-        }}
-        
-        .tooltip-step-{step}::after {{
-            content: '';
-            position: absolute;
-            top: -9px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 0;
-            height: 0;
-            border-left: 10px solid transparent;
-            border-right: 10px solid transparent;
-            border-bottom: 10px solid #1f2937;
-        }}
-        </style>
-        
-        <style>
-        @keyframes tooltipSlideDown {{
-            from {{ 
-                opacity: 0; 
-                transform: translateY(-20px); 
-            }}
-            to {{ 
-                opacity: 1; 
-                transform: translateY(0); 
-            }}
-        }}
-        </style>
         """, unsafe_allow_html=True)
     
     # Onboarding completato - auto-scroll silenzioso ai risultati
@@ -3036,49 +2966,14 @@ def main():
     if not st.session_state.onboarding_completed:
         st.stop()
 
-    # Add restart button after onboarding completion (styled)
-    st.markdown("""
-    <style>
-    /* Restart Button Styling - Coerente con design system */
-    .stButton > button[kind="secondary"] {
-        background: linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%) !important;
-        border: 1px solid rgba(148, 163, 184, 0.2) !important;
-        border-radius: var(--radius-2xl) !important;
-        padding: var(--space-12) var(--space-32) !important;
-        font-family: 'Inter', sans-serif !important;
-        font-size: 0.875rem !important;
-        font-weight: 600 !important;
-        color: var(--text-secondary) !important;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-        box-shadow: 
-            0 0 0 1px rgba(148, 163, 184, 0.1),
-            0 0 15px rgba(100, 116, 139, 0.1),
-            0 0 30px rgba(71, 85, 105, 0.05),
-            0 8px 25px -8px rgba(0, 0, 0, 0.4) !important;
-        height: auto !important;
-        min-height: auto !important;
-        backdrop-filter: blur(10px) !important;
-    }
-    .stButton > button[kind="secondary"]:hover {
-        background: linear-gradient(145deg, #334155 0%, #1e293b 50%, #334155 100%) !important;
-        color: var(--text-primary) !important;
-        transform: translateY(-2px) scale(1.02) !important;
-        box-shadow: 
-            0 0 0 1px rgba(148, 163, 184, 0.2),
-            0 0 25px rgba(100, 116, 139, 0.15),
-            0 0 50px rgba(71, 85, 105, 0.1),
-            0 15px 35px -10px rgba(0, 0, 0, 0.6) !important;
-        border-color: rgba(148, 163, 184, 0.3) !important;
-    }
-    </style>
-    """, unsafe_allow_html=True)
+    # Add restart button after onboarding completion (no custom styling to avoid CSS parsing issues)
     
     # Più spazio per avvicinarlo ai selettori e allontanarlo dall'hero
     st.markdown('<div style="margin: 2px 0;"></div>', unsafe_allow_html=True)
     
     col1, col2, col3 = st.columns([2, 1, 2])
     with col2:
-        if st.button("🔄 Ricomincia", key="restart_onboarding", use_container_width=True, type="secondary"):
+        if st.button("Ricomincia", key="restart_onboarding", use_container_width=True, type="secondary"):
             # Reset onboarding state
             st.session_state.onboarding_completed = False
             st.session_state.onboarding_step = 1
@@ -3107,9 +3002,9 @@ def main():
             st.markdown("""
             <div class="no-data-message">
                 <div class="no-data-content">
-                    <h3 class="no-data-title">😔 Nessuna stazione aperta</h3>
+                    <h3 class="no-data-title">Nessuna stazione aperta</h3>
                     <p class="no-data-subtitle">Le piste sono chiuse in questa data. Prova a scegliere un altro giorno per divertirti sulla neve!</p>
-                    <p class="no-data-guide">⬆️ Modifica la data qui sopra</p>
+                    <p class="no-data-guide">Modifica la data qui sopra</p>
                 </div>
             </div>
             """, unsafe_allow_html=True)
@@ -3333,7 +3228,7 @@ def main():
             <div class="ai-overview-section">
                 <div class="ai-header">
                     <div class="ai-header-text">
-                        <div class="ai-title">AI Overview ✨</div>
+                        <div class="ai-title">AI Overview</div>
                         <div class="ai-badge">Powered by {parse_model_name(DEFAULT_LLM_MODEL)}</div>
                     </div>
                 </div>
@@ -3550,19 +3445,19 @@ def main():
                     <div class='podium-container'>
                       <div class='podium-step second'>
                         <div class='podium-platform second'>
-                          <div class='podium-medal'>🥈</div>
+                          <div class='podium-medal'>2</div>
                           <div class='name'>{second}</div>
                         </div>
                       </div>
                       <div class='podium-step first'>
                         <div class='podium-platform first'>
-                          <div class='podium-medal'>🥇</div>
+                          <div class='podium-medal'>1</div>
                           <div class='name'>{first}</div>
                         </div>
                       </div>
                       <div class='podium-step third'>
                         <div class='podium-platform third'>
-                          <div class='podium-medal'>🥉</div>
+                          <div class='podium-medal'>3</div>
                           <div class='name'>{third}</div>
                         </div>
                       </div>
@@ -3789,19 +3684,19 @@ def main():
                     <div class='podium-container'>
                       <div class='podium-step second'>
                         <div class='podium-platform second'>
-                          <div class='podium-medal'>🥈</div>
+                          <div class='podium-medal'>2</div>
                           <div class='name'>{second}</div>
                         </div>
                       </div>
                       <div class='podium-step first'>
                         <div class='podium-platform first'>
-                          <div class='podium-medal'>🥇</div>
+                          <div class='podium-medal'>1</div>
                           <div class='name'>{first}</div>
                         </div>
                       </div>
                       <div class='podium-step third'>
                         <div class='podium-platform third'>
-                          <div class='podium-medal'>🥉</div>
+                          <div class='podium-medal'>3</div>
                           <div class='name'>{third}</div>
                         </div>
                       </div>
@@ -3851,7 +3746,7 @@ def main():
             
             # Disclaimer rischio valanghe
             st.markdown("""
-            L'indice di valanghe, conosciuto come Scala Europea del Pericolo di Valanghe, è uno strumento a 5 livelli utilizzato per valutare e comunicare il rischio di valanghe (0=basso, 5=molto alto).
+            L\'indice di valanghe, conosciuto come Scala Europea del Pericolo di Valanghe, è uno strumento a 5 livelli utilizzato per valutare e comunicare il rischio di valanghe (0=basso, 5=molto alto).
             """)
         except Exception:
             pass
@@ -4142,7 +4037,7 @@ def main():
             <div class="ai-overview-section">
                 <div class="ai-header">
                     <div class="ai-header-text">
-                        <div class="ai-title">AI Overview ✨</div>
+                        <div class="ai-title">AI Overview</div>
                         <div class="ai-badge">Powered by {parse_model_name(DEFAULT_LLM_MODEL)}</div>
                     </div>
                 </div>
@@ -4234,7 +4129,7 @@ def main():
             <div class="ai-overview-section">
                 <div class="ai-header">
                     <div class="ai-header-text">
-                        <div class="ai-title">AI Overview ✨</div>
+                        <div class="ai-title">AI Overview</div>
                         <div class="ai-badge">Powered by {parse_model_name(DEFAULT_LLM_MODEL)}</div>
                     </div>
                 </div>
@@ -4306,7 +4201,7 @@ def main():
             <div class="ai-overview-section">
                 <div class="ai-header">
                     <div class="ai-header-text">
-                        <div class="ai-title">AI Overview ✨</div>
+                        <div class="ai-title">AI Overview</div>
                         <div class="ai-badge">Powered by {parse_model_name(DEFAULT_LLM_MODEL)}</div>
                     </div>
                 </div>
