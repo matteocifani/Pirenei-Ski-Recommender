@@ -3537,10 +3537,6 @@ def main():
         st.markdown('<h2 class="profile-main-title">🎿 Sezione Livello: Intermedio</h2>', unsafe_allow_html=True)
         
 
-        # Mappa con consigliata evidenziata
-        st.markdown('<h4 class="section-subtitle">🗺️ Mappa delle stazioni (consigliata evidenziata)</h4>', unsafe_allow_html=True)
-        render_map_with_best(df_with_indices, best_name)
-
         # Podio Top 3 per indice_medio
         if "indice_medio" in df_with_indices.columns and not df_with_indices.empty:
             top3m = (
@@ -3579,18 +3575,46 @@ def main():
                     unsafe_allow_html=True,
                 )
 
-        # Meteo compatto (5 mini-donut) per la stazione consigliata
+        # Mappa con consigliata evidenziata
+        st.markdown('<h4 class="section-subtitle">🗺️ Mappa delle stazioni (consigliata evidenziata)</h4>', unsafe_allow_html=True)
+        render_map_with_best(df_with_indices, best_name)
+
+        # Speedometers meteo (come in base) per la stazione consigliata
         try:
             meteo_win = get_historical_data_for_date(df_filtered_meteo, data_sel, days_range=3)
             if not meteo_win.empty:
                 m_best = meteo_win[meteo_win.get("nome_stazione", "").astype(str) == best_name]
                 if m_best.empty:
                     m_best = meteo_win
-                pioggia = float(m_best.get("pioggia", 0).mean() * 100)
-                nebbia = float(m_best.get("nebbia", 0).mean() * 100)
-                sole    = float(m_best.get("sole", 0).mean() * 100)
-                vento   = float(m_best.get("vento", 0).mean() * 100)
-                neve_pct = 0.0
+                baseline = get_historical_data_for_date(df_filtered_meteo, data_sel, days_range=15)
+                
+                st.markdown('<h4 class="section-subtitle">🌤️ Probabilità condizioni meteo (storico ±3 giorni)</h4>', unsafe_allow_html=True)
+                col1, col2 = st.columns(2)
+                with col1:
+                    prob_nebbia = float(m_best.get("nebbia", 0).mean() * 100)
+                    baseline_nebbia = float((baseline.get("nebbia", 0).mean() * 100) if not baseline.empty else 0)
+                    fig_n = create_speedometer(prob_nebbia, "Prob. Nebbia", "#6b7280", reference_pct=baseline_nebbia)
+                    st.plotly_chart(fig_n, use_container_width=True)
+                with col2:
+                    prob_pioggia = float(m_best.get("pioggia", 0).mean() * 100)
+                    baseline_pioggia = float((baseline.get("pioggia", 0).mean() * 100) if not baseline.empty else 0)
+                    fig_p = create_speedometer(prob_pioggia, "Prob. Pioggia", "#06b6d4", reference_pct=baseline_pioggia)
+                    st.plotly_chart(fig_p, use_container_width=True)
+
+                # Speedometers aggiuntivi: Vento, Sole, Neve
+                colv, cols, coln = st.columns(3)
+                with colv:
+                    prob_vento = float(m_best.get("vento", 0).mean() * 100)
+                    baseline_vento = float((baseline.get("vento", 0).mean() * 100) if not baseline.empty else 0)
+                    fig_v = create_speedometer(prob_vento, "Prob. Vento", "#00C8FF", reference_pct=baseline_vento)
+                    st.plotly_chart(fig_v, use_container_width=True)
+                with cols:
+                    prob_sole = float(m_best.get("sole", 0).mean() * 100) if "sole" in m_best.columns else 0.0
+                    baseline_sole = float((baseline.get("sole", 0).mean() * 100) if (not baseline.empty and "sole" in baseline.columns) else 0)
+                    fig_s = create_speedometer(prob_sole, "Prob. Sole", "#F59E0B", reference_pct=baseline_sole)
+                    st.plotly_chart(fig_s, use_container_width=True)
+                with coln:
+                    neve_pct = 0.0
                 snow_win = get_historical_data_for_date(df_filtered_infonieve, data_sel, days_range=3)
                 if not snow_win.empty:
                     s_best = snow_win[snow_win.get("nome_stazione", "").astype(str) == best_name]
@@ -3600,37 +3624,16 @@ def main():
                     if not cm.empty:
                         cmin, cmax = cm.min(), cm.max()
                         neve_pct = float(((cm.mean() - cmin) / (cmax - cmin) * 100) if cmax > cmin else 0)
+                    fig_neve = create_speedometer(neve_pct, "Prob. Neve", "#6EE7B7")
+                    st.plotly_chart(fig_neve, use_container_width=True)
 
-                def donut(value, label, color):
-                    val = max(0.0, min(100.0, value))
-                    rem = 100 - val
-                    px, go, make_subplots = get_plotly()  # Lazy import
-                    fig = go.Figure(
-                        data=[go.Pie(values=[val, rem], hole=0.72, sort=False, direction='clockwise', marker_colors=[color, 'rgba(255,255,255,0.08)'], textinfo='none')]
-                    )
-                    fig.add_annotation(text=f"{val:.0f}%", x=0.5, y=0.5, showarrow=False, font=dict(size=22, color='#e6efff'))
-                    fig.update_layout(
-                        title=dict(text=label, font=dict(size=16), y=0.9),
-                        showlegend=False, margin=dict(l=0, r=0, t=50, b=10), height=220
-                    )
-                    return fig
-
-                st.markdown('<h4 class="section-subtitle">🌤️ Meteo (storico ±3 giorni)</h4>', unsafe_allow_html=True)
-                r1c1, r1c2, r1c3 = st.columns(3)
-                with r1c1:
-                    st.plotly_chart(donut(pioggia, "Pioggia", "#60A5FA"), use_container_width=True)
-                with r1c2:
-                    st.plotly_chart(donut(sole, "Sole", "#F59E0B"), use_container_width=True)
-                with r1c3:
-                    st.plotly_chart(donut(nebbia, "Nebbia", "#94a3b8"), use_container_width=True)
-                st.write("")
-                r2c1, r2c2, r2c3 = st.columns([1,1,1])
-                with r2c1:
-                    st.plotly_chart(donut(vento, "Vento", "#00C8FF"), use_container_width=True)
-                with r2c2:
-                    st.plotly_chart(donut(neve_pct, "Neve", "#6EE7B7"), use_container_width=True)
-                with r2c3:
-                    st.write("")
+                st.markdown(
+                    '<div style="text-align: center; margin-top: 20px; margin-bottom: 30px;">'
+                    '<p style="font-size: 14px; color: #94a3b8; font-family: Inter, sans-serif; font-style: italic; margin: 0;">'
+                    'Nota: probabilità calcolate sui dati storici per periodi simili; il delta confronta con la media degli anni precedenti nella finestra ±15 giorni.'
+                    '</p></div>',
+                    unsafe_allow_html=True
+                )
         except Exception:
             pass
 
@@ -3673,27 +3676,28 @@ def main():
         except Exception:
             pass
 
-        # Barre: piste blu/rosse ordinate per indice_medio
+        # Barre: piste verdi/blu/rosse ordinate per indice_medio
         if not df_with_indices.empty and "indice_medio" in df_with_indices.columns:
-            st.markdown('<h4 class="section-subtitle">🎿 Piste blu e rosse per stazione</h4>', unsafe_allow_html=True)
+            st.markdown('<h4 class="section-subtitle">🎿 Distribuzione piste per colore (ordinate per preferenze)</h4>', unsafe_allow_html=True)
             # Raggruppa per stazione per evitare duplicazioni (un valore per stazione)
             piste = (
-                df_with_indices[["nome_stazione", "Piste_blu", "Piste_rosse", "indice_medio"]]
+                df_with_indices[["nome_stazione", "Piste_verdi", "Piste_blu", "Piste_rosse", "indice_medio"]]
                 .groupby("nome_stazione")
                 .agg({
-                    "Piste_blu": "first",    # Prende il primo valore (sono uguali per stazione)
+                    "Piste_verdi": "first",    # Prende il primo valore (sono uguali per stazione)
+                    "Piste_blu": "first",
                     "Piste_rosse": "first",
                     "indice_medio": "mean"   # Media dell'indice se varia per data
                 })
                 .reset_index()
                 .sort_values("indice_medio", ascending=False)
             )
-            melted = piste.melt("nome_stazione", value_vars=["Piste_blu", "Piste_rosse"], var_name="Tipo", value_name="Numero")
+            melted = piste.melt("nome_stazione", value_vars=["Piste_verdi", "Piste_blu", "Piste_rosse"], var_name="Tipo", value_name="Numero")
             px, go, make_subplots = get_plotly()  # Lazy import
             fig = px.bar(
                 melted,
                 x="nome_stazione", y="Numero", color="Tipo", barmode="group",
-                color_discrete_map={"Piste_blu": "#06b6d4", "Piste_rosse": "#ef4444"},
+                color_discrete_map={"Piste_verdi": "#10b981", "Piste_blu": "#06b6d4", "Piste_rosse": "#ef4444"},
             )
             fig.update_layout(
                 xaxis_tickangle=-45,
