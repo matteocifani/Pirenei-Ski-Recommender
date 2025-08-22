@@ -3,7 +3,7 @@ import streamlit as st
 # Configurazione pagina Streamlit - DEVE essere la prima chiamata Streamlit
 st.set_page_config(
     page_title="Pirenei Ski Recommender",
-    page_icon="🏔️",
+    page_icon="PSR",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
@@ -2774,7 +2774,7 @@ def render_map_with_best(df_coords: pd.DataFrame, best_name: str, tooltip_km: bo
 def main():
     st.markdown("""
 <div class="app-header">
-    <h1 class="app-title">🏔️ Pirenei Ski Recommender</h1>
+    <h1 class="app-title">Pirenei Ski Recommender</h1>
     <p class="app-subtitle">La tua guida per scegliere la stazione sciistica perfetta</p>
 </div>
 """, unsafe_allow_html=True)
