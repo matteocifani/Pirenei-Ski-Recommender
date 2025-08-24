@@ -2629,26 +2629,67 @@ def generate_panoramic_calendar(df_infonieve: pd.DataFrame, station_name: str, t
         if station_data.empty:
             return None
         
+        # Debug: verifica colonne disponibili
+        available_cols = station_data.columns.tolist()
+        print(f"Colonne disponibili per {station_name}: {available_cols}")
+        
+        # Verifica se abbiamo le colonne necessarie per l'indice panoramico
+        required_cols = ["panoramico", "pioggia", "vento", "sole", "nebbia", "Quota_max"]
+        missing_cols = [col for col in required_cols if col not in available_cols]
+        if missing_cols:
+            print(f"Colonne mancanti per {station_name}: {missing_cols}")
+            # Fallback: usa solo le colonne disponibili
+            available_required = [col for col in required_cols if col in available_cols]
+            if not available_required:
+                print(f"Nessuna colonna panoramica disponibile per {station_name}")
+                return None
+        
         # Converti date e filtra per stagione sciistica (Nov-Apr)
         station_data["date"] = pd.to_datetime(station_data["date"])
-        station_data = station_data[
+        print(f"Date disponibili per {station_name}: {station_data['date'].min()} - {station_data['date'].max()}")
+        
+        # Filtra per stagione sciistica (Nov-Apr) ma sii più flessibile
+        season_data = station_data[
             (station_data["date"].dt.month.isin([11, 12, 1, 2, 3, 4]))
         ].copy()
         
-        if station_data.empty:
+        if season_data.empty:
+            # Fallback: usa tutti i dati disponibili se non ci sono dati stagionali
+            print(f"Nessun dato stagionale per {station_name}, uso tutti i dati disponibili")
+            season_data = station_data.copy()
+        
+        if season_data.empty:
+            print(f"Nessun dato disponibile per {station_name}")
             return None
         
         # Calcola indice panoramico per ogni giorno
         def calculate_panoramic_index(row):
             """Calcola indice panoramico per una riga di dati"""
             try:
-                # Normalizza i valori tra 0 e 1 (MinMax scaling semplificato)
-                panoramico = min(1.0, max(0.0, row.get("panoramico", 0) / 5.0))  # Assumendo scala 0-5
-                pioggia = min(1.0, max(0.0, row.get("pioggia", 0)))
-                vento = min(1.0, max(0.0, row.get("vento", 0)))
-                sole = min(1.0, max(0.0, row.get("sole", 0)))
-                nebbia = min(1.0, max(0.0, row.get("nebbia", 0)))
-                quota = min(1.0, max(0.0, row.get("Quota_max", 0) / 3000.0))  # Normalizza quota (0-3000m)
+                # Usa solo le colonne disponibili
+                available_required = [col for col in required_cols if col in available_cols]
+                
+                # Inizializza valori di default
+                panoramico = 0.5  # Valore medio se non disponibile
+                pioggia = 0.5     # Valore medio se non disponibile
+                vento = 0.5       # Valore medio se non disponibile
+                sole = 0.5        # Valore medio se non disponibile
+                nebbia = 0.5      # Valore medio se non disponibile
+                quota = 0.5       # Valore medio se non disponibile
+                
+                # Assegna valori reali se disponibili
+                if "panoramico" in available_required:
+                    panoramico = min(1.0, max(0.0, row.get("panoramico", 0.5) / 5.0))  # Assumendo scala 0-5
+                if "pioggia" in available_required:
+                    pioggia = min(1.0, max(0.0, row.get("pioggia", 0.5)))
+                if "vento" in available_required:
+                    vento = min(1.0, max(0.0, row.get("vento", 0.5)))
+                if "sole" in available_required:
+                    sole = min(1.0, max(0.0, row.get("sole", 0.5)))
+                if "nebbia" in available_required:
+                    nebbia = min(1.0, max(0.0, row.get("nebbia", 0.5)))
+                if "Quota_max" in available_required:
+                    quota = min(1.0, max(0.0, row.get("Quota_max", 1500) / 3000.0))  # Default 1500m
                 
                 # Calcola indice panoramico con stessi pesi del sistema principale
                 indice = (
@@ -2660,23 +2701,23 @@ def generate_panoramic_calendar(df_infonieve: pd.DataFrame, station_name: str, t
                     0.20 * (1 - quota)
                 )
                 return round(indice, 3)
-            except Exception:
-                return 0.0
+            except Exception as e:
+                print(f"Errore nel calcolo indice per riga: {e}")
+                return 0.5  # Valore medio in caso di errore
         
         # Applica calcolo indice panoramico
-        station_data["indice_panoramico"] = station_data.apply(calculate_panoramic_index, axis=1)
+        season_data["indice_panoramico"] = season_data.apply(calculate_panoramic_index, axis=1)
         
         # Raggruppa per data e calcola media ±3 giorni per smoothing
-        station_data["date_str"] = station_data["date"].dt.strftime("%Y-%m-%d")
-        daily_avg = station_data.groupby("date_str").agg({
-            "indice_panoramico": "mean",
-            "panoramico": "mean",
-            "pioggia": "mean",
-            "vento": "mean",
-            "sole": "mean",
-            "nebbia": "mean",
-            "Quota_max": "mean"
-        }).reset_index()
+        season_data["date_str"] = season_data["date"].dt.strftime("%Y-%m-%d")
+        
+        # Seleziona solo le colonne disponibili per l'aggregazione
+        agg_cols = ["indice_panoramico"]
+        for col in ["panoramico", "pioggia", "vento", "sole", "nebbia", "Quota_max"]:
+            if col in season_data.columns:
+                agg_cols.append(col)
+        
+        daily_avg = season_data.groupby("date_str")[agg_cols].mean().reset_index()
         
         # Converti date string in datetime per il calendario
         daily_avg["date"] = pd.to_datetime(daily_avg["date_str"])
@@ -2687,23 +2728,33 @@ def generate_panoramic_calendar(df_infonieve: pd.DataFrame, station_name: str, t
             date = row["date"]
             indice = row["indice_panoramico"]
             
-            # Calcola breakdown percentuale per tooltip
-            panoramico_pct = row["panoramico"] * 20  # 25% del peso totale
-            pioggia_pct = (1 - row["pioggia"]) * 15  # 15% del peso totale
-            vento_pct = (1 - row["vento"]) * 10      # 10% del peso totale
-            sole_pct = row["sole"] * 20               # 20% del peso totale
-            nebbia_pct = (1 - row["nebbia"]) * 10    # 10% del peso totale
-            quota_pct = (1 - row["Quota_max"] / 3000) * 20  # 20% del peso totale
+            # Calcola breakdown percentuale per tooltip (solo per colonne disponibili)
+            breakdown_parts = []
+            if "panoramico" in row:
+                panoramico_pct = row["panoramico"] * 20  # 25% del peso totale
+                breakdown_parts.append(f"Panoramico: {panoramico_pct:.1f}%")
+            if "pioggia" in row:
+                pioggia_pct = (1 - row["pioggia"]) * 15  # 15% del peso totale
+                breakdown_parts.append(f"Assenza pioggia: {pioggia_pct:.1f}%")
+            if "vento" in row:
+                vento_pct = (1 - row["vento"]) * 10      # 10% del peso totale
+                breakdown_parts.append(f"Assenza vento: {vento_pct:.1f}%")
+            if "sole" in row:
+                sole_pct = row["sole"] * 20               # 20% del peso totale
+                breakdown_parts.append(f"Sole: {sole_pct:.1f}%")
+            if "nebbia" in row:
+                nebbia_pct = (1 - row["nebbia"]) * 10    # 10% del peso totale
+                breakdown_parts.append(f"Assenza nebbia: {nebbia_pct:.1f}%")
+            if "Quota_max" in row:
+                quota_pct = (1 - row["Quota_max"] / 3000) * 20  # 20% del peso totale
+                breakdown_parts.append(f"Quota moderata: {quota_pct:.1f}%")
+            
+            breakdown_text = " | ".join(breakdown_parts) if breakdown_parts else "Dati limitati"
             
             calendar_data.append({
                 "date": date,
                 "indice": indice,
-                "panoramico_pct": panoramico_pct,
-                "pioggia_pct": pioggia_pct,
-                "vento_pct": vento_pct,
-                "sole_pct": sole_pct,
-                "nebbia_pct": nebbia_pct,
-                "quota_pct": quota_pct
+                "breakdown": breakdown_text
             })
         
         if not calendar_data:
@@ -2771,8 +2822,10 @@ def generate_panoramic_calendar(df_infonieve: pd.DataFrame, station_name: str, t
                         "<b>%{y}</b><br>" +
                         "Giorno: %{x}<br>" +
                         "Indice Panoramico: %{z:.3f}<br>" +
+                        "Breakdown: %{customdata}<br>" +
                         "<extra></extra>"
                     ),
+                    customdata=[row.get("breakdown", "Dati limitati") for _, row in year_data.iterrows() if row["month"] == month],
                     name=f"{year} {month_data['month']}"
                 ))
         
