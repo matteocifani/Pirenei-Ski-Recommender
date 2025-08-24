@@ -2940,22 +2940,22 @@ def generate_panoramic_calendar(df_meteo: pd.DataFrame, df_recensioni: pd.DataFr
         
 
         
-        # Aggiungi indicatore unico per periodo chiusura impianti (Maggio-Ottobre)
-            fig.add_shape(
-                type="rect",
-                x0=0.5, x1=31.5,
+                # Aggiungi indicatore unico per periodo chiusura impianti (Maggio-Ottobre)
+        fig.add_shape(
+            type="rect",
+            x0=0.5, x1=31.5,
             y0=4.6, y1=10.4,  # Da Maggio (5) a Ottobre (10)
-                fillcolor="rgba(107, 114, 128, 0.1)",
-                line=dict(color="rgba(107, 114, 128, 0.3)", width=1, dash="dot"),
-                layer="below"
-            )
-            fig.add_annotation(
+            fillcolor="rgba(107, 114, 128, 0.1)",
+            line=dict(color="rgba(107, 114, 128, 0.3)", width=1, dash="dot"),
+            layer="below"
+        )
+        fig.add_annotation(
             x=16, y=7.5,  # Centro della striscia
-                text="Impianti chiusi",
-                showarrow=False,
+            text="Impianti chiusi",
+            showarrow=False,
             font=dict(size=12, color="#6b7280", family="Inter"),
-                opacity=0.6
-            )
+            opacity=0.6
+        )
         
         # Aggiungi sottotitolo sopra il calendario
         fig.add_annotation(
