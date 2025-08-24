@@ -10,7 +10,7 @@ st.set_page_config(
 
 import datetime
 import os
-from typing import List, Tuple
+from typing import List, Tuple, Any
 
 import numpy as np
 import re
@@ -2611,7 +2611,7 @@ def build_lowcost_prompt(df_rec: pd.DataFrame, best_name: str, livello: str, tar
     return " ".join(prompt_parts)
 
 
-def generate_panoramic_calendar(df_infonieve: pd.DataFrame, station_name: str, target_date: datetime.date) -> go.Figure:
+def generate_panoramic_calendar(df_infonieve: pd.DataFrame, station_name: str, target_date: datetime.date):
     """
     Genera un calendario heatmap per mostrare l'indice panoramico storico di una stazione.
     
@@ -2621,7 +2621,7 @@ def generate_panoramic_calendar(df_infonieve: pd.DataFrame, station_name: str, t
         target_date: Data target per centrare il calendario
     
     Returns:
-        go.Figure: Calendario heatmap con indice panoramico
+        Any: Calendario heatmap con indice panoramico (Plotly Figure)
     """
     try:
         # Filtra dati per la stazione specifica
@@ -2820,7 +2820,7 @@ def generate_panoramic_calendar(df_infonieve: pd.DataFrame, station_name: str, t
         return fig
         
     except Exception as e:
-        st.error(f"Errore nella generazione del calendario panoramico: {e}")
+        # Non usare st.error qui perché la funzione viene chiamata da un contesto diverso
         return None
 
 
