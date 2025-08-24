@@ -4230,7 +4230,7 @@ def main():
         except Exception:
             pass
 
-        # Quota max e min: grafico a barre sovrapposte (Top 10) con scala 2000-3000 m
+        # Quota max e min: grafico a barre sovrapposte
         try:
             # Prepara dati per entrambe le quote
             quota_data = (
@@ -4295,7 +4295,7 @@ def main():
         except Exception:
             pass
 
-        # Piste rosse e nere per livello esperto (Top 10 stazioni)
+        # Piste rosse e nere per livello esperto
         try:
             piste = (
                 df_with_indices[["nome_stazione", "Piste_rosse", "Piste_nere"]]
@@ -4323,7 +4323,7 @@ def main():
                 fig_piste = px.bar(
                     melted, x="nome_stazione", y="Numero", color="Tipo",
                     barmode="group", 
-                    title="Piste rosse e nere per stazione (Top 10)",
+                    title="Piste rosse e nere per stazione",
                     labels={"nome_stazione": "Stazione", "Numero": "Numero piste"},
                     color_discrete_map={"Piste rosse": "#ef4444", "Piste nere": "#1f2937"}
                 )
@@ -4714,7 +4714,7 @@ def main():
                     df_night,
                     x="Scii_notte", y="nome_stazione",
                     orientation='h',  # Barre orizzontali
-                    title="Km di sci notturno per impianto (Top 10)",
+                    title="Km di sci notturno per impianto",
                     labels={"Scii_notte": "Km sci notturno", "nome_stazione": "Impianto"},
                     text="Scii_notte"
                 )
