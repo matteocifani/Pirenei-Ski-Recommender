@@ -4343,41 +4343,7 @@ def main():
         )
         st.plotly_chart(fig_bar_total, use_container_width=True)
 
-        if profilo_norm == "festaiolo":
 
-            try:
-                df_night = df_with_indices[["nome_stazione", "Scii_notte"]].drop_duplicates().fillna(0)
-                if not df_night.empty:
-                    px, go, make_subplots = get_plotly()  # Lazy import
-                    fig_night = px.bar(
-                        df_night.sort_values("Scii_notte", ascending=False),
-                        x="nome_stazione", y="Scii_notte",
-                        title="Km di sci notturno per impianto",
-                        labels={"Scii_notte": "Km sci notturno", "nome_stazione": "Impianto"}
-                    )
-                    st.plotly_chart(fig_night, use_container_width=True)
-            except Exception:
-                pass
-            try:
-                cols = [c for c in ["Snowpark", "Superpipe"] if c in df_with_indices.columns]
-                df_acts = df_with_indices[["nome_stazione"] + cols].drop_duplicates().fillna(0)
-                if not df_acts.empty:
-                    melted = df_acts.melt("nome_stazione", value_vars=cols, var_name="Attività", value_name="Valore")
-                    px, go, make_subplots = get_plotly()  # Lazy import
-                    fig_acts = px.bar(
-                        melted, x="nome_stazione", y="Valore", color="Attività",
-                        barmode="group", title="Snowpark e Superpipe",
-                        labels={"nome_stazione": "Nome stazione", "Valore": "Valore", "Attività": "Attività"}
-                    )
-                    fig_acts.update_layout(
-                        xaxis_tickangle=-45,
-                        template="plotly_dark",
-                        paper_bgcolor="rgba(0,0,0,0)",
-                        plot_bgcolor="rgba(0,0,0,0)"
-                    )
-                    st.plotly_chart(fig_acts, use_container_width=True)
-            except Exception:
-                pass
             
 
 
@@ -4719,25 +4685,7 @@ def main():
         </div>
         """, unsafe_allow_html=True)
         
-        # KPI Snowpark e Superpipe per festaioli (stazione consigliata)
-        try:
-            top_best = df_with_indices[df_with_indices["nome_stazione"] == best_name]
-            if not top_best.empty:
-                st.markdown('<h3 class="section-subtitle">🎪 KPI Party</h3>', unsafe_allow_html=True)
-                vals = top_best[["Snowpark", "Superpipe"]].fillna(0).mean()
-                
-                # KPI Grid per KPI party con layout uniformi - 2 colonne su una riga
-                st.markdown(
-                    f"""
-                    <div class="kpi-grid grid-2">
-                        {render_kpi("Snowpark", f"{vals.get('Snowpark',0):.0f}", "", "🛹")}
-                        {render_kpi("Superpipe", f"{vals.get('Superpipe',0):.0f}", "", "🏂")}
-                    </div>
-                    """,
-                    unsafe_allow_html=True
-                )
-        except Exception:
-            pass
+
 
         # Titolo per i grafici specifici del profilo
         st.markdown('<h4 class="section-subtitle">📊 Analisi specifica per festaioli</h4>', unsafe_allow_html=True)
