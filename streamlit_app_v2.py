@@ -4250,7 +4250,8 @@ def main():
                     text=[f"{val:.0f} m" for val in quota_data["Quota_max"]],
                     textposition='outside',
                     marker_color='rgba(34, 197, 94, 0.8)',  # Verde
-                    opacity=0.8
+                    opacity=0.8,
+                    hovertemplate="<b>%{x}</b><br>Quota max: %{y} m<extra></extra>"
                 ))
                 
                 # Barra sovrapposta per Quota_min
@@ -4261,7 +4262,8 @@ def main():
                     text=[f"{val:.0f} m" for val in quota_data["Quota_min"]],
                     textposition='outside',
                     marker_color='rgba(59, 130, 246, 0.8)',  # Blu
-                    opacity=0.8
+                    opacity=0.8,
+                    hovertemplate="<b>%{x}</b><br>Quota min: %{y} m<extra></extra>"
                 ))
                 
                 fig_quota.update_layout(
