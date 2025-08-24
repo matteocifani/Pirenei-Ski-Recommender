@@ -2669,24 +2669,29 @@ def generate_panoramic_calendar(df_meteo: pd.DataFrame, df_recensioni: pd.DataFr
         # Aggiungi dati quota (se disponibili)
         if not info_station.empty:
             info_station["date"] = pd.to_datetime(info_station["date"])
+            print(f"Date info_station: {info_station['date'].min()} - {info_station['date'].max()}")
             base_data = base_data.merge(
                 info_station[["date", "nome_stazione", "Quota_max"]],
                 on=["date", "nome_stazione"],
                 how="left"
             )
+            print(f"Dopo merge quota: {len(base_data)} righe")
         else:
             base_data["Quota_max"] = 2000  # Default quota media
         
         # Aggiungi dati panoramici dalle recensioni (aggregazione temporale)
         if not rec_station.empty:
             rec_station["date"] = pd.to_datetime(rec_station["date"])
+            print(f"Date recensioni: {rec_station['date'].min()} - {rec_station['date'].max()}")
             # Aggrega recensioni per giorno (media del punteggio panoramico)
             rec_daily = rec_station.groupby(["date", "nome_stazione"])["panoramico"].mean().reset_index()
+            print(f"Recensioni aggregate per giorno: {len(rec_daily)} giorni unici")
             base_data = base_data.merge(
                 rec_daily,
                 on=["date", "nome_stazione"],
                 how="left"
             )
+            print(f"Dopo merge recensioni: {len(base_data)} righe")
         else:
             base_data["panoramico"] = 3.0  # Default valore medio (scala 1-5)
         
@@ -2937,10 +2942,14 @@ def generate_panoramic_calendar(df_meteo: pd.DataFrame, df_recensioni: pd.DataFr
             align="left"
         )
         
+        print(f"Calendario creato con successo!")
         return fig
         
     except Exception as e:
-        # Non usare st.error qui perché la funzione viene chiamata da un contesto diverso
+        # Log dell'errore per debug
+        print(f"ERRORE in generate_panoramic_calendar: {type(e).__name__}: {str(e)}")
+        import traceback
+        print(f"Traceback: {traceback.format_exc()}")
         return None
 
 
@@ -4464,7 +4473,11 @@ def main():
         """)
         
         try:
-            # Genera calendario heatmap per la stazione consigliata
+            # Forza refresh per evitare cache Streamlit
+            import time
+            cache_buster = int(time.time()) // 60  # Cambio ogni minuto
+            
+            # Genera calendario heatmap per la stazione consigliata  
             calendar_data = generate_panoramic_calendar(
                 df_filtered_meteo,     # Dati meteo (pioggia, sole, nebbia, vento)
                 df_filtered_rec,       # Dati recensioni (panoramico)
@@ -4472,6 +4485,8 @@ def main():
                 best_name, 
                 data_sel
             )
+            
+            print(f"[MAIN] Risultato generate_panoramic_calendar: {type(calendar_data)}")
             if calendar_data is not None:
                 st.plotly_chart(calendar_data, use_container_width=True)
             else:
