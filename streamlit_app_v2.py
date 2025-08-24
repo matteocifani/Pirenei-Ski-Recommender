@@ -2878,7 +2878,7 @@ def generate_panoramic_calendar(df_meteo: pd.DataFrame, df_recensioni: pd.DataFr
                     width=1
                 )
             ),
-            text=[f"📅 <b>{row['date'].strftime('%d %B %Y')}</b><br>🏔️ Indice panoramico: <b>{row['indice']:.3f}</b><br><i>Qualità giornata per panorami</i>" 
+            text=[f"📅 <b>{row['date'].strftime('%d %B %Y')}</b><br>🏔️ Indice panoramico: <b>{row['indice']:.3f}</b>" 
                   for _, row in df_calendar.iterrows()],
             hovertemplate="<b>%{text}</b><extra></extra>",
             name="Giorni da Cartolina",
@@ -2938,19 +2938,7 @@ def generate_panoramic_calendar(df_meteo: pd.DataFrame, df_recensioni: pd.DataFr
             )
         )
         
-        # Aggiungi legenda in alto a destra (libera da sovrapposizioni)
-        fig.add_annotation(
-            x=0.98, y=0.95, xref="paper", yref="paper",
-            text="<b>Legenda:</b> 🔴 Basso (0-0.3) | 🟠 Medio (0.3-0.6) | 🟢 Alto (0.6-1.0)",
-            showarrow=False,
-            font=dict(size=11, color="#cbd5e1", family="Inter"),
-            bgcolor="rgba(15, 23, 42, 0.85)",
-            bordercolor="#64748b", 
-            borderwidth=1,
-            borderpad=8,
-            align="right",
-            xanchor="right"
-        )
+
         
         # Aggiungi indicatori per mesi di chiusura impianti (Maggio-Ottobre)
         for closed_month in [5, 6, 7, 8, 9, 10]:
@@ -4554,7 +4542,6 @@ def main():
             st.warning(f"Errore nella generazione del calendario: {e}")
         
         # Nota: questo profilo non ha grafici specifici, solo AI Overview
-        st.info("Questo profilo si concentra sulla bellezza panoramica e le viste. L'AI Overview fornisce informazioni personalizzate basate su recensioni e dati ambientali.")
 
     # Sezione Profilo Familiare (dopo tutti i livelli)
     if profilo_norm == "familiare":
