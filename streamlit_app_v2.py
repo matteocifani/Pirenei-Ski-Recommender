@@ -4274,12 +4274,19 @@ def main():
                     barmode='overlay',  # Barre sovrapposte una sopra l'altra
                     paper_bgcolor="rgba(0,0,0,0)",
                     plot_bgcolor="rgba(0,0,0,0)",
+                    font=dict(color="#f8fafc", family="Inter"),
+                    hoverlabel=dict(
+                        bgcolor="rgba(15, 23, 42, 0.95)",
+                        bordercolor="#64748b",
+                        font=dict(size=12, color="#f8fafc", family="Inter")
+                    ),
                     legend=dict(
                         orientation="h",
                         yanchor="bottom",
                         y=1.02,
                         xanchor="right",
-                        x=1
+                        x=1,
+                        font=dict(color="#f8fafc", family="Inter")
                     )
                 )
                 st.plotly_chart(fig_quota, use_container_width=True)
