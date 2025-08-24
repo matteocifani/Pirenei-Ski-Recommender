@@ -2853,6 +2853,9 @@ def generate_panoramic_calendar(df_meteo: pd.DataFrame, df_recensioni: pd.DataFr
         # Crea heatmap calendario con Plotly
         px, go, make_subplots = get_plotly()  # Lazy import
         
+        # Definisci plotly_template localmente (dark theme per coerenza UI)
+        plotly_template = "plotly_dark"
+        
         # Prepara dati per il calendario
         df_calendar["year"] = df_calendar["date"].dt.year
         df_calendar["month"] = df_calendar["date"].dt.month
@@ -2879,8 +2882,10 @@ def generate_panoramic_calendar(df_meteo: pd.DataFrame, df_recensioni: pd.DataFr
                 color=df_calendar["indice"],
                 colorscale=colorscale,
                 colorbar=dict(
-                    title="Indice Panoramico",
-                    titlefont=dict(color="#f8fafc"),
+                    title=dict(
+                        text="Indice Panoramico",
+                        font=dict(color="#f8fafc")
+                    ),
                     tickfont=dict(color="#f8fafc")
                 ),
                 cmin=0,
@@ -2933,6 +2938,13 @@ def generate_panoramic_calendar(df_meteo: pd.DataFrame, df_recensioni: pd.DataFr
         )
         
         print(f"Calendario creato con successo!")
+        print(f"Figura info: {len(fig.data)} trace(s), layout keys: {list(fig.layout.keys())[:5]}...")
+        
+        # Verifica che la figura sia valida
+        if len(fig.data) == 0:
+            print(f"ERRORE: Figura senza dati!")
+            return None
+            
         return fig
         
     except Exception as e:
@@ -4465,7 +4477,8 @@ def main():
         try:
             # Forza refresh per evitare cache Streamlit
             import time
-            cache_buster = int(time.time()) // 60  # Cambio ogni minuto
+            cache_buster = int(time.time()) // 10  # Cambio ogni 10 secondi
+            st.write(f"🔄 Cache buster: {cache_buster}")  # Debug cache
             
             # Genera calendario heatmap per la stazione consigliata  
             calendar_data = generate_panoramic_calendar(
@@ -4478,8 +4491,15 @@ def main():
             
             print(f"[MAIN] Risultato generate_panoramic_calendar: {type(calendar_data)}")
             if calendar_data is not None:
-                st.plotly_chart(calendar_data, use_container_width=True)
+                print(f"[MAIN] Figura valida, rendering...")
+                try:
+                    st.plotly_chart(calendar_data, use_container_width=True)
+                    print(f"[MAIN] st.plotly_chart eseguito con successo")
+                except Exception as e:
+                    print(f"[MAIN] ERRORE in st.plotly_chart: {e}")
+                    st.error(f"Errore nel rendering: {e}")
             else:
+                print(f"[MAIN] calendar_data è None, mostro messaggio")
                 st.info("Dati insufficienti per generare il calendario panoramico")
         except Exception as e:
             st.warning(f"Errore nella generazione del calendario: {e}")
