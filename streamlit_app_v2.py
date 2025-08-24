@@ -2944,7 +2944,7 @@ def generate_panoramic_calendar(df_meteo: pd.DataFrame, df_recensioni: pd.DataFr
         fig.add_shape(
             type="rect",
             x0=0.5, x1=31.5,
-            y0=4.6, y1=10.4,  # Da Maggio (5) a Ottobre (10)
+            y0=5.2, y1=9.8,  # Box più piccolo: da metà Maggio a metà Ottobre
             fillcolor="rgba(107, 114, 128, 0.1)",
             line=dict(color="rgba(107, 114, 128, 0.3)", width=1, dash="dot"),
             layer="below"
@@ -2953,7 +2953,7 @@ def generate_panoramic_calendar(df_meteo: pd.DataFrame, df_recensioni: pd.DataFr
             x=16, y=7.5,  # Centro della striscia
             text="Impianti chiusi",
             showarrow=False,
-            font=dict(size=12, color="#6b7280", family="Inter"),
+            font=dict(size=10, color="#6b7280", family="Inter"),  # Font più piccolo
             opacity=0.6
         )
         
@@ -4909,7 +4909,7 @@ def main():
 
     
 
-    st.caption("v2 – Stazione consigliata, overview AI e viste dedicate per livello")
+
     
     # Chiudi theme wrapper
     st.markdown('</div>', unsafe_allow_html=True)
