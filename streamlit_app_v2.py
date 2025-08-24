@@ -2856,8 +2856,8 @@ def generate_panoramic_calendar(df_meteo: pd.DataFrame, df_recensioni: pd.DataFr
                 colorscale=colorscale,
                 colorbar=dict(
                     title=dict(
-                        text="🔴 Basso<br>🟠 Medio<br>🟢 Alto",
-                        font=dict(color="#f8fafc", size=12, family="Inter"),
+                        text="🔴 Basso  🟠 Medio  🟢 Alto",
+                        font=dict(color="#f8fafc", size=11, family="Inter"),
                         side="right"
                     ),
                     tickfont=dict(color="#f8fafc", size=12, family="Inter"),
