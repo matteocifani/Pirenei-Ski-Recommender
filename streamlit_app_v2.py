@@ -4270,7 +4270,7 @@ def main():
                     xaxis_tickangle=-45,
                     yaxis=dict(range=[1000, 2800]),
                     template="plotly_dark",
-                    barmode='group',  # Barre affiancate invece che sovrapposte
+                    barmode='overlay',  # Barre sovrapposte una sopra l'altra
                     legend=dict(
                         orientation="h",
                         yanchor="bottom",
