@@ -2629,6 +2629,12 @@ def generate_panoramic_calendar(df_meteo: pd.DataFrame, df_recensioni: pd.DataFr
         # Combina i dati da tutti e tre i dataset
         print(f"Generazione calendario panoramico per: {station_name}")
         
+        # Debug: verifica nomi stazioni nei dataset
+        print(f"Stazioni uniche in meteo: {df_meteo['nome_stazione'].unique()[:5]}...")
+        print(f"Stazioni uniche in recensioni: {df_recensioni['nome_stazione'].unique()[:5]}...")
+        print(f"Stazioni uniche in infonieve: {df_infonieve['nome_stazione'].unique()[:5]}...")
+        print(f"Stazione cercata: '{station_name}'")
+        
         # 1. Dati meteo per la stazione
         meteo_station = df_meteo[df_meteo["nome_stazione"] == station_name].copy()
         print(f"Righe meteo trovate: {len(meteo_station)}")
