@@ -4207,19 +4207,21 @@ def main():
         except Exception:
             pass
 
-        # KPI tecnici (stazione consigliata) - Solo Area gare e Slalom per esperti
+        # KPI tecnici (stazione consigliata) - Metriche per esperti
         try:
             top_best = df_with_indices[df_with_indices["nome_stazione"] == best_name]
             if not top_best.empty:
                 st.markdown('<h3 class="section-subtitle">🎯 KPI tecnici</h3>', unsafe_allow_html=True)
-                vals = top_best[["Area_gare", "Slalom"]].fillna(0).mean()
+                vals = top_best[["Area_gare", "Slalom", "Piste_nere", "Quota_max"]].fillna(0).mean()
                 
-                # KPI Grid per KPI tecnici con layout uniformi - 2 colonne su una riga
+                # KPI Grid per KPI tecnici con layout uniformi - 4 colonne su una riga
                 st.markdown(
                     f"""
-                    <div class="kpi-grid grid-2">
+                    <div class="kpi-grid grid-4">
                         {render_kpi("Area gare", f"{vals.get('Area_gare',0):.0f}", "", "🏁")}
                         {render_kpi("Slalom", f"{vals.get('Slalom',0):.0f}", "", "⛷️")}
+                        {render_kpi("Piste nere", f"{vals.get('Piste_nere',0):.0f}", "", "⚫")}
+                        {render_kpi("Quota max", f"{vals.get('Quota_max',0):.0f}", "m", "🏔️")}
                     </div>
                     """,
                     unsafe_allow_html=True
