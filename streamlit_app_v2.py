@@ -2864,12 +2864,13 @@ def generate_panoramic_calendar(df_meteo: pd.DataFrame, df_recensioni: pd.DataFr
         # Crea figura del calendario semplificata
         fig = go.Figure()
         
-        # Colori per il heatmap (verde per buoni indici, rosso per cattivi)
+        # Colori con maggior contrasto e varietà
         colorscale = [
-            [0, "#dc2626"],      # Rosso per indici bassi
-            [0.3, "#f59e0b"],    # Arancione
-            [0.6, "#10b981"],    # Verde per indici medi
-            [1, "#059669"]       # Verde scuro per indici alti
+            [0, "#dc2626"],      # Rosso intenso per indici bassi
+            [0.25, "#ea580c"],   # Rosso-arancione
+            [0.5, "#d97706"],    # Arancione
+            [0.75, "#65a30d"],   # Verde-giallo
+            [1, "#16a34a"]       # Verde brillante per indici alti
         ]
         
         # Crea scatter plot elegante con design migliorato
@@ -2949,7 +2950,8 @@ def generate_panoramic_calendar(df_meteo: pd.DataFrame, df_recensioni: pd.DataFr
                 gridwidth=1,
                 tickfont=dict(color="#cbd5e1", size=12, family="Inter"),
                 showgrid=True,
-                zeroline=False
+                zeroline=False,
+                range=[0.5, 12.5]  # Mostra tutti i mesi senza buchi
             ),
             font=dict(color="#f8fafc", family="Inter"),
             paper_bgcolor="rgba(0,0,0,0)",
@@ -2961,19 +2963,36 @@ def generate_panoramic_calendar(df_meteo: pd.DataFrame, df_recensioni: pd.DataFr
             )
         )
         
-        # Aggiungi annotazione elegante con legenda
+        # Aggiungi legenda in basso a sinistra (non sovrapposta)
         fig.add_annotation(
-            x=0.02, y=0.98, xref="paper", yref="paper",
-            text="<b>Legenda:</b> 🔴 Basso (0-0.3) | 🟡 Medio (0.3-0.6) | 🟢 Alto (0.6-1.0)",
+            x=0.02, y=0.15, xref="paper", yref="paper",
+            text="<b>Legenda:</b> 🔴 Basso (0-0.3) | 🟠 Medio (0.3-0.6) | 🟢 Alto (0.6-1.0)",
             showarrow=False,
-            font=dict(size=12, color="#cbd5e1", family="Inter"),
-            bgcolor="rgba(15, 23, 42, 0.9)",
+            font=dict(size=11, color="#cbd5e1", family="Inter"),
+            bgcolor="rgba(15, 23, 42, 0.85)",
             bordercolor="#64748b", 
             borderwidth=1,
-            borderpad=10,
-            align="left",
-            borderradius=8
+            borderpad=8,
+            align="left"
         )
+        
+        # Aggiungi indicatori per mesi di chiusura impianti (Maggio-Ottobre)
+        for closed_month in [5, 6, 7, 8, 9, 10]:
+            fig.add_shape(
+                type="rect",
+                x0=0.5, x1=31.5,
+                y0=closed_month-0.4, y1=closed_month+0.4,
+                fillcolor="rgba(107, 114, 128, 0.1)",
+                line=dict(color="rgba(107, 114, 128, 0.3)", width=1, dash="dot"),
+                layer="below"
+            )
+            fig.add_annotation(
+                x=16, y=closed_month,
+                text="Impianti chiusi",
+                showarrow=False,
+                font=dict(size=10, color="#6b7280", family="Inter"),
+                opacity=0.6
+            )
         
         # Aggiungi sottotitolo esplicativo
         fig.add_annotation(
