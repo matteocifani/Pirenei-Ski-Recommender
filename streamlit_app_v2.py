@@ -2872,69 +2872,116 @@ def generate_panoramic_calendar(df_meteo: pd.DataFrame, df_recensioni: pd.DataFr
             [1, "#059669"]       # Verde scuro per indici alti
         ]
         
-        # Prepara dati per scatter plot come calendario semplificato
+        # Crea scatter plot elegante con design migliorato
         fig.add_trace(go.Scatter(
             x=df_calendar["day"],
             y=df_calendar["month"],
             mode="markers",
             marker=dict(
-                size=15,
+                size=18,  # Marker più grandi
                 color=df_calendar["indice"],
                 colorscale=colorscale,
                 colorbar=dict(
                     title=dict(
                         text="Indice Panoramico",
-                        font=dict(color="#f8fafc")
+                        font=dict(color="#f8fafc", size=14, family="Inter")
                     ),
-                    tickfont=dict(color="#f8fafc")
+                    tickfont=dict(color="#f8fafc", size=12, family="Inter"),
+                    bgcolor="rgba(15, 23, 42, 0.9)",
+                    bordercolor="#64748b",
+                    borderwidth=1,
+                    len=0.6,
+                    thickness=20,
+                    x=1.02
                 ),
                 cmin=0,
                 cmax=1,
-                opacity=0.8
+                opacity=0.9,
+                line=dict(
+                    color="#1e293b",
+                    width=1
+                )
             ),
-            text=[f"📅 {row['date'].strftime('%d/%m/%Y')}<br>🏔️ Indice: {row['indice']:.3f}<br>📊 {row['breakdown']}" 
+            text=[f"📅 <b>{row['date'].strftime('%d %B %Y')}</b><br>🏔️ Indice panoramico: <b>{row['indice']:.3f}</b><br><br>📊 <b>Breakdown componenti:</b><br>{row['breakdown']}" 
                   for _, row in df_calendar.iterrows()],
             hovertemplate="<b>%{text}</b><extra></extra>",
-            name="Giorni da Cartolina"
+            name="Giorni da Cartolina",
+            showlegend=False
         ))
         
-        # Layout del calendario semplificato
+        # Layout elegante e moderno
         fig.update_layout(
-            title=f"📅 Calendario 'Giorni da Cartolina' - {station_name}",
-            xaxis_title="Giorno del mese",
-            yaxis_title="Mese",
-            height=500,
+            title=dict(
+                text=f"📅 Calendario 'Giorni da Cartolina' - {station_name}",
+                font=dict(size=20, color="#f8fafc", family="Inter", weight=600),
+                x=0.5,
+                xanchor="center",
+                pad=dict(t=20, b=10)
+            ),
+            xaxis_title=dict(
+                text="Giorno del mese",
+                font=dict(size=14, color="#cbd5e1", family="Inter")
+            ),
+            yaxis_title=dict(
+                text="Mese",
+                font=dict(size=14, color="#cbd5e1", family="Inter")
+            ),
+            height=550,
             template="plotly_dark",
             showlegend=False,
+            margin=dict(l=60, r=100, t=80, b=60),
             xaxis=dict(
-                range=[0, 32],
+                range=[0.5, 31.5],
                 tickmode="linear",
                 tick0=1,
                 dtick=1,
-                gridcolor="#374151"
+                gridcolor="rgba(148, 163, 184, 0.15)",
+                gridwidth=1,
+                tickfont=dict(color="#cbd5e1", size=12, family="Inter"),
+                showgrid=True,
+                zeroline=False
             ),
             yaxis=dict(
                 tickmode="array",
                 tickvals=[1, 2, 3, 4, 11, 12],
-                ticktext=["Gen", "Feb", "Mar", "Apr", "Nov", "Dic"],
-                gridcolor="#374151"
+                ticktext=["Gennaio", "Febbraio", "Marzo", "Aprile", "Novembre", "Dicembre"],
+                gridcolor="rgba(148, 163, 184, 0.15)", 
+                gridwidth=1,
+                tickfont=dict(color="#cbd5e1", size=12, family="Inter"),
+                showgrid=True,
+                zeroline=False
             ),
-            font=dict(color="#f8fafc"),
+            font=dict(color="#f8fafc", family="Inter"),
             paper_bgcolor="rgba(0,0,0,0)",
-            plot_bgcolor="rgba(0,0,0,0)"
+            plot_bgcolor="rgba(15, 23, 42, 0.4)",
+            hoverlabel=dict(
+                bgcolor="rgba(15, 23, 42, 0.95)",
+                bordercolor="#64748b",
+                font=dict(size=13, color="#f8fafc", family="Inter")
+            )
         )
         
-        # Aggiungi annotazione informativa
+        # Aggiungi annotazione elegante con legenda
         fig.add_annotation(
             x=0.02, y=0.98, xref="paper", yref="paper",
-            text="🔴 Basso | 🟡 Medio | 🟢 Alto indice panoramico",
+            text="<b>Legenda:</b> 🔴 Basso (0-0.3) | 🟡 Medio (0.3-0.6) | 🟢 Alto (0.6-1.0)",
             showarrow=False,
-            font=dict(size=11, color="#9ca3af"),
-            bgcolor="rgba(15, 23, 42, 0.8)",
-            bordercolor="#374151",
+            font=dict(size=12, color="#cbd5e1", family="Inter"),
+            bgcolor="rgba(15, 23, 42, 0.9)",
+            bordercolor="#64748b", 
             borderwidth=1,
-            borderpad=6,
-            align="left"
+            borderpad=10,
+            align="left",
+            borderradius=8
+        )
+        
+        # Aggiungi sottotitolo esplicativo
+        fig.add_annotation(
+            x=0.5, y=0.02, xref="paper", yref="paper",
+            text="<i>Ogni punto rappresenta un giorno con il relativo indice panoramico.<br>Passa il mouse per dettagli e breakdown componenti.</i>",
+            showarrow=False,
+            font=dict(size=11, color="#94a3b8", family="Inter"),
+            align="center"
         )
         
         print(f"Calendario creato con successo!")
@@ -4472,13 +4519,19 @@ def main():
         st.markdown("""
         **Cosa mostra:** Calendario Nov→Apr dove ogni cella è l'indice panoramico storico per la stazione consigliata.  
         **Perché utile:** Aiuta a scegliere il weekend più "fotogenico" nella stagione.
+        
+        **Come è calcolato l'indice panoramico:**
+        - 🏔️ **Qualità panoramica** (30%): Valutazioni dalle recensioni su viste e paesaggi
+        - ☀️ **Sole** (25%): Probabilità di giornate soleggiate per buona visibilità  
+        - 🌧️ **Assenza pioggia** (20%): Condizioni asciutte per fotografie nitide
+        - 🏔️ **Quota elevata** (15%): Altitudine per panorami più ampi
+        - 🌫️ **Assenza nebbia** (10%): Aria limpida per visibilità ottimale
         """)
         
         try:
             # Forza refresh per evitare cache Streamlit
             import time
-            cache_buster = int(time.time()) // 10  # Cambio ogni 10 secondi
-            st.write(f"🔄 Cache buster: {cache_buster}")  # Debug cache
+            cache_buster = int(time.time()) // 30  # Cambio ogni 30 secondi
             
             # Genera calendario heatmap per la stazione consigliata  
             calendar_data = generate_panoramic_calendar(
