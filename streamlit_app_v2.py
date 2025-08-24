@@ -2369,146 +2369,154 @@ def build_llm_prompt(df_kpis: pd.DataFrame, best_name: str, livello: str, profil
         .to_dict(orient="records")
         if "km_open_est" in df_kpis.columns else []
     )
+    
     def fmt(x, pct=False):
         try:
             return f"{float(x)*100:.0f}%" if pct else f"{float(x):.0f}"
         except Exception:
             return "-"
-    # facts per best
+            
+    # Analisi intelligente delle condizioni
     b_km = fmt(best.get("km_open_est", 0))
     b_pct = fmt(best.get("pct_open", 0), pct=True)
     b_neb = fmt(best.get("nebbia", 0), pct=True)
     b_ven = fmt(best.get("vento", 0), pct=True)
-    b_av  = f"{float(best.get('avalanche', 0)):.1f}" if best.get('avalanche') is not None else "-"
+    b_av = f"{float(best.get('avalanche', 0)):.1f}" if best.get('avalanche') is not None else "-"
+    b_prob = fmt(best.get("open_prob", 0), pct=True)
+    
+    # Contesto meteo interpretato
+    nebbia_val = float(best.get("nebbia", 0)) if best.get("nebbia") else 0
+    vento_val = float(best.get("vento", 0)) if best.get("vento") else 0
+    avalanche_val = float(best.get("avalanche", 3)) if best.get("avalanche") else 3
+    
+    meteo_status = "ottime" if nebbia_val < 0.2 and vento_val < 0.3 else "buone" if nebbia_val < 0.4 and vento_val < 0.5 else "variabili"
+    sicurezza_status = "eccellente" if avalanche_val < 2.5 else "buona" if avalanche_val < 3.5 else "da monitorare"
+    
+    # Costruisce analisi comparative
     lines = [
-        f"BEST {best_name}: km aperti {b_km}, % aperte {b_pct}, nebbia {b_neb}, vento {b_ven}, valanghe {b_av}"
+        f"MIGLIORE {best_name}: {b_km} km aperti ({b_pct}), prob. apertura {b_prob}, condizioni {meteo_status}, sicurezza {sicurezza_status}"
     ]
-    for o in others:
+    
+    for i, o in enumerate(others[:2], 1):
         o_km = fmt(o.get("km_open_est", 0))
         o_pct = fmt(o.get("pct_open", 0), pct=True)
-        o_neb = fmt(o.get("nebbia", 0), pct=True)
-        o_ven = fmt(o.get("vento", 0), pct=True)
-        o_av  = f"{float(o.get('avalanche', 0)):.1f}" if o.get('avalanche') is not None else "-"
-        lines.append(
-            f"ALT {o['nome_stazione']}: km {o_km}, % {o_pct}, nebbia {o_neb}, vento {o_ven}, valanghe {o_av}"
-        )
+        o_prob = fmt(o.get("open_prob", 0), pct=True)
+        lines.append(f"ALTERNATIVA{i} {o['nome_stazione']}: {o_km} km ({o_pct}), prob. {o_prob}")
+    
     context = "\n".join(lines)
     target_date_italian = format_date_for_display(target_date)
+    
+    # Prompt ottimizzato per consigli pratici
     prompt = (
-        f"Per la data {target_date_italian} l'app ha selezionato la stazione migliore: {best_name}. "
-        f"Scrivi un'overview molto breve (max 2 frasi, 35–45 parole), chiara e utile, che spieghi perché {best_name} è preferibile rispetto alle altre. "
-        f"Usa informazioni concrete: km/% piste, meteo (nebbia/vento/sole/pioggia), rischio valanghe e coerenza con livello '{livello}' e profilo '{profilo}'. "
-        f"Non fare elenchi; evita superlativi generici. Se non emergono differenze nette, evidenzia il miglior compromesso. "
-        f"Sii coerente con i dati della dashboard e spiega chiaramente perché {best_name} è consigliata.\n"
-        f"Dati sintetici (usa solo come base, non ripetere letteralmente etichette BEST/ALT):\n{context}"
+        f"Scrivi ESATTAMENTE 2-3 frasi complete (massimo 50 parole totali) che spieghino perché {best_name} "
+        f"è la scelta migliore per livello '{livello}' e profilo '{profilo}' il {target_date_italian}. "
+        f"Usa SOLO i dati forniti. NON inventare nomi di piste, rifugi, montagne o luoghi specifici. "
+        f"Includi: km piste aperte, condizioni meteo, confronto con alternativa. "
+        f"IMPORTANTE: Termina con punto finale, non lasciare frasi incomplete. "
+        f"Esempio: '{best_name} offre 45 km aperti con condizioni meteo favorevoli. Supera Formigal che ha solo 30 km disponibili.'\n\n"
+        f"Dati da utilizzare:\n{context}"
     )
     return prompt
 
 
 def build_festaiolo_prompt(df_rec: pd.DataFrame, best_name: str, livello: str, target_date: datetime.date) -> str:
-    # Estrae signal dalle recensioni per tema "festaiolo" per best + 2 alternative
-    parole_festaiolo = [
-        "divertente", "giovanile", "apres ski", "festa", "fete", "party", "fiesta", "juvenil", 
-        "jovanil", "juventud", "jove", "great atmosphere", "young", "atmosfera", "nightlife", 
-        "bar", "ristoranti", "divertimento", "entertainment", "fun", "lively", "vibrant"
-    ]
-    
     # Costruisci il prompt con focus sulla stazione consigliata
     target_date_italian = format_date_for_display(target_date)
-    prompt_parts = [
-        f"Per la data {target_date_italian} e livello '{livello}', {best_name} è la stazione consigliata dal sistema.",
-        f"Scrivi un mini-riassunto (max 3 frasi) che spieghi perché {best_name} è consigliata per il profilo festaiolo."
-    ]
     
-    # Aggiungi contesto dalle recensioni
+    # Aggiungi contesto dalle recensioni con analisi intelligente
+    context_lines = []
     try:
         by_station = (
             df_rec.groupby("nome_stazione")[["festaiolo", "ristoranti", "coda", "Stelle"]]
             .mean().reset_index().sort_values("festaiolo", ascending=False)
         )
         rows = by_station.head(3).to_dict(orient="records")
+        
         for r in rows:
-            parts.append(
-                f"- {r['nome_stazione']}: festaiolo={r.get('festaiolo',0):.2f}, stelle={r.get('Stelle',0):.2f}, ristoranti={r.get('ristoranti',0):.2f}, code={r.get('coda',0):.2f}"
+            fest_score = r.get('festaiolo', 0)
+            rest_score = r.get('ristoranti', 0)
+            crowd_score = r.get('coda', 0)
+            stelle = r.get('Stelle', 0)
+            
+            # Interpretazione intelligente dei punteggi
+            festa_level = "eccellente" if fest_score > 0.7 else "buona" if fest_score > 0.4 else "moderata"
+            resto_level = "ottimi" if rest_score > 0.7 else "buoni" if rest_score > 0.4 else "basic"
+            affoll_level = "molto affollata" if crowd_score > 0.7 else "moderatamente affollata" if crowd_score > 0.4 else "tranquilla"
+            
+            context_lines.append(
+                f"{r['nome_stazione']}: atmosfera {festa_level}, ristoranti {resto_level}, generalmente {affoll_level} (stelle {stelle:.1f})"
             )
     except Exception:
-        parts = []
+        context_lines = []
     
-    context = "\n".join(parts) if parts else ""
-    keywords = ", ".join(parole_festaiolo[:15]) + ", ..."
+    context = "\n".join(context_lines) if context_lines else ""
     
-    prompt_parts.append(
-        f"Spiega l'atmosfera e la vita notturna di {best_name} e menziona alternative se disponibili. "
-        f"Considera recensioni per divertimento/ristoranti con parole chiave: {keywords}. "
-        f"Sii pratico e specifico (atmosfera, après-ski, nightlife). Evita elenchi e sii coerente con i dati della dashboard."
+    # Prompt per profilo festaiolo
+    prompt = (
+        f"Scrivi ESATTAMENTE 2 frasi complete (massimo 45 parole totali) sul perché {best_name} "
+        f"è migliore per divertimento il {target_date_italian} (livello '{livello}'). "
+        f"Usa SOLO i dati forniti. NON inventare nomi di locali, bar o ristoranti specifici. "
+        f"Parla solo di 'atmosfera' e 'après-ski' generici. "
+        f"IMPORTANTE: Termina con punto finale. "
+        f"Esempio: '{best_name} ha atmosfera eccellente per après-ski. Supera Formigal con recensioni migliori per divertimento.'\n\n"
+        f"Dati atmosfera:\n{context}"
     )
     
-    if context:
-        prompt_parts.append(f"Dati recensioni:\n{context}")
-    
-    return " ".join(prompt_parts)
+    return prompt
 
 
 def build_familiare_prompt(df_rec: pd.DataFrame, best_name: str, livello: str, target_date: datetime.date) -> str:
-    # Panoramica family-friendly: segnali recensione e code
-    parole_code = [
-        "fila", "attesa", "coda", "caos", "affollato", "cua", "cola", "espera", "lleno", "ple",
-        "caotic", "aglomeracion", "aglomeracio", "atasco", "pieno", "disorganizzato", "desorganizado",
-        "desorganizat", "ressa", "file", "attente", "queue", "bouchon", "foule", "bondé", "plein",
-        "chaotique", "désorganisé", "waiting", "wait", "crowd", "crowded", "full", "line", "chaos",
-        "chaotic", "busy", "overcrowded", "unorganized", "messy"
-    ]
-    
     # Costruisci il prompt con focus sulla stazione consigliata
     target_date_italian = format_date_for_display(target_date)
-    prompt_parts = [
-        f"Per la data {target_date_italian} e livello '{livello}', {best_name} è la stazione consigliata dal sistema.",
-        f"Scrivi un mini-riassunto (max 3 frasi) che spieghi perché {best_name} è consigliata per il profilo familiare."
-    ]
     
-    # Aggiungi contesto dalle recensioni
+    # Aggiungi contesto dalle recensioni con analisi orientata alla famiglia
+    context_lines = []
     try:
         by_station = (
             df_rec.groupby("nome_stazione")[["familiare", "sicurezza", "coda", "Stelle"]]
             .mean().reset_index().sort_values("familiare", ascending=False)
         )
         rows = by_station.head(3).to_dict(orient="records")
+        
         for r in rows:
-            parts.append(
-                f"- {r['nome_stazione']}: family={r.get('familiare',0):.2f}, sicurezza={r.get('sicurezza',0):.2f}, code={r.get('coda',0):.2f}, stelle={r.get('Stelle',0):.2f}"
+            family_score = r.get('familiare', 0)
+            safety_score = r.get('sicurezza', 0)
+            queue_score = r.get('coda', 0)
+            stars = r.get('Stelle', 0)
+            
+            # Interpretazione family-friendly
+            family_level = "perfetta" if family_score > 0.7 else "molto adatta" if family_score > 0.4 else "adeguata"
+            safety_level = "massima" if safety_score > 0.7 else "buona" if safety_score > 0.4 else "standard"
+            queue_level = "lunghe attese" if queue_score > 0.7 else "code moderate" if queue_score > 0.4 else "code gestibili"
+            
+            context_lines.append(
+                f"{r['nome_stazione']}: {family_level} per famiglie, sicurezza {safety_level}, {queue_level} ({stars:.1f} stelle)"
             )
     except Exception:
-        parts = []
+        context_lines = []
     
-    context = "\n".join(parts) if parts else ""
-    keywords = ", ".join(parole_code[:10]) + ", ..."
+    context = "\n".join(context_lines) if context_lines else ""
     
-    prompt_parts.append(
-        f"Spiega i servizi per famiglie di {best_name} e menziona alternative se disponibili. "
-        f"Considera recensioni per servizi familiari con parole chiave: {keywords}. "
-        f"Evita elenchi, sii conciso e coerente con i dati della dashboard."
+    # Prompt per profilo familiare
+    prompt = (
+        f"Scrivi ESATTAMENTE 2 frasi complete (massimo 45 parole totali) sul perché {best_name} "
+        f"è migliore per famiglie il {target_date_italian} (livello '{livello}'). "
+        f"Usa SOLO i dati forniti. NON inventare nomi di servizi, aree o strutture specifiche. "
+        f"Parla solo di 'servizi famiglia' e 'sicurezza' generici. "
+        f"IMPORTANTE: Termina con punto finale. "
+        f"Esempio: '{best_name} offre buona sicurezza e servizi famiglia. Supera Formigal con recensioni migliori per famiglie.'\n\n"
+        f"Dati family:\n{context}"
     )
     
-    if context:
-        prompt_parts.append(f"Dati recensioni:\n{context}")
-    
-    return " ".join(prompt_parts)
+    return prompt
 
 
 def build_panoramico_prompt(df_rec: pd.DataFrame, best_name: str, livello: str, target_date: datetime.date) -> str:
-    # Panoramica panoramica: segnali recensione su viste, paesaggi e bellezza naturale
-    parole_panoramico = [
-        "paisaje", "panorámica", "panorámicas", "vistas", "vista", "mirador", "naturaleza", "paisajístico", "bonito", "bonita", "precioso", "preciosa", "miradores", "cielo", "horizonte", "amanecer", "atardecer", "panorama", "paisatge", "panoràmica", "panoràmiques", "vistes", "vista", "mirador", "natura", "paisatgístic", "bonic", "bonica", "preciós", "preciosa", "miradors", "cel", "horitzó", "albada", "capvespre", "panorama", "paesaggio", "panoramica", "panoramiche", "vista", "vedute", "belvedere", "natura", "paesaggistico", "bello", "bella", "prezioso", "preziosa", "belvederi", "cielo", "orizzonte", "alba", "tramonto", "panorama", "landscape", "panoramic", "panoramics", "views", "view", "lookout", "nature", "scenic", "nice", "beautiful", "precious", "lovely", "lookouts", "sky", "horizon", "sunrise", "sunset", "paysage", "panoramique", "panoramiques", "vues", "vue", "belvédère", "nature", "paysager", "joli", "jolie", "précieux", "précieuse", "belvédères", "ciel", "horizon", "lever de soleil", "coucher de soleil"
-    ]
-    
     # Costruisci il prompt con focus sulla stazione consigliata
     target_date_italian = format_date_for_display(target_date)
-    prompt_parts = [
-        f"Per la data {target_date_italian} e livello '{livello}', {best_name} è la stazione consigliata dal sistema.",
-        f"Scrivi un mini-riassunto (max 3 frasi) che spieghi perché {best_name} è consigliata per il profilo panoramico."
-    ]
     
-    # Aggiungi contesto dalle recensioni
+    # Aggiungi contesto dalle recensioni con focus sui paesaggi
+    context_lines = []
     try:
         available_cols = [col for col in ["panoramico", "Stelle"] if col in df_rec.columns]
         if available_cols:
@@ -2517,67 +2525,54 @@ def build_panoramico_prompt(df_rec: pd.DataFrame, best_name: str, livello: str, 
                 .mean().reset_index().sort_values("panoramico", ascending=False)
             )
             rows = by_station.head(3).to_dict(orient="records")
-            parts = []
+            
             for r in rows:
-                part_parts = [f"- {r['nome_stazione']}:"]
-                if "panoramico" in available_cols:
-                    part_parts.append(f"panoramico={r.get('panoramico',0):.2f}")
-                if "Stelle" in available_cols:
-                    part_parts.append(f"stelle={r.get('Stelle',0):.2f}")
-                parts.append(", ".join(part_parts))
-        else:
-            parts = []
+                panoramic_score = r.get('panoramico', 0)
+                stars = r.get('Stelle', 0)
+                
+                # Interpretazione del valore panoramico
+                view_quality = "viste mozzafiato" if panoramic_score > 0.7 else "bei panorami" if panoramic_score > 0.4 else "viste discrete"
+                
+                context_lines.append(
+                    f"{r['nome_stazione']}: {view_quality} ({stars:.1f} stelle)"
+                )
     except Exception:
-        parts = []
+        context_lines = []
     
-    context = "\n".join(parts) if parts else ""
-    keywords = ", ".join(parole_panoramico[:15]) + ", ..."
+    context = "\n".join(context_lines) if context_lines else ""
     
-    prompt_parts.append(
-        f"Spiega la bellezza panoramica di {best_name} e menziona alternative con belle viste se disponibili. "
-        f"Considera recensioni per paesaggi/viste con parole chiave: {keywords}. "
-        f"Evita elenchi, sii conciso e coerente con i dati della dashboard."
+    # Prompt per profilo panoramico
+    prompt = (
+        f"Scrivi ESATTAMENTE 2 frasi complete (massimo 45 parole totali) sul perché {best_name} "
+        f"è migliore per panorami il {target_date_italian} (livello '{livello}'). "
+        f"Usa SOLO i dati forniti. NON inventare nomi di montagne, rifugi o luoghi specifici. "
+        f"Parla solo di 'viste panoramiche' o 'panorami' generici. "
+        f"IMPORTANTE: Termina con punto finale. "
+        f"Esempio: '{best_name} ha panorami eccellenti. Supera Formigal con recensioni migliori per le viste.'\n\n"
+        f"Dati panorami:\n{context}"
     )
     
-    if context:
-        prompt_parts.append(f"Dati recensioni:\n{context}")
-    
-    return " ".join(prompt_parts)
+    return prompt
 
 
 def build_lowcost_prompt(df_rec: pd.DataFrame, best_name: str, livello: str, target_date: datetime.date, df_ratio: pd.DataFrame = None) -> str:
-    # Panoramica low-cost: segnali recensione su prezzi e rapporto qualità-prezzo
-    parole_lowcost = [
-        "barato", "económico", "económica", "asequible", "precio", "precios", "oferta", "ofertas", 
-        "descuento", "descuentos", "ahorro", "calidad-precio", "coste", "rebaja", "rebajas", 
-        "promoción", "promociones", "barat", "econòmic", "econòmica", "assequible", "preu", "preus", 
-        "oferta", "ofertes", "descompte", "descomptes", "estalvi", "qualitat-preu", "cost", 
-        "rebaixa", "rebaixes", "promoció", "promocions", "car", "cara", "bon marché", "économique", 
-        "abordable", "prix", "offre", "offres", "cheap", "affordable", "budget", "value", "deal", 
-        "discount", "sale", "promotion", "offer", "cost-effective", "good value", "worth it"
-    ]
-    
     # Costruisci il prompt con focus sulla stazione consigliata
     target_date_italian = format_date_for_display(target_date)
-    prompt_parts = [
-        f"Per la data {target_date_italian} e livello '{livello}', {best_name} è la stazione consigliata dal sistema.",
-        f"Scrivi un mini-riassunto (max 3 frasi) che spieghi perché {best_name} è consigliata per il profilo low-cost."
-    ]
     
-    # Aggiungi informazioni dal rapporto qualità-prezzo se disponibile
+    # Analisi del rapporto qualità-prezzo
+    price_context = ""
     if df_ratio is not None and not df_ratio.empty:
         best_ratio = df_ratio[df_ratio["nome_stazione"] == best_name]
         if not best_ratio.empty:
-            best_euro_km = best_ratio.iloc[0].get("rapporto_euro_km", 0)
-            best_km = best_ratio.iloc[0].get("kmopen", 0)
-            best_price = best_ratio.iloc[0].get("Prezzo_skipass", 0)
+            euro_km = best_ratio.iloc[0].get("rapporto_euro_km", 0)
+            km_open = best_ratio.iloc[0].get("kmopen", 0)
+            price = best_ratio.iloc[0].get("Prezzo_skipass", 0)
             
-            prompt_parts.append(
-                f"Usa questi dati: {best_name} ha rapporto €/km={best_euro_km:.2f}, "
-                f"km aperti={best_km:.1f}, prezzo skipass={best_price:.2f}€."
-            )
+            value_rating = "eccellente" if euro_km < 3 else "buon" if euro_km < 5 else "standard"
+            price_context = f"{best_name}: {value_rating} rapporto qualità-prezzo (€{euro_km:.2f}/km, {km_open:.1f}km disponibili, skipass €{price:.0f})"
     
-    # Aggiungi contesto dalle recensioni
+    # Aggiungi contesto dalle recensioni low-cost
+    context_lines = []
     try:
         available_cols = [col for col in ["lowcost", "Stelle"] if col in df_rec.columns]
         if available_cols:
@@ -2586,29 +2581,41 @@ def build_lowcost_prompt(df_rec: pd.DataFrame, best_name: str, livello: str, tar
                 .mean().reset_index().sort_values("lowcost", ascending=False)
             )
             rows = by_station.head(3).to_dict(orient="records")
+            
             for r in rows:
-                part_parts = [f"- {r['nome_stazione']}:"]
-                if "lowcost" in available_cols:
-                    part_parts.append(f"lowcost={r.get('lowcost',0):.2f}")
-                if "Stelle" in available_cols:
-                    part_parts.append(f"stelle={r.get('Stelle',0):.2f}")
-                parts.append(", ".join(part_parts))
+                lowcost_score = r.get('lowcost', 0)
+                stars = r.get('Stelle', 0)
+                
+                # Interpretazione del punteggio economico
+                affordability = "molto conveniente" if lowcost_score > 0.7 else "buon prezzo" if lowcost_score > 0.4 else "prezzo standard"
+                
+                context_lines.append(
+                    f"{r['nome_stazione']}: {affordability} ({stars:.1f} stelle)"
+                )
     except Exception:
-        parts = []
+        context_lines = []
     
-    context = "\n".join(parts) if parts else ""
-    keywords = ", ".join(parole_lowcost[:15]) + ", ..."
+    # Combina contesti
+    all_context = []
+    if price_context:
+        all_context.append(price_context)
+    if context_lines:
+        all_context.extend(context_lines)
     
-    prompt_parts.append(
-        f"Spiega la convenienza di {best_name} e menziona alternative economiche se disponibili. "
-        f"Considera recensioni per prezzi/offerte con parole chiave: {keywords}. "
-        f"Evita elenchi, sii conciso e coerente con i dati della dashboard."
+    context = "\n".join(all_context) if all_context else ""
+    
+    # Prompt per profilo low-cost
+    prompt = (
+        f"Scrivi ESATTAMENTE 2 frasi complete (massimo 45 parole totali) sul perché {best_name} "
+        f"è migliore per convenienza il {target_date_italian} (livello '{livello}'). "
+        f"Usa SOLO i dati forniti sui prezzi. NON inventare costi o offerte specifiche non presenti nei dati. "
+        f"Parla solo di 'convenienza' e 'rapporto qualità-prezzo' generici. "
+        f"IMPORTANTE: Termina con punto finale. "
+        f"Esempio: '{best_name} offre buon rapporto qualità-prezzo. Supera Formigal con recensioni migliori per convenienza.'\n\n"
+        f"Dati costi:\n{context}"
     )
     
-    if context:
-        prompt_parts.append(f"Dati recensioni:\n{context}")
-    
-    return " ".join(prompt_parts)
+    return prompt
 
 
 def generate_panoramic_calendar(df_meteo: pd.DataFrame, df_recensioni: pd.DataFrame, df_infonieve: pd.DataFrame, station_name: str, target_date: datetime.date):
@@ -3222,25 +3229,25 @@ def main():
 
     # Floating dock state (replaces sidebar filters)
     min_date = df_infonieve["date"].min().date()
-    default_date = datetime.date(2025, 12, 17)
+    default_date = datetime.date.today()
     if "dock_date" not in st.session_state:
         st.session_state.dock_date = default_date
     if "dock_level" not in st.session_state:
-        st.session_state.dock_level = "esperto"
+        st.session_state.dock_level = "nessuno"
     if "dock_profile" not in st.session_state:
         st.session_state.dock_profile = "nessuno"
 
     # Onboarding System
     if "onboarding_completed" not in st.session_state:
-        st.session_state.onboarding_completed = True  # Salta onboarding per test calendario
+        st.session_state.onboarding_completed = False
     if "onboarding_step" not in st.session_state:
         st.session_state.onboarding_step = 1
     if "selected_date" not in st.session_state:
-        st.session_state.selected_date = datetime.date(2025, 12, 17)  # Preseleziona 17/12/2025
+        st.session_state.selected_date = None
     if "selected_level" not in st.session_state:
-        st.session_state.selected_level = "base"  # Preseleziona livello base
+        st.session_state.selected_level = None
     if "selected_profile" not in st.session_state:
-        st.session_state.selected_profile = "panoramico"  # Preseleziona profilo panoramico (era "esperto" nel testo ma nel contesto penso sia panoramico)
+        st.session_state.selected_profile = None
 
     # Show welcome message FIRST if onboarding not completed
     if not st.session_state.onboarding_completed:
@@ -3260,35 +3267,75 @@ def main():
     
     with col1:
         st.markdown('<div id="date-column" class="selector-column">', unsafe_allow_html=True)
+        # Date input senza valore preimpostato durante onboarding
+        if st.session_state.selected_date is not None:
+            date_value = st.session_state.selected_date
+        else:
+            # Nessun valore di default, forza l'utente a scegliere
+            date_value = datetime.date.today()
+        
+        # Aggiungi un help text durante l'onboarding per guidare l'utente
+        help_text = "Seleziona la data della tua giornata sulla neve" if st.session_state.onboarding_step == 1 else None
+        
         new_date = st.date_input(
             "📅 DATA",
-            value=st.session_state.selected_date,
+            value=date_value,
             min_value=min_date,
             max_value=datetime.date(2030, 12, 31),
             key="onboard_date",
-            disabled=(st.session_state.onboarding_step != 1 and not st.session_state.onboarding_completed)
+            disabled=(st.session_state.onboarding_step != 1 and not st.session_state.onboarding_completed),
+            help=help_text
         )
-        if new_date and new_date != st.session_state.selected_date:
-            st.session_state.selected_date = new_date
-            st.session_state.dock_date = new_date
-            if st.session_state.onboarding_step == 1:
+        
+        # Gestione corretta: avanza solo quando l'utente interagisce ATTIVAMENTE con la data
+        if st.session_state.onboarding_step == 1 and st.session_state.selected_date is None:
+            # Al primo step, dobbiamo tracciare se l'utente ha interagito
+            if "date_interaction_tracked" not in st.session_state:
+                st.session_state.date_interaction_tracked = False
+            
+            # Se l'utente ha già interagito e la data è diversa, avanza
+            if st.session_state.date_interaction_tracked and new_date != datetime.date.today():
+                st.session_state.selected_date = new_date
+                st.session_state.dock_date = new_date
                 st.session_state.onboarding_step = 2
                 st.rerun()
-            elif st.session_state.onboarding_completed:
+            # Se l'utente clicca sulla data (qualsiasi data), marca come interazione
+            elif not st.session_state.date_interaction_tracked:
+                st.session_state.date_interaction_tracked = True
+                # Non avanzare ancora, aspetta che l'utente selezioni una data diversa
+        elif new_date != st.session_state.selected_date:
+            # Normale aggiornamento della data
+            st.session_state.selected_date = new_date
+            st.session_state.dock_date = new_date
+            if st.session_state.onboarding_completed:
                 st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
     
     with col2:
         st.markdown('<div id="level-column" class="selector-column">', unsafe_allow_html=True)
-        level_opts = ["base", "medio", "esperto"]
+        # Aggiungi placeholder per livello durante onboarding
+        if st.session_state.onboarding_step < 2 and not st.session_state.onboarding_completed:
+            level_opts = ["Seleziona prima la data"] + ["base", "medio", "esperto"]
+            level_index = 0
+        else:
+            level_opts = ["base", "medio", "esperto"]
+            level_index = None
+            if st.session_state.selected_level and st.session_state.selected_level in level_opts:
+                level_index = level_opts.index(st.session_state.selected_level)
+        
+        # Aggiungi help text per livello durante onboarding
+        level_help_text = "Seleziona il tuo livello di esperienza" if st.session_state.onboarding_step == 2 else None
+        
         new_level = st.selectbox(
             "🎯 LIVELLO",
             level_opts,
-            index=level_opts.index(st.session_state.selected_level) if st.session_state.selected_level in level_opts else None,
+            index=level_index,
             key="onboard_level",
-            disabled=(st.session_state.onboarding_step != 2 and not st.session_state.onboarding_completed)
+            disabled=(st.session_state.onboarding_step != 2 and not st.session_state.onboarding_completed),
+            help=level_help_text
         )
-        if new_level and new_level != st.session_state.selected_level:
+        # Ignora il placeholder e processa solo selezioni valide
+        if new_level and new_level != "Seleziona prima la data" and new_level != st.session_state.selected_level:
             st.session_state.selected_level = new_level
             st.session_state.dock_level = new_level
             if st.session_state.onboarding_step == 2:
@@ -3296,29 +3343,46 @@ def main():
                 st.rerun()
             elif st.session_state.onboarding_completed:
                 st.rerun()
+            
+            # Completa onboarding se abbiamo data e livello (profilo opzionale)
+            if (not st.session_state.onboarding_completed and 
+                st.session_state.selected_date is not None and 
+                st.session_state.selected_level is not None):
+                st.session_state.onboarding_completed = True
+                st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
     
     with col3:
         st.markdown('<div id="profile-column" class="selector-column">', unsafe_allow_html=True)
-        profile_opts = [p for p in SUPPORTED_PROFILES if p != "nessuno"]
-        all_profile_opts = ["Salta questo step"] + profile_opts
-        current_index = None
-        if st.session_state.selected_profile == "nessuno":
+        # Gestione placeholder per profilo durante onboarding
+        if st.session_state.onboarding_step < 3 and not st.session_state.onboarding_completed:
+            all_profile_opts = ["Seleziona prima data e livello", "Salta questo step"] + [p for p in SUPPORTED_PROFILES if p != "nessuno"]
             current_index = 0
-        elif st.session_state.selected_profile in profile_opts:
-            current_index = profile_opts.index(st.session_state.selected_profile) + 1
+        else:
+            profile_opts = [p for p in SUPPORTED_PROFILES if p != "nessuno"]
+            all_profile_opts = ["Salta questo step"] + profile_opts
+            current_index = None
+            if st.session_state.selected_profile == "nessuno" or st.session_state.selected_profile is None:
+                current_index = 0
+            elif st.session_state.selected_profile in profile_opts:
+                current_index = profile_opts.index(st.session_state.selected_profile) + 1
             
+        # Aggiungi help text per profilo durante onboarding
+        profile_help_text = "Scegli il tuo profilo di sciatore" if st.session_state.onboarding_step == 3 else None
+        
         new_profile = st.selectbox(
             "👥 PROFILO",
             all_profile_opts,
             index=current_index,
             key="onboard_profile",
-            disabled=(st.session_state.onboarding_step != 3 and not st.session_state.onboarding_completed)
+            disabled=(st.session_state.onboarding_step != 3 and not st.session_state.onboarding_completed),
+            help=profile_help_text
         )
-        if new_profile and (
+        # Ignora placeholder e processa solo selezioni valide per profilo
+        if (new_profile and new_profile != "Seleziona prima data e livello" and (
             (new_profile == "Salta questo step" and st.session_state.selected_profile != "nessuno") or
             (new_profile != "Salta questo step" and st.session_state.selected_profile != new_profile)
-        ):
+        )):
             if new_profile == "Salta questo step":
                 st.session_state.selected_profile = "nessuno"
                 st.session_state.dock_profile = "nessuno"
@@ -3326,7 +3390,10 @@ def main():
                 st.session_state.selected_profile = new_profile
                 st.session_state.dock_profile = new_profile
             
-            if not st.session_state.onboarding_completed:
+            # Completa onboarding solo se tutti i requisiti minimi sono soddisfatti
+            if (not st.session_state.onboarding_completed and 
+                st.session_state.selected_date is not None and 
+                st.session_state.selected_level is not None):
                 st.session_state.onboarding_completed = True
                 # Non fare rerun immediato per permettere alla celebrazione di essere visualizzata
             elif st.session_state.onboarding_completed:
@@ -3515,6 +3582,8 @@ def main():
             st.session_state.selected_profile = None
             if "snowfall_shown" in st.session_state:
                 del st.session_state.snowfall_shown
+            if "date_interaction_tracked" in st.session_state:
+                del st.session_state.date_interaction_tracked
             st.rerun()
 
     # Plotly theme synchronization
@@ -3531,7 +3600,8 @@ def main():
     )
 
     if df_with_indices.empty:
-        if st.session_state.onboarding_completed:
+        # Mostra messaggio per stazioni chiuse quando c'è una data selezionata
+        if st.session_state.selected_date is not None:
             st.markdown("""
             <div class="no-data-message">
                 <div class="no-data-content">
@@ -3609,8 +3679,8 @@ def main():
                 table = avg[["nome_stazione", "Apertura media", "Chiusura media"]].rename(
                     columns={"nome_stazione": "Impianto"}
                 )
-                # Messaggio guida solo quando nessun filtro è selezionato
-                if livello == "nessuno" and profilo == "nessuno":
+                # Messaggio guida quando l'onboarding non è completato o nessun filtro è selezionato
+                if not st.session_state.onboarding_completed or (livello == "nessuno" and profilo == "nessuno"):
                     st.markdown("Consulta la tabella seguente per sapere quando le piste da sci si vestono di bianco")
                 st.dataframe(table, use_container_width=True, hide_index=True)
         except Exception:
@@ -3750,14 +3820,18 @@ def main():
         # AI Overview riattivato
         try:
             prompt = build_llm_prompt(df_kpis, best_name, livello, profilo, data_sel)
-            ai_overview, metadata = safe_llm_call(prompt, max_tokens=200)
+            ai_overview, metadata = safe_llm_call(prompt, max_tokens=120)
+            
+            # Genera badge con nome modello
+            model_name = parse_model_name(metadata.get("model"))
+            ai_badge = f"Powered by {model_name}"
             
             st.markdown(f"""
             <div class="ai-overview-section">
                 <div class="ai-header">
                     <div class="ai-header-text">
                         <div class="ai-title">AI Overview ✨</div>
-                        <div class="ai-badge">Analisi personalizzata</div>
+                        <div class="ai-badge">{ai_badge}</div>
                     </div>
                 </div>
                 <div class="ai-overview-content">
@@ -4540,14 +4614,18 @@ def main():
         # AI Overview per profilo panoramico (PRIMA dei grafici) - Riattivato
         try:
             prompt_panoramico = build_panoramico_prompt(df_with_indices, best_name, livello, data_sel)
-            ai_overview_panoramico, metadata = safe_llm_call(prompt_panoramico, max_tokens=200)
+            ai_overview_panoramico, metadata = safe_llm_call(prompt_panoramico, max_tokens=100)
+            
+            # Genera badge con nome modello
+            model_name = parse_model_name(metadata.get("model"))
+            ai_badge = f"Powered by {model_name}"
             
             st.markdown(f"""
             <div class="ai-overview-section">
                 <div class="ai-header">
                     <div class="ai-header-text">
                         <div class="ai-title">AI Overview ✨</div>
-                        <div class="ai-badge">Profilo Panoramico</div>
+                        <div class="ai-badge">{ai_badge}</div>
                     </div>
                 </div>
                 <div class="ai-overview-content">
@@ -4615,14 +4693,18 @@ def main():
         # AI Overview per profilo familiare (PRIMA dei grafici) - Riattivato
         try:
             prompt_familiare = build_familiare_prompt(df_with_indices, best_name, livello, data_sel)
-            ai_overview_familiare, metadata = safe_llm_call(prompt_familiare, max_tokens=200)
+            ai_overview_familiare, metadata = safe_llm_call(prompt_familiare, max_tokens=100)
+            
+            # Genera badge con nome modello
+            model_name = parse_model_name(metadata.get("model"))
+            ai_badge = f"Powered by {model_name}"
             
             st.markdown(f"""
             <div class="ai-overview-section">
                 <div class="ai-header">
                     <div class="ai-header-text">
                         <div class="ai-title">AI Overview ✨</div>
-                        <div class="ai-badge">Profilo Familiare</div>
+                        <div class="ai-badge">{ai_badge}</div>
                     </div>
                 </div>
                 <div class="ai-overview-content">
@@ -4705,14 +4787,18 @@ def main():
         # AI Overview per profilo festaiolo (PRIMA dei grafici) - Riattivato
         try:
             prompt_festaiolo = build_festaiolo_prompt(df_with_indices, best_name, livello, data_sel)
-            ai_overview_festaiolo, metadata = safe_llm_call(prompt_festaiolo, max_tokens=200)
+            ai_overview_festaiolo, metadata = safe_llm_call(prompt_festaiolo, max_tokens=100)
+            
+            # Genera badge con nome modello
+            model_name = parse_model_name(metadata.get("model"))
+            ai_badge = f"Powered by {model_name}"
             
             st.markdown(f"""
             <div class="ai-overview-section">
                 <div class="ai-header">
                     <div class="ai-header-text">
                         <div class="ai-title">AI Overview ✨</div>
-                        <div class="ai-badge">Profilo Festaiolo</div>
+                        <div class="ai-badge">{ai_badge}</div>
                     </div>
                 </div>
                 <div class="ai-overview-content">
@@ -4785,14 +4871,18 @@ def main():
         # AI Overview per profilo low-cost (PRIMA dei grafici) - Riattivato
         try:
             prompt_lowcost = build_lowcost_prompt(df_with_indices, best_name, livello, data_sel)
-            ai_overview_lowcost, metadata = safe_llm_call(prompt_lowcost, max_tokens=200)
+            ai_overview_lowcost, metadata = safe_llm_call(prompt_lowcost, max_tokens=100)
+            
+            # Genera badge con nome modello
+            model_name = parse_model_name(metadata.get("model"))
+            ai_badge = f"Powered by {model_name}"
             
             st.markdown(f"""
             <div class="ai-overview-section">
                 <div class="ai-header">
                     <div class="ai-header-text">
                         <div class="ai-title">AI Overview ✨</div>
-                        <div class="ai-badge">Profilo Low-Cost</div>
+                        <div class="ai-badge">{ai_badge}</div>
                     </div>
                 </div>
                 <div class="ai-overview-content">
