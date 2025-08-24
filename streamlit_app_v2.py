@@ -2495,6 +2495,56 @@ def build_familiare_prompt(df_rec: pd.DataFrame, best_name: str, livello: str, t
     return " ".join(prompt_parts)
 
 
+def build_panoramico_prompt(df_rec: pd.DataFrame, best_name: str, livello: str, target_date: datetime.date) -> str:
+    # Panoramica panoramica: segnali recensione su viste, paesaggi e bellezza naturale
+    parole_panoramico = [
+        "paisaje", "panorámica", "panorámicas", "vistas", "vista", "mirador", "naturaleza", "paisajístico", "bonito", "bonita", "precioso", "preciosa", "miradores", "cielo", "horizonte", "amanecer", "atardecer", "panorama", "paisatge", "panoràmica", "panoràmiques", "vistes", "vista", "mirador", "natura", "paisatgístic", "bonic", "bonica", "preciós", "preciosa", "miradors", "cel", "horitzó", "albada", "capvespre", "panorama", "paesaggio", "panoramica", "panoramiche", "vista", "vedute", "belvedere", "natura", "paesaggistico", "bello", "bella", "prezioso", "preziosa", "belvederi", "cielo", "orizzonte", "alba", "tramonto", "panorama", "landscape", "panoramic", "panoramics", "views", "view", "lookout", "nature", "scenic", "nice", "beautiful", "precious", "lovely", "lookouts", "sky", "horizon", "sunrise", "sunset", "paysage", "panoramique", "panoramiques", "vues", "vue", "belvédère", "nature", "paysager", "joli", "jolie", "précieux", "précieuse", "belvédères", "ciel", "horizon", "lever de soleil", "coucher de soleil"
+    ]
+    
+    # Costruisci il prompt con focus sulla stazione consigliata
+    target_date_italian = format_date_for_display(target_date)
+    prompt_parts = [
+        f"Per la data {target_date_italian} e livello '{livello}', {best_name} è la stazione consigliata dal sistema.",
+        f"Scrivi un mini-riassunto (max 3 frasi) che spieghi perché {best_name} è consigliata per il profilo panoramico."
+    ]
+    
+    # Aggiungi contesto dalle recensioni
+    try:
+        available_cols = [col for col in ["panoramico", "Stelle"] if col in df_rec.columns]
+        if available_cols:
+            by_station = (
+                df_rec.groupby("nome_stazione")[available_cols]
+                .mean().reset_index().sort_values("panoramico", ascending=False)
+            )
+            rows = by_station.head(3).to_dict(orient="records")
+            parts = []
+            for r in rows:
+                part_parts = [f"- {r['nome_stazione']}:"]
+                if "panoramico" in available_cols:
+                    part_parts.append(f"panoramico={r.get('panoramico',0):.2f}")
+                if "Stelle" in available_cols:
+                    part_parts.append(f"stelle={r.get('Stelle',0):.2f}")
+                parts.append(", ".join(part_parts))
+        else:
+            parts = []
+    except Exception:
+        parts = []
+    
+    context = "\n".join(parts) if parts else ""
+    keywords = ", ".join(parole_panoramico[:15]) + ", ..."
+    
+    prompt_parts.append(
+        f"Spiega la bellezza panoramica di {best_name} e menziona alternative con belle viste se disponibili. "
+        f"Considera recensioni per paesaggi/viste con parole chiave: {keywords}. "
+        f"Evita elenchi, sii conciso e coerente con i dati della dashboard."
+    )
+    
+    if context:
+        prompt_parts.append(f"Dati recensioni:\n{context}")
+    
+    return " ".join(prompt_parts)
+
+
 def build_lowcost_prompt(df_rec: pd.DataFrame, best_name: str, livello: str, target_date: datetime.date, df_ratio: pd.DataFrame = None) -> str:
     # Panoramica low-cost: segnali recensione su prezzi e rapporto qualità-prezzo
     parole_lowcost = [
@@ -4058,6 +4108,41 @@ def main():
 
     # --- Sezione finale: classifiche semplici per livello e profilo ---
     
+    # Sezione Profilo Panoramico (dopo tutti i livelli)
+    if profilo_norm == "panoramico":
+        # Divider e titolo sezione profilo
+        st.markdown('<hr class="profile-divider">', unsafe_allow_html=True)
+        st.markdown('<h2 class="profile-main-title">🏔️ Sezione Profilo: Panoramico</h2>', unsafe_allow_html=True)
+        
+        # AI Overview per profilo panoramico (PRIMA dei grafici)
+        try:
+            prompt_panoramico = build_panoramico_prompt(df_filtered_rec, best_name, livello, data_sel)
+            out, usage = generate_overview(prompt_panoramico, max_tokens=140)
+            
+            # Pulizia diretta e aggressiva del contenuto HTML
+            clean_out = re.sub(r'<[^>]*>', '', str(out)).strip()
+            clean_out = re.sub(r'\s+', ' ', clean_out)
+            
+            st.markdown(f"""
+            <div class="ai-overview-section">
+                <div class="ai-header">
+                    <div class="ai-header-text">
+                        <div class="ai-title">AI Overview ✨</div>
+                        <div class="ai-badge">Powered by {parse_model_name(DEFAULT_LLM_MODEL)}</div>
+                    </div>
+                </div>
+                <div class="ai-overview-content">{clean_out}</div>
+            </div>
+            """, unsafe_allow_html=True)
+        except Exception as e:
+            st.error(f"Errore nell'AI Overview Panoramico: {e}")
+        
+        # Titolo per i grafici specifici del profilo
+        st.markdown('<h4 class="section-subtitle">📊 Analisi specifica per panorami</h4>', unsafe_allow_html=True)
+        
+        # Nota: questo profilo non ha grafici specifici, solo AI Overview
+        st.info("Questo profilo si concentra sulla bellezza panoramica e le viste. L'AI Overview fornisce informazioni personalizzate basate su recensioni e dati ambientali.")
+
     # Sezione Profilo Familiare (dopo tutti i livelli)
     if profilo_norm == "familiare":
         # Divider e titolo sezione profilo
