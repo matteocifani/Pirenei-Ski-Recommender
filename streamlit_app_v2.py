@@ -3639,29 +3639,20 @@ def main():
     st.write("")
     # AI overview: disattivata quando livello == "nessuno"
     if livello != "nessuno":
-        try:
-            prompt = build_llm_prompt(df_kpis, best_name, livello, profilo, data_sel)
-            output, usage = generate_overview(prompt, max_tokens=160)
-            
-            # Pulizia diretta e aggressiva del contenuto HTML
-            import re
-            clean_output = re.sub(r'<[^>]*>', '', str(output)).strip()
-            clean_output = re.sub(r'\s+', ' ', clean_output)
-            
-            # AI Overview completo con box HTML e contenuto integrato
-            st.markdown(f"""
-            <div class="ai-overview-section">
-                <div class="ai-header">
-                    <div class="ai-header-text">
-                        <div class="ai-title">AI Overview ✨</div>
-                        <div class="ai-badge">Powered by {parse_model_name(DEFAULT_LLM_MODEL)}</div>
-                    </div>
+        # AI Overview temporaneamente disabilitato per risparmiare chiamate OpenRouter
+        st.markdown(f"""
+        <div class="ai-overview-section">
+            <div class="ai-header">
+                <div class="ai-header-text">
+                    <div class="ai-title">AI Overview ✨</div>
+                    <div class="ai-badge">Temporaneamente in pausa</div>
                 </div>
-                <div class="ai-overview-content">{clean_output}</div>
             </div>
-            """, unsafe_allow_html=True)
-        except Exception as e:
-            st.error(f"Errore nell'AI Overview: {e}")
+            <div class="ai-overview-content">
+                Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
 
     # Level-specific visualizations (no raw index shown)
     if livello == "base":
@@ -4380,28 +4371,20 @@ def main():
         st.markdown('<hr class="profile-divider">', unsafe_allow_html=True)
         st.markdown('<h2 class="profile-main-title">🏔️ Sezione Profilo: Panoramico</h2>', unsafe_allow_html=True)
         
-        # AI Overview per profilo panoramico (PRIMA dei grafici)
-        try:
-            prompt_panoramico = build_panoramico_prompt(df_filtered_rec, best_name, livello, data_sel)
-            out, usage = generate_overview(prompt_panoramico, max_tokens=140)
-            
-            # Pulizia diretta e aggressiva del contenuto HTML
-            clean_out = re.sub(r'<[^>]*>', '', str(out)).strip()
-            clean_out = re.sub(r'\s+', ' ', clean_out)
-            
-            st.markdown(f"""
-            <div class="ai-overview-section">
-                <div class="ai-header">
-                    <div class="ai-header-text">
-                        <div class="ai-title">AI Overview ✨</div>
-                        <div class="ai-badge">Powered by {parse_model_name(DEFAULT_LLM_MODEL)}</div>
-                    </div>
+        # AI Overview per profilo panoramico (PRIMA dei grafici) - Temporaneamente disabilitato
+        st.markdown(f"""
+        <div class="ai-overview-section">
+            <div class="ai-header">
+                <div class="ai-header-text">
+                    <div class="ai-title">AI Overview ✨</div>
+                    <div class="ai-badge">Temporaneamente in pausa</div>
                 </div>
-                <div class="ai-overview-content">{clean_out}</div>
             </div>
-            """, unsafe_allow_html=True)
-        except Exception as e:
-            st.error(f"Errore nell'AI Overview Panoramico: {e}")
+            <div class="ai-overview-content">
+                Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
         
         # Titolo per i grafici specifici del profilo
         st.markdown('<h4 class="section-subtitle">📊 Analisi specifica per panorami</h4>', unsafe_allow_html=True)
@@ -4432,28 +4415,20 @@ def main():
         st.markdown('<hr class="profile-divider">', unsafe_allow_html=True)
         st.markdown('<h2 class="profile-main-title">👶 Sezione Profilo: Familiare</h2>', unsafe_allow_html=True)
         
-        # AI Overview per profilo familiare (PRIMA dei grafici)
-        try:
-            prompt_family = build_familiare_prompt(df_filtered_rec, best_name, livello, data_sel)
-            out, usage = generate_overview(prompt_family, max_tokens=140)
-            
-            # Pulizia diretta e aggressiva del contenuto HTML
-            clean_out = re.sub(r'<[^>]*>', '', str(out)).strip()
-            clean_out = re.sub(r'\s+', ' ', clean_out)
-            
-            st.markdown(f"""
-            <div class="ai-overview-section">
-                <div class="ai-header">
-                    <div class="ai-header-text">
-                        <div class="ai-title">AI Overview ✨</div>
-                        <div class="ai-badge">Powered by {parse_model_name(DEFAULT_LLM_MODEL)}</div>
-                    </div>
+        # AI Overview per profilo familiare (PRIMA dei grafici) - Temporaneamente disabilitato
+        st.markdown(f"""
+        <div class="ai-overview-section">
+            <div class="ai-header">
+                <div class="ai-header-text">
+                    <div class="ai-title">AI Overview ✨</div>
+                    <div class="ai-badge">Temporaneamente in pausa</div>
                 </div>
-                <div class="ai-overview-content">{clean_out}</div>
             </div>
-            """, unsafe_allow_html=True)
-        except Exception as e:
-            st.error(f"Errore nell'AI Overview Famiglia: {e}")
+            <div class="ai-overview-content">
+                Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
         
         # Titolo per i grafici specifici del profilo
         st.markdown('<h4 class="section-subtitle">📊 Analisi specifica per famiglie</h4>', unsafe_allow_html=True)
@@ -4524,28 +4499,20 @@ def main():
         st.markdown('<hr class="profile-divider">', unsafe_allow_html=True)
         st.markdown('<h2 class="profile-main-title">🎉 Sezione Profilo: Festaiolo</h2>', unsafe_allow_html=True)
         
-        # AI Overview per profilo festaiolo (PRIMA dei grafici)
-        try:
-            prompt_festaiolo = build_festaiolo_prompt(df_filtered_rec, best_name, livello, data_sel)
-            out, usage = generate_overview(prompt_festaiolo, max_tokens=140)
-            
-            # Pulizia diretta e aggressiva del contenuto HTML
-            clean_out = re.sub(r'<[^>]*>', '', str(out)).strip()
-            clean_out = re.sub(r'\s+', ' ', clean_out)
-            
-            st.markdown(f"""
-            <div class="ai-overview-section">
-                <div class="ai-header">
-                    <div class="ai-header-text">
-                        <div class="ai-title">AI Overview ✨</div>
-                        <div class="ai-badge">Powered by {parse_model_name(DEFAULT_LLM_MODEL)}</div>
-                    </div>
+        # AI Overview per profilo festaiolo (PRIMA dei grafici) - Temporaneamente disabilitato
+        st.markdown(f"""
+        <div class="ai-overview-section">
+            <div class="ai-header">
+                <div class="ai-header-text">
+                    <div class="ai-title">AI Overview ✨</div>
+                    <div class="ai-badge">Temporaneamente in pausa</div>
                 </div>
-                <div class="ai-overview-content">{clean_out}</div>
             </div>
-            """, unsafe_allow_html=True)
-        except Exception as e:
-            st.error(f"Errore nell'AI Overview Festaiolo: {e}")
+            <div class="ai-overview-content">
+                Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
         
         # Titolo per i grafici specifici del profilo
         st.markdown('<h4 class="section-subtitle">📊 Analisi specifica per festaioli</h4>', unsafe_allow_html=True)
@@ -4596,28 +4563,20 @@ def main():
         # Titolo sezione profilo
         st.markdown('<h2 class="profile-main-title">💰 Sezione Profilo: Low-Cost</h2>', unsafe_allow_html=True)
         
-        # AI Overview per profilo low-cost (PRIMA dei grafici)
-        try:
-            prompt_lowcost = build_lowcost_prompt(df_filtered_rec, best_name, livello, data_sel)
-            out, usage = generate_overview(prompt_lowcost, max_tokens=140)
-            
-            # Pulizia diretta e aggressiva del contenuto HTML
-            clean_out = re.sub(r'<[^>]*>', '', str(out)).strip()
-            clean_out = re.sub(r'\s+', ' ', clean_out)
-            
-            st.markdown(f"""
-            <div class="ai-overview-section">
-                <div class="ai-header">
-                    <div class="ai-header-text">
-                        <div class="ai-title">AI Overview ✨</div>
-                        <div class="ai-badge">Powered by {parse_model_name(DEFAULT_LLM_MODEL)}</div>
-                    </div>
+        # AI Overview per profilo low-cost (PRIMA dei grafici) - Temporaneamente disabilitato
+        st.markdown(f"""
+        <div class="ai-overview-section">
+            <div class="ai-header">
+                <div class="ai-header-text">
+                    <div class="ai-title">AI Overview ✨</div>
+                    <div class="ai-badge">Temporaneamente in pausa</div>
                 </div>
-                <div class="ai-overview-content">{clean_out}</div>
             </div>
-            """, unsafe_allow_html=True)
-        except Exception as e:
-            st.error(f"Errore nell'AI Overview Low-Cost: {e}")
+            <div class="ai-overview-content">
+                Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
         
         # Titolo per i grafici specifici del profilo
         st.markdown('<h4 class="section-subtitle">📊 Analisi specifica per low-cost</h4>', unsafe_allow_html=True)
