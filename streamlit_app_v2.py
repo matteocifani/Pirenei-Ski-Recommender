@@ -4272,6 +4272,8 @@ def main():
                     yaxis=dict(range=[1000, 2800]),
                     template="plotly_dark",
                     barmode='overlay',  # Barre sovrapposte una sopra l'altra
+                    paper_bgcolor="rgba(0,0,0,0)",
+                    plot_bgcolor="rgba(0,0,0,0)",
                     legend=dict(
                         orientation="h",
                         yanchor="bottom",
