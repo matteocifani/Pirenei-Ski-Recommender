@@ -4229,26 +4229,55 @@ def main():
         except Exception:
             pass
 
-        # Quota max: grafico a barre (Top 10) con scala 2000-3000 m
+        # Quota max e min: grafico a barre sovrapposte (Top 10) con scala 2000-3000 m
         try:
-            quota = (
-                df_with_indices.groupby("nome_stazione")["Quota_max"].mean().dropna().sort_values(ascending=False).head(10).reset_index()
+            # Prepara dati per entrambe le quote
+            quota_data = (
+                df_with_indices.groupby("nome_stazione")[["Quota_max", "Quota_min"]].mean().dropna().sort_values("Quota_max", ascending=False).head(10).reset_index()
             )
-            if not quota.empty:
+            if not quota_data.empty:
                 px, go, make_subplots = get_plotly()  # Lazy import
-                fig_quota = px.bar(
-                    quota, 
-                    x="nome_stazione", 
-                    y="Quota_max", 
-                    title="Quota max per stazione", 
-                    labels={"nome_stazione": "Stazione", "Quota_max": "Quota max (m)"},
-                    text="Quota_max"
-                )
-                fig_quota.update_traces(texttemplate='%{text:.0f} m', textposition='outside')
+                
+                # Crea grafico con barre sovrapposte
+                fig_quota = go.Figure()
+                
+                # Barra per Quota_max
+                fig_quota.add_trace(go.Bar(
+                    x=quota_data["nome_stazione"],
+                    y=quota_data["Quota_max"],
+                    name="Quota max",
+                    text=[f"{val:.0f} m" for val in quota_data["Quota_max"]],
+                    textposition='outside',
+                    marker_color='rgba(34, 197, 94, 0.8)',  # Verde
+                    opacity=0.8
+                ))
+                
+                # Barra sovrapposta per Quota_min
+                fig_quota.add_trace(go.Bar(
+                    x=quota_data["nome_stazione"],
+                    y=quota_data["Quota_min"],
+                    name="Quota min",
+                    text=[f"{val:.0f} m" for val in quota_data["Quota_min"]],
+                    textposition='outside',
+                    marker_color='rgba(59, 130, 246, 0.8)',  # Blu
+                    opacity=0.8
+                ))
+                
                 fig_quota.update_layout(
-                    xaxis_tickangle=-45, 
-                    yaxis=dict(range=[2000, 2800]),
-                    template="plotly_dark"
+                    title="Quota max e min per stazione",
+                    xaxis_title="Stazione",
+                    yaxis_title="Quota (m)",
+                    xaxis_tickangle=-45,
+                    yaxis=dict(range=[1000, 2800]),
+                    template="plotly_dark",
+                    barmode='group',  # Barre affiancate invece che sovrapposte
+                    legend=dict(
+                        orientation="h",
+                        yanchor="bottom",
+                        y=1.02,
+                        xanchor="right",
+                        x=1
+                    )
                 )
                 st.plotly_chart(fig_quota, use_container_width=True)
         except Exception:
