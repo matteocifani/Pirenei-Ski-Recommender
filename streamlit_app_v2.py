@@ -4207,21 +4207,19 @@ def main():
         except Exception:
             pass
 
-        # KPI tecnici (stazione consigliata)
+        # KPI tecnici (stazione consigliata) - Solo Area gare e Slalom per esperti
         try:
             top_best = df_with_indices[df_with_indices["nome_stazione"] == best_name]
             if not top_best.empty:
                 st.markdown('<h3 class="section-subtitle">🎯 KPI tecnici</h3>', unsafe_allow_html=True)
-                vals = top_best[["Snowpark", "Area_gare", "Slalom", "Superpipe"]].fillna(0).mean()
+                vals = top_best[["Area_gare", "Slalom"]].fillna(0).mean()
                 
-                # KPI Grid per KPI tecnici con layout uniformi - 4 colonne su una riga
+                # KPI Grid per KPI tecnici con layout uniformi - 2 colonne su una riga
                 st.markdown(
                     f"""
-                    <div class="kpi-grid grid-4">
-                        {render_kpi("Snowpark", f"{vals.get('Snowpark',0):.0f}", "", "🛹")}
+                    <div class="kpi-grid grid-2">
                         {render_kpi("Area gare", f"{vals.get('Area_gare',0):.0f}", "", "🏁")}
                         {render_kpi("Slalom", f"{vals.get('Slalom',0):.0f}", "", "⛷️")}
-                        {render_kpi("Superpipe", f"{vals.get('Superpipe',0):.0f}", "", "🏂")}
                     </div>
                     """,
                     unsafe_allow_html=True
@@ -4280,6 +4278,48 @@ def main():
                     )
                 )
                 st.plotly_chart(fig_quota, use_container_width=True)
+        except Exception:
+            pass
+
+        # Piste rosse e nere per livello esperto (Top 10 stazioni)
+        try:
+            piste = (
+                df_with_indices[["nome_stazione", "Piste_rosse", "Piste_nere"]]
+                .drop_duplicates()
+                .groupby("nome_stazione")
+                .agg({
+                    "Piste_rosse": "first",
+                    "Piste_nere": "first",
+                })
+                .reset_index()
+                .fillna(0)
+            )
+            # Ordina per numero totale di piste rosse + nere
+            piste["totale_difficili"] = piste["Piste_rosse"] + piste["Piste_nere"]
+            piste = piste.sort_values("totale_difficili", ascending=False).head(10)
+            
+            if not piste.empty:
+                melted = piste.melt("nome_stazione", value_vars=["Piste_rosse", "Piste_nere"], var_name="Tipo", value_name="Numero")
+                # Rimuovi underscore dalle label  
+                melted["Tipo"] = melted["Tipo"].replace({
+                    "Piste_rosse": "Piste rosse",
+                    "Piste_nere": "Piste nere"
+                })
+                px, go, make_subplots = get_plotly()  # Lazy import
+                fig_piste = px.bar(
+                    melted, x="nome_stazione", y="Numero", color="Tipo",
+                    barmode="group", 
+                    title="Piste rosse e nere per stazione (Top 10)",
+                    labels={"nome_stazione": "Stazione", "Numero": "Numero piste"},
+                    color_discrete_map={"Piste rosse": "#ef4444", "Piste nere": "#1f2937"}
+                )
+                fig_piste.update_layout(
+                    xaxis_tickangle=-45, 
+                    template="plotly_dark",
+                    paper_bgcolor="rgba(0,0,0,0)",
+                    plot_bgcolor="rgba(0,0,0,0)"
+                )
+                st.plotly_chart(fig_piste, use_container_width=True)
         except Exception:
             pass
 
@@ -4677,22 +4717,50 @@ def main():
         </div>
         """, unsafe_allow_html=True)
         
+        # KPI Snowpark e Superpipe per festaioli (stazione consigliata)
+        try:
+            top_best = df_with_indices[df_with_indices["nome_stazione"] == best_name]
+            if not top_best.empty:
+                st.markdown('<h3 class="section-subtitle">🎪 KPI Party</h3>', unsafe_allow_html=True)
+                vals = top_best[["Snowpark", "Superpipe"]].fillna(0).mean()
+                
+                # KPI Grid per KPI party con layout uniformi - 2 colonne su una riga
+                st.markdown(
+                    f"""
+                    <div class="kpi-grid grid-2">
+                        {render_kpi("Snowpark", f"{vals.get('Snowpark',0):.0f}", "", "🛹")}
+                        {render_kpi("Superpipe", f"{vals.get('Superpipe',0):.0f}", "", "🏂")}
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+        except Exception:
+            pass
+
         # Titolo per i grafici specifici del profilo
         st.markdown('<h4 class="section-subtitle">📊 Analisi specifica per festaioli</h4>', unsafe_allow_html=True)
         
         try:
             df_night = df_with_indices[["nome_stazione", "Scii_notte"]].drop_duplicates().fillna(0)
+            # Filtra solo stazioni con sci notturno > 0 e prendi top 10
+            df_night = df_night[df_night["Scii_notte"] > 0].sort_values("Scii_notte", ascending=True).tail(10)
             if not df_night.empty:
+                # Horizontal bar chart per migliore leggibilità dei nomi delle stazioni
                 fig_night = px.bar(
-                    df_night.sort_values("Scii_notte", ascending=False),
-                    x="nome_stazione", y="Scii_notte",
-                    title="Km di sci notturno per impianto",
-                    labels={"Scii_notte": "Km sci notturno", "nome_stazione": "Impianto"}
+                    df_night,
+                    x="Scii_notte", y="nome_stazione",
+                    orientation='h',  # Barre orizzontali
+                    title="Km di sci notturno per impianto (Top 10)",
+                    labels={"Scii_notte": "Km sci notturno", "nome_stazione": "Impianto"},
+                    text="Scii_notte"
                 )
+                fig_night.update_traces(texttemplate='%{text:.1f} km', textposition='outside')
                 fig_night.update_layout(
                     template="plotly_dark",
                     paper_bgcolor="rgba(0,0,0,0)",
-                    plot_bgcolor="rgba(0,0,0,0)"
+                    plot_bgcolor="rgba(0,0,0,0)",
+                    height=400,  # Altezza maggiore per accomodare nomi stazioni
+                    margin=dict(l=150)  # Margine sinistro maggiore per nomi lunghi
                 )
                 st.plotly_chart(fig_night, use_container_width=True)
         except Exception:
