@@ -3190,15 +3190,15 @@ def main():
 
     # Onboarding System
     if "onboarding_completed" not in st.session_state:
-        st.session_state.onboarding_completed = False
+        st.session_state.onboarding_completed = True  # Salta onboarding per test calendario
     if "onboarding_step" not in st.session_state:
         st.session_state.onboarding_step = 1
     if "selected_date" not in st.session_state:
-        st.session_state.selected_date = None
+        st.session_state.selected_date = datetime.date(2025, 12, 17)  # Preseleziona 17/12/2025
     if "selected_level" not in st.session_state:
-        st.session_state.selected_level = None
+        st.session_state.selected_level = "base"  # Preseleziona livello base
     if "selected_profile" not in st.session_state:
-        st.session_state.selected_profile = None
+        st.session_state.selected_profile = "panoramico"  # Preseleziona profilo panoramico (era "esperto" nel testo ma nel contesto penso sia panoramico)
 
     # Show welcome message FIRST if onboarding not completed
     if not st.session_state.onboarding_completed:
