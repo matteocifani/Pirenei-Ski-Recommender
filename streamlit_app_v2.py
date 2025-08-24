@@ -2611,12 +2611,14 @@ def build_lowcost_prompt(df_rec: pd.DataFrame, best_name: str, livello: str, tar
     return " ".join(prompt_parts)
 
 
-def generate_panoramic_calendar(df_infonieve: pd.DataFrame, station_name: str, target_date: datetime.date):
+def generate_panoramic_calendar(df_meteo: pd.DataFrame, df_recensioni: pd.DataFrame, df_infonieve: pd.DataFrame, station_name: str, target_date: datetime.date):
     """
     Genera un calendario heatmap per mostrare l'indice panoramico storico di una stazione.
     
     Args:
-        df_infonieve: DataFrame con dati storici delle stazioni
+        df_meteo: DataFrame con dati meteo storici (pioggia, sole, nebbia, vento)
+        df_recensioni: DataFrame con dati recensioni (panoramico)
+        df_infonieve: DataFrame con dati stazioni (Quota_max)
         station_name: Nome della stazione per cui generare il calendario
         target_date: Data target per centrare il calendario
     
@@ -2624,29 +2626,82 @@ def generate_panoramic_calendar(df_infonieve: pd.DataFrame, station_name: str, t
         Any: Calendario heatmap con indice panoramico (Plotly Figure)
     """
     try:
-        # Filtra dati per la stazione specifica
-        station_data = df_infonieve[df_infonieve["nome_stazione"] == station_name].copy()
-        if station_data.empty:
+        # Combina i dati da tutti e tre i dataset
+        print(f"Generazione calendario panoramico per: {station_name}")
+        
+        # 1. Dati meteo per la stazione
+        meteo_station = df_meteo[df_meteo["nome_stazione"] == station_name].copy()
+        print(f"Righe meteo trovate: {len(meteo_station)}")
+        
+        # 2. Dati recensioni per la stazione
+        rec_station = df_recensioni[df_recensioni["nome_stazione"] == station_name].copy()
+        print(f"Righe recensioni trovate: {len(rec_station)}")
+        
+        # 3. Dati quota per la stazione
+        info_station = df_infonieve[df_infonieve["nome_stazione"] == station_name].copy()
+        print(f"Righe infonieve trovate: {len(info_station)}")
+        
+        # Verifica che abbiamo almeno alcuni dati
+        if meteo_station.empty and rec_station.empty and info_station.empty:
+            print(f"Nessun dato trovato per {station_name}")
             return None
         
-        # Debug: verifica colonne disponibili
-        available_cols = station_data.columns.tolist()
-        print(f"Colonne disponibili per {station_name}: {available_cols}")
-        
-        # Verifica se abbiamo le colonne necessarie per l'indice panoramico
-        required_cols = ["panoramico", "pioggia", "vento", "sole", "nebbia", "Quota_max"]
-        missing_cols = [col for col in required_cols if col not in available_cols]
-        if missing_cols:
-            print(f"Colonne mancanti per {station_name}: {missing_cols}")
-            # Fallback: usa solo le colonne disponibili
-            available_required = [col for col in required_cols if col in available_cols]
-            if not available_required:
-                print(f"Nessuna colonna panoramica disponibile per {station_name}")
+        # Prepara dataset base dal meteo (ha più copertura temporale)
+        if not meteo_station.empty:
+            meteo_station["date"] = pd.to_datetime(meteo_station["date"])
+            base_data = meteo_station[["date", "nome_stazione", "pioggia", "sole", "nebbia", "vento"]].copy()
+        else:
+            # Fallback: usa dati infonieve se non c'è meteo
+            if not info_station.empty:
+                info_station["date"] = pd.to_datetime(info_station["date"])
+                base_data = info_station[["date", "nome_stazione"]].copy()
+                # Aggiungi colonne meteo con valori di default
+                base_data["pioggia"] = 0.5
+                base_data["sole"] = 0.5
+                base_data["nebbia"] = 0.5
+                base_data["vento"] = 0.5
+            else:
+                print(f"Nessun dato temporale disponibile per {station_name}")
                 return None
         
-        # Converti date e filtra per stagione sciistica (Nov-Apr)
-        station_data["date"] = pd.to_datetime(station_data["date"])
-        print(f"Date disponibili per {station_name}: {station_data['date'].min()} - {station_data['date'].max()}")
+        print(f"Date disponibili per {station_name}: {base_data['date'].min()} - {base_data['date'].max()}")
+        
+        # Aggiungi dati quota (se disponibili)
+        if not info_station.empty:
+            info_station["date"] = pd.to_datetime(info_station["date"])
+            base_data = base_data.merge(
+                info_station[["date", "nome_stazione", "Quota_max"]],
+                on=["date", "nome_stazione"],
+                how="left"
+            )
+        else:
+            base_data["Quota_max"] = 2000  # Default quota media
+        
+        # Aggiungi dati panoramici dalle recensioni (aggregazione temporale)
+        if not rec_station.empty:
+            rec_station["date"] = pd.to_datetime(rec_station["date"])
+            # Aggrega recensioni per giorno (media del punteggio panoramico)
+            rec_daily = rec_station.groupby(["date", "nome_stazione"])["panoramico"].mean().reset_index()
+            base_data = base_data.merge(
+                rec_daily,
+                on=["date", "nome_stazione"],
+                how="left"
+            )
+        else:
+            base_data["panoramico"] = 3.0  # Default valore medio (scala 1-5)
+        
+        # Riempi valori mancanti
+        base_data["Quota_max"] = base_data["Quota_max"].fillna(2000)
+        base_data["panoramico"] = base_data["panoramico"].fillna(3.0)
+        base_data["pioggia"] = base_data["pioggia"].fillna(0.5)
+        base_data["sole"] = base_data["sole"].fillna(0.5)
+        base_data["nebbia"] = base_data["nebbia"].fillna(0.5)
+        base_data["vento"] = base_data["vento"].fillna(0.5)
+        
+        print(f"Dataset combinato: {len(base_data)} righe, colonne: {base_data.columns.tolist()}")
+        
+        # Dataset unificato
+        station_data = base_data.copy()
         
         # Filtra per stagione sciistica (Nov-Apr) ma sii più flessibile
         season_data = station_data[
@@ -2666,39 +2721,30 @@ def generate_panoramic_calendar(df_infonieve: pd.DataFrame, station_name: str, t
         def calculate_panoramic_index(row):
             """Calcola indice panoramico per una riga di dati"""
             try:
-                # Usa solo le colonne disponibili
-                available_required = [col for col in required_cols if col in available_cols]
+                # Normalizza i valori (tutti su scala 0-1)
                 
-                # Inizializza valori di default
-                panoramico = 0.5  # Valore medio se non disponibile
-                pioggia = 0.5     # Valore medio se non disponibile
-                vento = 0.5       # Valore medio se non disponibile
-                sole = 0.5        # Valore medio se non disponibile
-                nebbia = 0.5      # Valore medio se non disponibile
-                quota = 0.5       # Valore medio se non disponibile
+                # Panoramico: scala 1-5 → 0-1
+                panoramico = min(1.0, max(0.0, (row.get("panoramico", 3.0) - 1) / 4.0))
                 
-                # Assegna valori reali se disponibili
-                if "panoramico" in available_required:
-                    panoramico = min(1.0, max(0.0, row.get("panoramico", 0.5) / 5.0))  # Assumendo scala 0-5
-                if "pioggia" in available_required:
-                    pioggia = min(1.0, max(0.0, row.get("pioggia", 0.5)))
-                if "vento" in available_required:
-                    vento = min(1.0, max(0.0, row.get("vento", 0.5)))
-                if "sole" in available_required:
-                    sole = min(1.0, max(0.0, row.get("sole", 0.5)))
-                if "nebbia" in available_required:
-                    nebbia = min(1.0, max(0.0, row.get("nebbia", 0.5)))
-                if "Quota_max" in available_required:
-                    quota = min(1.0, max(0.0, row.get("Quota_max", 1500) / 3000.0))  # Default 1500m
+                # Meteo: già su scala 0-1 (probabilità)
+                pioggia = min(1.0, max(0.0, row.get("pioggia", 0.5)))
+                vento = min(1.0, max(0.0, row.get("vento", 0.5)))
+                sole = min(1.0, max(0.0, row.get("sole", 0.5)))
+                nebbia = min(1.0, max(0.0, row.get("nebbia", 0.5)))
                 
-                # Calcola indice panoramico con stessi pesi del sistema principale
+                # Quota: normalizza su base tipica dei Pirenei (1000-3000m)
+                quota_raw = row.get("Quota_max", 2000)
+                quota = min(1.0, max(0.0, (quota_raw - 1000) / 2000.0))
+                
+                # Calcola indice panoramico con pesi ottimizzati per panorami
+                # Pesi: panoramico=30%, sole=25%, assenza pioggia=20%, quota=15%, assenza nebbia=10%
                 indice = (
-                    0.25 * panoramico +
-                    0.15 * (1 - pioggia) +
-                    0.10 * (1 - vento) +
-                    0.20 * sole +
-                    0.10 * (1 - nebbia) +
-                    0.20 * (1 - quota)
+                    0.30 * panoramico +        # Qualità panoramica dalle recensioni
+                    0.25 * sole +              # Sole per buona visibilità
+                    0.20 * (1 - pioggia) +     # Assenza pioggia per chiarezza
+                    0.15 * quota +             # Quota alta per vista migliore
+                    0.10 * (1 - nebbia)        # Assenza nebbia per visibilità
+                    # Nota: vento non incluso perché non influenza molto i panorami
                 )
                 return round(indice, 3)
             except Exception as e:
@@ -2728,26 +2774,30 @@ def generate_panoramic_calendar(df_infonieve: pd.DataFrame, station_name: str, t
             date = row["date"]
             indice = row["indice_panoramico"]
             
-            # Calcola breakdown percentuale per tooltip (solo per colonne disponibili)
+            # Calcola breakdown percentuale per tooltip con i nuovi pesi
             breakdown_parts = []
             if "panoramico" in row:
-                panoramico_pct = row["panoramico"] * 20  # 25% del peso totale
-                breakdown_parts.append(f"Panoramico: {panoramico_pct:.1f}%")
-            if "pioggia" in row:
-                pioggia_pct = (1 - row["pioggia"]) * 15  # 15% del peso totale
-                breakdown_parts.append(f"Assenza pioggia: {pioggia_pct:.1f}%")
-            if "vento" in row:
-                vento_pct = (1 - row["vento"]) * 10      # 10% del peso totale
-                breakdown_parts.append(f"Assenza vento: {vento_pct:.1f}%")
+                # Panoramico: 30% del peso totale, normalizzato da scala 1-5
+                panoramico_norm = (row["panoramico"] - 1) / 4.0
+                panoramico_pct = panoramico_norm * 30
+                breakdown_parts.append(f"Qualità panoramica: {panoramico_pct:.1f}%")
             if "sole" in row:
-                sole_pct = row["sole"] * 20               # 20% del peso totale
+                # Sole: 25% del peso totale
+                sole_pct = row["sole"] * 25
                 breakdown_parts.append(f"Sole: {sole_pct:.1f}%")
-            if "nebbia" in row:
-                nebbia_pct = (1 - row["nebbia"]) * 10    # 10% del peso totale
-                breakdown_parts.append(f"Assenza nebbia: {nebbia_pct:.1f}%")
+            if "pioggia" in row:
+                # Assenza pioggia: 20% del peso totale
+                pioggia_pct = (1 - row["pioggia"]) * 20
+                breakdown_parts.append(f"Assenza pioggia: {pioggia_pct:.1f}%")
             if "Quota_max" in row:
-                quota_pct = (1 - row["Quota_max"] / 3000) * 20  # 20% del peso totale
-                breakdown_parts.append(f"Quota moderata: {quota_pct:.1f}%")
+                # Quota: 15% del peso totale, normalizzata 1000-3000m
+                quota_norm = (row["Quota_max"] - 1000) / 2000.0
+                quota_pct = max(0, min(15, quota_norm * 15))
+                breakdown_parts.append(f"Quota elevata: {quota_pct:.1f}%")
+            if "nebbia" in row:
+                # Assenza nebbia: 10% del peso totale
+                nebbia_pct = (1 - row["nebbia"]) * 10
+                breakdown_parts.append(f"Assenza nebbia: {nebbia_pct:.1f}%")
             
             breakdown_text = " | ".join(breakdown_parts) if breakdown_parts else "Dati limitati"
             
@@ -4398,7 +4448,13 @@ def main():
         
         try:
             # Genera calendario heatmap per la stazione consigliata
-            calendar_data = generate_panoramic_calendar(df_filtered_infonieve, best_name, data_sel)
+            calendar_data = generate_panoramic_calendar(
+                df_filtered_meteo,     # Dati meteo (pioggia, sole, nebbia, vento)
+                df_filtered_rec,       # Dati recensioni (panoramico)
+                df_filtered_infonieve, # Dati stazioni (Quota_max)
+                best_name, 
+                data_sel
+            )
             if calendar_data is not None:
                 st.plotly_chart(calendar_data, use_container_width=True)
             else:
