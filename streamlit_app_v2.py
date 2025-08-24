@@ -2778,7 +2778,6 @@ def generate_panoramic_calendar(df_infonieve: pd.DataFrame, station_name: str, t
         
         # Layout del calendario
         fig.update_layout(
-            title=f"📅 Calendario 'Giorni da Cartolina' - {station_name}",
             xaxis_title="Giorno del mese",
             yaxis_title="Mese e Anno",
             height=400,
@@ -2787,6 +2786,7 @@ def generate_panoramic_calendar(df_infonieve: pd.DataFrame, station_name: str, t
             plot_bgcolor="rgba(0,0,0,0)",
             font=dict(family="Inter", color="#f8fafc"),
             title=dict(
+                text=f"📅 Calendario 'Giorni da Cartolina' - {station_name}",
                 font=dict(size=18, family="Inter", color="#f8fafc"),
                 x=0.5,
                 xanchor="center"
