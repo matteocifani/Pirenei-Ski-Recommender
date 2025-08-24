@@ -2611,6 +2611,219 @@ def build_lowcost_prompt(df_rec: pd.DataFrame, best_name: str, livello: str, tar
     return " ".join(prompt_parts)
 
 
+def generate_panoramic_calendar(df_infonieve: pd.DataFrame, station_name: str, target_date: datetime.date) -> go.Figure:
+    """
+    Genera un calendario heatmap per mostrare l'indice panoramico storico di una stazione.
+    
+    Args:
+        df_infonieve: DataFrame con dati storici delle stazioni
+        station_name: Nome della stazione per cui generare il calendario
+        target_date: Data target per centrare il calendario
+    
+    Returns:
+        go.Figure: Calendario heatmap con indice panoramico
+    """
+    try:
+        # Filtra dati per la stazione specifica
+        station_data = df_infonieve[df_infonieve["nome_stazione"] == station_name].copy()
+        if station_data.empty:
+            return None
+        
+        # Converti date e filtra per stagione sciistica (Nov-Apr)
+        station_data["date"] = pd.to_datetime(station_data["date"])
+        station_data = station_data[
+            (station_data["date"].dt.month.isin([11, 12, 1, 2, 3, 4]))
+        ].copy()
+        
+        if station_data.empty:
+            return None
+        
+        # Calcola indice panoramico per ogni giorno
+        def calculate_panoramic_index(row):
+            """Calcola indice panoramico per una riga di dati"""
+            try:
+                # Normalizza i valori tra 0 e 1 (MinMax scaling semplificato)
+                panoramico = min(1.0, max(0.0, row.get("panoramico", 0) / 5.0))  # Assumendo scala 0-5
+                pioggia = min(1.0, max(0.0, row.get("pioggia", 0)))
+                vento = min(1.0, max(0.0, row.get("vento", 0)))
+                sole = min(1.0, max(0.0, row.get("sole", 0)))
+                nebbia = min(1.0, max(0.0, row.get("nebbia", 0)))
+                quota = min(1.0, max(0.0, row.get("Quota_max", 0) / 3000.0))  # Normalizza quota (0-3000m)
+                
+                # Calcola indice panoramico con stessi pesi del sistema principale
+                indice = (
+                    0.25 * panoramico +
+                    0.15 * (1 - pioggia) +
+                    0.10 * (1 - vento) +
+                    0.20 * sole +
+                    0.10 * (1 - nebbia) +
+                    0.20 * (1 - quota)
+                )
+                return round(indice, 3)
+            except Exception:
+                return 0.0
+        
+        # Applica calcolo indice panoramico
+        station_data["indice_panoramico"] = station_data.apply(calculate_panoramic_index, axis=1)
+        
+        # Raggruppa per data e calcola media ±3 giorni per smoothing
+        station_data["date_str"] = station_data["date"].dt.strftime("%Y-%m-%d")
+        daily_avg = station_data.groupby("date_str").agg({
+            "indice_panoramico": "mean",
+            "panoramico": "mean",
+            "pioggia": "mean",
+            "vento": "mean",
+            "sole": "mean",
+            "nebbia": "mean",
+            "Quota_max": "mean"
+        }).reset_index()
+        
+        # Converti date string in datetime per il calendario
+        daily_avg["date"] = pd.to_datetime(daily_avg["date_str"])
+        
+        # Prepara dati per il calendario heatmap
+        calendar_data = []
+        for _, row in daily_avg.iterrows():
+            date = row["date"]
+            indice = row["indice_panoramico"]
+            
+            # Calcola breakdown percentuale per tooltip
+            panoramico_pct = row["panoramico"] * 20  # 25% del peso totale
+            pioggia_pct = (1 - row["pioggia"]) * 15  # 15% del peso totale
+            vento_pct = (1 - row["vento"]) * 10      # 10% del peso totale
+            sole_pct = row["sole"] * 20               # 20% del peso totale
+            nebbia_pct = (1 - row["nebbia"]) * 10    # 10% del peso totale
+            quota_pct = (1 - row["Quota_max"] / 3000) * 20  # 20% del peso totale
+            
+            calendar_data.append({
+                "date": date,
+                "indice": indice,
+                "panoramico_pct": panoramico_pct,
+                "pioggia_pct": pioggia_pct,
+                "vento_pct": vento_pct,
+                "sole_pct": sole_pct,
+                "nebbia_pct": nebbia_pct,
+                "quota_pct": quota_pct
+            })
+        
+        if not calendar_data:
+            return None
+        
+        # Crea DataFrame per il calendario
+        df_calendar = pd.DataFrame(calendar_data)
+        
+        # Crea heatmap calendario con Plotly
+        px, go, make_subplots = get_plotly()  # Lazy import
+        
+        # Prepara dati per il calendario
+        df_calendar["year"] = df_calendar["date"].dt.year
+        df_calendar["month"] = df_calendar["date"].dt.month
+        df_calendar["day"] = df_calendar["date"].dt.day
+        
+        # Crea figura del calendario
+        fig = go.Figure()
+        
+        # Colori per il heatmap (verde per buoni indici, rosso per cattivi)
+        colorscale = [
+            [0, "#ef4444"],      # Rosso per indici bassi
+            [0.3, "#f59e0b"],    # Arancione
+            [0.6, "#10b981"],    # Verde per indici medi
+            [1, "#059669"]       # Verde scuro per indici alti
+        ]
+        
+        # Aggiungi heatmap per ogni anno disponibile
+        years = sorted(df_calendar["year"].unique())
+        for year in years:
+            year_data = df_calendar[df_calendar["year"] == year]
+            
+            # Prepara dati per il calendario
+            calendar_matrix = []
+            month_names = ["Nov", "Dec", "Jan", "Feb", "Mar", "Apr"]
+            
+            for month in [11, 12, 1, 2, 3, 4]:
+                month_data = year_data[year_data["month"] == month]
+                if month_data.empty:
+                    continue
+                
+                # Crea array per il mese (31 giorni)
+                month_array = [None] * 31
+                for _, row in month_data.iterrows():
+                    day = row["day"] - 1  # Indice 0-based
+                    if 0 <= day < 31:
+                        month_array[day] = row["indice"]
+                
+                calendar_matrix.append({
+                    "month": month_names[month - 11] if month >= 11 else month_names[month + 1],
+                    "values": month_array
+                })
+            
+            # Aggiungi heatmap per questo anno
+            for i, month_data in enumerate(calendar_matrix):
+                fig.add_trace(go.Heatmap(
+                    z=[month_data["values"]],
+                    x=list(range(1, 32)),  # Giorni 1-31
+                    y=[f"{year} {month_data['month']}"],
+                    colorscale=colorscale,
+                    zmin=0,
+                    zmax=1,
+                    showscale=(i == 0),  # Mostra scala solo per il primo mese
+                    hovertemplate=(
+                        "<b>%{y}</b><br>" +
+                        "Giorno: %{x}<br>" +
+                        "Indice Panoramico: %{z:.3f}<br>" +
+                        "<extra></extra>"
+                    ),
+                    name=f"{year} {month_data['month']}"
+                ))
+        
+        # Layout del calendario
+        fig.update_layout(
+            title=f"📅 Calendario 'Giorni da Cartolina' - {station_name}",
+            xaxis_title="Giorno del mese",
+            yaxis_title="Mese e Anno",
+            height=400,
+            template=plotly_template,
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)",
+            font=dict(family="Inter", color="#f8fafc"),
+            title=dict(
+                font=dict(size=18, family="Inter", color="#f8fafc"),
+                x=0.5,
+                xanchor="center"
+            ),
+            xaxis=dict(
+                gridcolor="#374151",
+                tickfont=dict(color="#d1d5db", family="Inter"),
+                tickmode="linear",
+                tick0=1,
+                dtick=1
+            ),
+            yaxis=dict(
+                gridcolor="#374151",
+                tickfont=dict(color="#d1d5db", family="Inter")
+            )
+        )
+        
+        # Aggiungi annotazione per la legenda
+        fig.add_annotation(
+            x=0.02, y=0.98, xref="paper", yref="paper",
+            text="🟢 Verde: Giorni ideali per panorami<br>🔴 Rosso: Condizioni meno favorevoli",
+            showarrow=False,
+            font=dict(size=12, color="#9ca3af", family="Inter"),
+            bgcolor="rgba(15, 23, 42, 0.9)",
+            bordercolor="#374151",
+            borderwidth=1,
+            borderpad=8,
+            align="left"
+        )
+        
+        return fig
+        
+    except Exception as e:
+        st.error(f"Errore nella generazione del calendario panoramico: {e}")
+        return None
+
+
 def build_local_overview(df_kpis: pd.DataFrame, best_name: str) -> str:
     try:
         row = df_kpis[df_kpis["nome_stazione"] == best_name].iloc[0]
@@ -4139,6 +4352,23 @@ def main():
         
         # Titolo per i grafici specifici del profilo
         st.markdown('<h4 class="section-subtitle">📊 Analisi specifica per panorami</h4>', unsafe_allow_html=True)
+        
+        # Calendario "giorni da cartolina" - Heatmap stazione selezionata
+        st.markdown('<h4 class="section-subtitle">📅 Calendario "Giorni da Cartolina"</h4>', unsafe_allow_html=True)
+        st.markdown("""
+        **Cosa mostra:** Calendario Nov→Apr dove ogni cella è l'indice panoramico storico per la stazione consigliata.  
+        **Perché utile:** Aiuta a scegliere il weekend più "fotogenico" nella stagione.
+        """)
+        
+        try:
+            # Genera calendario heatmap per la stazione consigliata
+            calendar_data = generate_panoramic_calendar(df_filtered_infonieve, best_name, data_sel)
+            if calendar_data is not None:
+                st.plotly_chart(calendar_data, use_container_width=True)
+            else:
+                st.info("Dati insufficienti per generare il calendario panoramico")
+        except Exception as e:
+            st.warning(f"Errore nella generazione del calendario: {e}")
         
         # Nota: questo profilo non ha grafici specifici, solo AI Overview
         st.info("Questo profilo si concentra sulla bellezza panoramica e le viste. L'AI Overview fornisce informazioni personalizzate basate su recensioni e dati ambientali.")
