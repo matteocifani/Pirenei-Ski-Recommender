@@ -2629,10 +2629,7 @@ def generate_panoramic_calendar(df_meteo: pd.DataFrame, df_recensioni: pd.DataFr
         # Combina i dati da tutti e tre i dataset
         print(f"Generazione calendario panoramico per: {station_name}")
         
-        # Debug: verifica nomi stazioni nei dataset
-        print(f"Stazioni uniche in meteo: {df_meteo['nome_stazione'].unique()[:5]}...")
-        print(f"Stazioni uniche in recensioni: {df_recensioni['nome_stazione'].unique()[:5]}...")
-        print(f"Stazioni uniche in infonieve: {df_infonieve['nome_stazione'].unique()[:5]}...")
+        # Debug: verifica dati disponibili
         print(f"Stazione cercata: '{station_name}'")
         
         # 1. Dati meteo per la stazione
@@ -2687,17 +2684,28 @@ def generate_panoramic_calendar(df_meteo: pd.DataFrame, df_recensioni: pd.DataFr
         
         # Aggiungi dati panoramici dalle recensioni (aggregazione temporale)
         if not rec_station.empty:
-            rec_station["date"] = pd.to_datetime(rec_station["date"])
+            rec_station["date"] = pd.to_datetime(rec_station["date"], errors="coerce")
+            rec_station = rec_station.dropna(subset=["date"])  # Rimuovi date invalide
             print(f"Date recensioni: {rec_station['date'].min()} - {rec_station['date'].max()}")
+            
             # Aggrega recensioni per giorno (media del punteggio panoramico)
             rec_daily = rec_station.groupby(["date", "nome_stazione"])["panoramico"].mean().reset_index()
             print(f"Recensioni aggregate per giorno: {len(rec_daily)} giorni unici")
+            
+            # Merge con left join per preservare tutti i dati meteo
             base_data = base_data.merge(
                 rec_daily,
                 on=["date", "nome_stazione"],
                 how="left"
             )
             print(f"Dopo merge recensioni: {len(base_data)} righe")
+            
+            # Se non ci sono match, calcola media delle recensioni per quella stazione
+            if base_data["panoramico"].isna().all():
+                print(f"Nessun match diretto date, uso media generale recensioni per {station_name}")
+                avg_panoramico = rec_station["panoramico"].mean()
+                base_data["panoramico"] = avg_panoramico
+                print(f"Media panoramica generale per {station_name}: {avg_panoramico:.2f}")
         else:
             base_data["panoramico"] = 3.0  # Default valore medio (scala 1-5)
         
@@ -2795,8 +2803,9 @@ def generate_panoramic_calendar(df_meteo: pd.DataFrame, df_recensioni: pd.DataFr
             date = row["date"]
             indice = row["indice_panoramico"]
             
-            if i < 3:  # Debug primi 3 elementi
-                print(f"Riga {i}: data={date}, indice={indice:.3f}")
+            # Debug occasionale
+            if i < 2:  # Debug primi 2 elementi
+                print(f"Campione {i}: data={date}, indice={indice:.3f}")
             
             # Calcola breakdown percentuale per tooltip con i nuovi pesi
             breakdown_parts = []
@@ -2912,7 +2921,7 @@ def generate_panoramic_calendar(df_meteo: pd.DataFrame, df_recensioni: pd.DataFr
             xaxis_title="Giorno del mese",
             yaxis_title="Mese e Anno",
             height=400,
-            template=plotly_template,
+            template="plotly_dark",
             paper_bgcolor="rgba(0,0,0,0)",
             plot_bgcolor="rgba(0,0,0,0)",
             font=dict(family="Inter", color="#f8fafc"),
