@@ -2807,37 +2807,9 @@ def generate_panoramic_calendar(df_meteo: pd.DataFrame, df_recensioni: pd.DataFr
             if i < 2:  # Debug primi 2 elementi
                 print(f"Campione {i}: data={date}, indice={indice:.3f}")
             
-            # Calcola breakdown percentuale per tooltip con i nuovi pesi
-            breakdown_parts = []
-            if "panoramico" in row:
-                # Panoramico: 30% del peso totale, normalizzato da scala 1-5
-                panoramico_norm = (row["panoramico"] - 1) / 4.0
-                panoramico_pct = panoramico_norm * 30
-                breakdown_parts.append(f"Qualità panoramica: {panoramico_pct:.1f}%")
-            if "sole" in row:
-                # Sole: 25% del peso totale
-                sole_pct = row["sole"] * 25
-                breakdown_parts.append(f"Sole: {sole_pct:.1f}%")
-            if "pioggia" in row:
-                # Assenza pioggia: 20% del peso totale
-                pioggia_pct = (1 - row["pioggia"]) * 20
-                breakdown_parts.append(f"Assenza pioggia: {pioggia_pct:.1f}%")
-            if "Quota_max" in row:
-                # Quota: 15% del peso totale, normalizzata 1000-3000m
-                quota_norm = (row["Quota_max"] - 1000) / 2000.0
-                quota_pct = max(0, min(15, quota_norm * 15))
-                breakdown_parts.append(f"Quota elevata: {quota_pct:.1f}%")
-            if "nebbia" in row:
-                # Assenza nebbia: 10% del peso totale
-                nebbia_pct = (1 - row["nebbia"]) * 10
-                breakdown_parts.append(f"Assenza nebbia: {nebbia_pct:.1f}%")
-            
-            breakdown_text = " | ".join(breakdown_parts) if breakdown_parts else "Dati limitati"
-            
             calendar_data.append({
                 "date": date,
-                "indice": indice,
-                "breakdown": breakdown_text
+                "indice": indice
             })
         
         if not calendar_data:
@@ -2885,7 +2857,8 @@ def generate_panoramic_calendar(df_meteo: pd.DataFrame, df_recensioni: pd.DataFr
                 colorbar=dict(
                     title=dict(
                         text="Indice Panoramico",
-                        font=dict(color="#f8fafc", size=14, family="Inter")
+                        font=dict(color="#f8fafc", size=14, family="Inter"),
+                        side="right"
                     ),
                     tickfont=dict(color="#f8fafc", size=12, family="Inter"),
                     bgcolor="rgba(15, 23, 42, 0.9)",
@@ -2893,7 +2866,9 @@ def generate_panoramic_calendar(df_meteo: pd.DataFrame, df_recensioni: pd.DataFr
                     borderwidth=1,
                     len=0.6,
                     thickness=20,
-                    x=1.02
+                    x=1.02,
+                    xanchor="left",
+                    yanchor="middle"  # Centra verticalmente
                 ),
                 cmin=0,
                 cmax=1,
@@ -2903,7 +2878,7 @@ def generate_panoramic_calendar(df_meteo: pd.DataFrame, df_recensioni: pd.DataFr
                     width=1
                 )
             ),
-            text=[f"📅 <b>{row['date'].strftime('%d %B %Y')}</b><br>🏔️ Indice panoramico: <b>{row['indice']:.3f}</b><br><br>📊 <b>Breakdown componenti:</b><br>{row['breakdown']}" 
+            text=[f"📅 <b>{row['date'].strftime('%d %B %Y')}</b><br>🏔️ Indice panoramico: <b>{row['indice']:.3f}</b><br><i>Qualità giornata per panorami</i>" 
                   for _, row in df_calendar.iterrows()],
             hovertemplate="<b>%{text}</b><extra></extra>",
             name="Giorni da Cartolina",
@@ -2963,9 +2938,9 @@ def generate_panoramic_calendar(df_meteo: pd.DataFrame, df_recensioni: pd.DataFr
             )
         )
         
-        # Aggiungi legenda in basso a sinistra (non sovrapposta)
+        # Aggiungi legenda in alto a destra (libera da sovrapposizioni)
         fig.add_annotation(
-            x=0.02, y=0.15, xref="paper", yref="paper",
+            x=0.98, y=0.95, xref="paper", yref="paper",
             text="<b>Legenda:</b> 🔴 Basso (0-0.3) | 🟠 Medio (0.3-0.6) | 🟢 Alto (0.6-1.0)",
             showarrow=False,
             font=dict(size=11, color="#cbd5e1", family="Inter"),
@@ -2973,7 +2948,8 @@ def generate_panoramic_calendar(df_meteo: pd.DataFrame, df_recensioni: pd.DataFr
             bordercolor="#64748b", 
             borderwidth=1,
             borderpad=8,
-            align="left"
+            align="right",
+            xanchor="right"
         )
         
         # Aggiungi indicatori per mesi di chiusura impianti (Maggio-Ottobre)
@@ -2994,13 +2970,14 @@ def generate_panoramic_calendar(df_meteo: pd.DataFrame, df_recensioni: pd.DataFr
                 opacity=0.6
             )
         
-        # Aggiungi sottotitolo esplicativo
+        # Aggiungi sottotitolo sopra il calendario
         fig.add_annotation(
-            x=0.5, y=0.02, xref="paper", yref="paper",
-            text="<i>Ogni punto rappresenta un giorno con il relativo indice panoramico.<br>Passa il mouse per dettagli e breakdown componenti.</i>",
+            x=0.5, y=1.08, xref="paper", yref="paper",
+            text="<i>Ogni punto rappresenta un giorno con il relativo indice panoramico. Passa il mouse per dettagli.</i>",
             showarrow=False,
-            font=dict(size=11, color="#94a3b8", family="Inter"),
-            align="center"
+            font=dict(size=12, color="#94a3b8", family="Inter"),
+            align="center",
+            xanchor="center"
         )
         
         print(f"Calendario creato con successo!")
