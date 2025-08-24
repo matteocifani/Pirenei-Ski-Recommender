@@ -2858,102 +2858,77 @@ def generate_panoramic_calendar(df_meteo: pd.DataFrame, df_recensioni: pd.DataFr
         df_calendar["month"] = df_calendar["date"].dt.month
         df_calendar["day"] = df_calendar["date"].dt.day
         
-        # Crea figura del calendario
+        # Crea figura del calendario semplificata
         fig = go.Figure()
         
         # Colori per il heatmap (verde per buoni indici, rosso per cattivi)
         colorscale = [
-            [0, "#ef4444"],      # Rosso per indici bassi
+            [0, "#dc2626"],      # Rosso per indici bassi
             [0.3, "#f59e0b"],    # Arancione
             [0.6, "#10b981"],    # Verde per indici medi
             [1, "#059669"]       # Verde scuro per indici alti
         ]
         
-        # Aggiungi heatmap per ogni anno disponibile
-        years = sorted(df_calendar["year"].unique())
-        for year in years:
-            year_data = df_calendar[df_calendar["year"] == year]
-            
-            # Prepara dati per il calendario
-            calendar_matrix = []
-            month_names = ["Nov", "Dec", "Jan", "Feb", "Mar", "Apr"]
-            
-            for month in [11, 12, 1, 2, 3, 4]:
-                month_data = year_data[year_data["month"] == month]
-                if month_data.empty:
-                    continue
-                
-                # Crea array per il mese (31 giorni)
-                month_array = [None] * 31
-                for _, row in month_data.iterrows():
-                    day = row["day"] - 1  # Indice 0-based
-                    if 0 <= day < 31:
-                        month_array[day] = row["indice"]
-                
-                calendar_matrix.append({
-                    "month": month_names[month - 11] if month >= 11 else month_names[month + 1],
-                    "values": month_array
-                })
-            
-            # Aggiungi heatmap per questo anno
-            for i, month_data in enumerate(calendar_matrix):
-                fig.add_trace(go.Heatmap(
-                    z=[month_data["values"]],
-                    x=list(range(1, 32)),  # Giorni 1-31
-                    y=[f"{year} {month_data['month']}"],
-                    colorscale=colorscale,
-                    zmin=0,
-                    zmax=1,
-                    showscale=(i == 0),  # Mostra scala solo per il primo mese
-                    hovertemplate=(
-                        "<b>%{y}</b><br>" +
-                        "Giorno: %{x}<br>" +
-                        "Indice Panoramico: %{z:.3f}<br>" +
-                        "Breakdown: %{customdata}<br>" +
-                        "<extra></extra>"
-                    ),
-                    customdata=[row.get("breakdown", "Dati limitati") for _, row in year_data.iterrows() if row["month"] == month],
-                    name=f"{year} {month_data['month']}"
-                ))
-        
-        # Layout del calendario
-        fig.update_layout(
-            xaxis_title="Giorno del mese",
-            yaxis_title="Mese e Anno",
-            height=400,
-            template="plotly_dark",
-            paper_bgcolor="rgba(0,0,0,0)",
-            plot_bgcolor="rgba(0,0,0,0)",
-            font=dict(family="Inter", color="#f8fafc"),
-            title=dict(
-                text=f"📅 Calendario 'Giorni da Cartolina' - {station_name}",
-                font=dict(size=18, family="Inter", color="#f8fafc"),
-                x=0.5,
-                xanchor="center"
+        # Prepara dati per scatter plot come calendario semplificato
+        fig.add_trace(go.Scatter(
+            x=df_calendar["day"],
+            y=df_calendar["month"],
+            mode="markers",
+            marker=dict(
+                size=15,
+                color=df_calendar["indice"],
+                colorscale=colorscale,
+                colorbar=dict(
+                    title="Indice Panoramico",
+                    titlefont=dict(color="#f8fafc"),
+                    tickfont=dict(color="#f8fafc")
+                ),
+                cmin=0,
+                cmax=1,
+                opacity=0.8
             ),
+            text=[f"📅 {row['date'].strftime('%d/%m/%Y')}<br>🏔️ Indice: {row['indice']:.3f}<br>📊 {row['breakdown']}" 
+                  for _, row in df_calendar.iterrows()],
+            hovertemplate="<b>%{text}</b><extra></extra>",
+            name="Giorni da Cartolina"
+        ))
+        
+        # Layout del calendario semplificato
+        fig.update_layout(
+            title=f"📅 Calendario 'Giorni da Cartolina' - {station_name}",
+            xaxis_title="Giorno del mese",
+            yaxis_title="Mese",
+            height=500,
+            template="plotly_dark",
+            showlegend=False,
             xaxis=dict(
-                gridcolor="#374151",
-                tickfont=dict(color="#d1d5db", family="Inter"),
+                range=[0, 32],
                 tickmode="linear",
                 tick0=1,
-                dtick=1
+                dtick=1,
+                gridcolor="#374151"
             ),
             yaxis=dict(
-                gridcolor="#374151",
-                tickfont=dict(color="#d1d5db", family="Inter")
-            )
+                tickmode="array",
+                tickvals=[1, 2, 3, 4, 11, 12],
+                ticktext=["Gen", "Feb", "Mar", "Apr", "Nov", "Dic"],
+                gridcolor="#374151"
+            ),
+            font=dict(color="#f8fafc"),
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)"
         )
         
-        # Aggiungi annotazione per la legenda
+        # Aggiungi annotazione informativa
         fig.add_annotation(
             x=0.02, y=0.98, xref="paper", yref="paper",
-            text="🟢 Verde: Giorni ideali per panorami<br>🔴 Rosso: Condizioni meno favorevoli",
+            text="🔴 Basso | 🟡 Medio | 🟢 Alto indice panoramico",
             showarrow=False,
-            font=dict(size=12, color="#9ca3af", family="Inter"),
-            bgcolor="rgba(15, 23, 42, 0.9)",
+            font=dict(size=11, color="#9ca3af"),
+            bgcolor="rgba(15, 23, 42, 0.8)",
             bordercolor="#374151",
             borderwidth=1,
-            borderpad=8,
+            borderpad=6,
             align="left"
         )
         
