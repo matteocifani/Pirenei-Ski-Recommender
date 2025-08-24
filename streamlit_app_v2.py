@@ -2940,21 +2940,20 @@ def generate_panoramic_calendar(df_meteo: pd.DataFrame, df_recensioni: pd.DataFr
         
 
         
-        # Aggiungi indicatori per mesi di chiusura impianti (Maggio-Ottobre)
-        for closed_month in [5, 6, 7, 8, 9, 10]:
+        # Aggiungi indicatore unico per periodo chiusura impianti (Maggio-Ottobre)
             fig.add_shape(
                 type="rect",
                 x0=0.5, x1=31.5,
-                y0=closed_month-0.4, y1=closed_month+0.4,
+            y0=4.6, y1=10.4,  # Da Maggio (5) a Ottobre (10)
                 fillcolor="rgba(107, 114, 128, 0.1)",
                 line=dict(color="rgba(107, 114, 128, 0.3)", width=1, dash="dot"),
                 layer="below"
             )
             fig.add_annotation(
-                x=16, y=closed_month,
+            x=16, y=7.5,  # Centro della striscia
                 text="Impianti chiusi",
                 showarrow=False,
-                font=dict(size=10, color="#6b7280", family="Inter"),
+            font=dict(size=12, color="#6b7280", family="Inter"),
                 opacity=0.6
             )
         
@@ -3767,7 +3766,7 @@ def main():
     if livello == "base":
         # Divider e titolo principale sezione livello
         st.markdown('<hr class="profile-divider">', unsafe_allow_html=True)
-        st.markdown('<h2 class="profile-main-title">🎿 Sezione Livello: Principiante</h2>', unsafe_allow_html=True)
+        st.markdown('<h2 class="profile-main-title">🎿 Livello: base</h2>', unsafe_allow_html=True)
         
 
         # Mappa con consigliata evidenziata
@@ -3924,7 +3923,7 @@ def main():
     elif livello == "medio":
         # Divider e titolo principale sezione livello
         st.markdown('<hr class="profile-divider">', unsafe_allow_html=True)
-        st.markdown('<h2 class="profile-main-title">🎿 Sezione Livello: Intermedio</h2>', unsafe_allow_html=True)
+        st.markdown('<h2 class="profile-main-title">🎿 Livello: medio</h2>', unsafe_allow_html=True)
         
 
         # Mappa con consigliata evidenziata
@@ -4115,7 +4114,7 @@ def main():
     elif livello == "esperto":
         # Divider e titolo principale sezione livello
         st.markdown('<hr class="profile-divider">', unsafe_allow_html=True)
-        st.markdown('<h2 class="profile-main-title">⛷️ Sezione Livello: Esperto</h2>', unsafe_allow_html=True)
+        st.markdown('<h2 class="profile-main-title">⛷️ Livello: esperto</h2>', unsafe_allow_html=True)
         
 
         
@@ -4196,7 +4195,9 @@ def main():
             fig_risk.update_layout(
                 height=260, 
                 margin=dict(l=10, r=10, t=24, b=24),
-                template="plotly_dark"
+                template="plotly_dark",
+                paper_bgcolor="rgba(0,0,0,0)",
+                plot_bgcolor="rgba(0,0,0,0)"
             )
             st.plotly_chart(fig_risk, use_container_width=True)
             
@@ -4267,7 +4268,7 @@ def main():
                     title="Quota max e min per stazione",
                     xaxis_title="Stazione",
                     yaxis_title="Quota (m)",
-                    xaxis_tickangle=-45,
+                    xaxis_tickangle=-45, 
                     yaxis=dict(range=[1000, 2800]),
                     template="plotly_dark",
                     barmode='overlay',  # Barre sovrapposte una sopra l'altra
@@ -4339,7 +4340,9 @@ def main():
         fig_bar_total.update_traces(texttemplate='%{text:.0f} km', textposition='outside')
         fig_bar_total.update_layout(
             xaxis_tickangle=-45,
-            template="plotly_dark"
+            template="plotly_dark",
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)"
         )
         st.plotly_chart(fig_bar_total, use_container_width=True)
 
@@ -4515,7 +4518,7 @@ def main():
     if profilo_norm == "panoramico":
         # Divider e titolo sezione profilo
         st.markdown('<hr class="profile-divider">', unsafe_allow_html=True)
-        st.markdown('<h2 class="profile-main-title">🏔️ Sezione Profilo: Panoramico</h2>', unsafe_allow_html=True)
+        st.markdown('<h2 class="profile-main-title">🏔️ Profilo: panoramico</h2>', unsafe_allow_html=True)
         
         # AI Overview per profilo panoramico (PRIMA dei grafici) - Temporaneamente disabilitato
         st.markdown(f"""
@@ -4584,7 +4587,7 @@ def main():
     if profilo_norm == "familiare":
         # Divider e titolo sezione profilo
         st.markdown('<hr class="profile-divider">', unsafe_allow_html=True)
-        st.markdown('<h2 class="profile-main-title">👶 Sezione Profilo: Familiare</h2>', unsafe_allow_html=True)
+        st.markdown('<h2 class="profile-main-title">👶 Profilo: familiare</h2>', unsafe_allow_html=True)
         
         # AI Overview per profilo familiare (PRIMA dei grafici) - Temporaneamente disabilitato
         st.markdown(f"""
@@ -4668,7 +4671,7 @@ def main():
     if profilo_norm == "festaiolo":
         # Divider e titolo sezione profilo
         st.markdown('<hr class="profile-divider">', unsafe_allow_html=True)
-        st.markdown('<h2 class="profile-main-title">🎉 Sezione Profilo: Festaiolo</h2>', unsafe_allow_html=True)
+        st.markdown('<h2 class="profile-main-title">🎉 Profilo: festaiolo</h2>', unsafe_allow_html=True)
         
         # AI Overview per profilo festaiolo (PRIMA dei grafici) - Temporaneamente disabilitato
         st.markdown(f"""
@@ -4686,7 +4689,7 @@ def main():
         """, unsafe_allow_html=True)
         
 
-
+        
         # Titolo per i grafici specifici del profilo
         st.markdown('<h4 class="section-subtitle">📊 Analisi specifica per festaioli</h4>', unsafe_allow_html=True)
         
@@ -4742,7 +4745,7 @@ def main():
 
         
         # Titolo sezione profilo
-        st.markdown('<h2 class="profile-main-title">💰 Sezione Profilo: Low-Cost</h2>', unsafe_allow_html=True)
+        st.markdown('<h2 class="profile-main-title">💰 Profilo: lowcost</h2>', unsafe_allow_html=True)
         
         # AI Overview per profilo low-cost (PRIMA dei grafici) - Temporaneamente disabilitato
         st.markdown(f"""
@@ -4786,7 +4789,9 @@ def main():
                 )
                 fig_prices_lowcost.update_layout(
                     xaxis_tickangle=-45,
-                    template="plotly_dark"
+                    template="plotly_dark",
+                    paper_bgcolor="rgba(0,0,0,0)",
+                    plot_bgcolor="rgba(0,0,0,0)"
                 )
                 st.plotly_chart(fig_prices_lowcost, use_container_width=True)
             else:
@@ -4903,62 +4908,6 @@ def main():
         # 3) AI Overview – Low-Cost (TEMPORANEAMENTE DISABILITATO)
 
     
-    # --- Sezione finale: classifiche semplici per livello e profilo ---
-    try:
-        if df_with_indices is not None and not df_with_indices.empty:
-            st.markdown("---")
-            # Classifica per livello
-            st.subheader("Classifica e indici – Livello")
-            level_to_col = {"base": "indice_base", "medio": "indice_medio", "esperto": "indice_esperto"}
-            level_col = level_to_col.get(livello)
-            if level_col and level_col in df_with_indices.columns:
-                df_level_rank = (
-                    df_with_indices.groupby("nome_stazione")[level_col]
-                    .mean()
-                    .reset_index()
-                    .sort_values(level_col, ascending=False)
-                )
-                fig_lvl = px.bar(
-                    df_level_rank,
-                    x="nome_stazione",
-                    y=level_col,
-                    title=f"Ranking (livello: {livello})",
-                    labels={"nome_stazione": "Impianto", level_col: "Indice livello"},
-                )
-                fig_lvl.update_layout(xaxis_tickangle=-45)
-                st.plotly_chart(fig_lvl, use_container_width=True)
-            else:
-                st.info("Seleziona un livello per vedere la classifica per livello.")
-
-            # Classifica per profilo
-            st.subheader("Classifica e indici – Profilo")
-            profile_to_col = {
-                "panoramico": "indice_panoramico",
-                "familiare": "indice_famigliare",
-                "festaiolo": "indice_festaiolo",
-                "lowcost": "indice_lowcost",
-            }
-            prof_col = profile_to_col.get(profilo_norm)
-            if prof_col and prof_col in df_with_indices.columns:
-                df_prof_rank = (
-                    df_with_indices.groupby("nome_stazione")[prof_col]
-                    .mean()
-                    .reset_index()
-                    .sort_values(prof_col, ascending=False)
-                )
-                fig_prof = px.bar(
-                    df_prof_rank,
-                    x="nome_stazione",
-                    y=prof_col,
-                    title=f"Ranking (profilo: {profilo_norm})",
-                    labels={"nome_stazione": "Impianto", prof_col: "Indice profilo"},
-                )
-                fig_prof.update_layout(xaxis_tickangle=-45)
-                st.plotly_chart(fig_prof, use_container_width=True)
-            else:
-                st.info("Seleziona un profilo per vedere la classifica per profilo.")
-    except Exception:
-        pass
 
     st.caption("v2 – Stazione consigliata, overview AI e viste dedicate per livello")
     
