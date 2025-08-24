@@ -2256,7 +2256,7 @@ def get_unified_plotly_template():
         'gridcolor': 'rgba(148, 163, 184, 0.2)',
         'linecolor': 'rgba(148, 163, 184, 0.3)',
         'tickfont': {'color': '#cbd5e1'},
-        'titlefont': {'color': '#e2e8f0'}
+        'title': {'font': {'color': '#e2e8f0'}}
     }
 
     return {
@@ -2938,7 +2938,7 @@ def generate_panoramic_calendar(df_meteo: pd.DataFrame, df_recensioni: pd.DataFr
         )
         
         print(f"Calendario creato con successo!")
-        print(f"Figura info: {len(fig.data)} trace(s), layout keys: {list(fig.layout.keys())[:5]}...")
+        print(f"Figura info: {len(fig.data)} trace(s), layout title: {getattr(fig.layout, 'title', 'N/A')}")
         
         # Verifica che la figura sia valida
         if len(fig.data) == 0:
@@ -3808,7 +3808,7 @@ def main():
             fig.update_layout(
                 height=280, 
                 margin=dict(l=20, r=20, t=40, b=40),
-                template=plotly_template,
+                template="plotly_dark",
                 paper_bgcolor="rgba(0,0,0,0)",
                 plot_bgcolor="rgba(0,0,0,0)",
                 font=dict(family="Inter", color="#f8fafc")
@@ -3868,7 +3868,7 @@ def main():
             )
             fig_piste_base.update_layout(
                 xaxis_tickangle=-45,
-                template=plotly_template,
+                template="plotly_dark",
                 paper_bgcolor="rgba(0,0,0,0)",
                 plot_bgcolor="rgba(0,0,0,0)",
                 font=dict(family="Inter", color="#f8fafc"),
@@ -4056,7 +4056,7 @@ def main():
             )
             fig.update_layout(
                 xaxis_tickangle=-45,
-                template=plotly_template,
+                template="plotly_dark",
                 paper_bgcolor="rgba(0,0,0,0)",
                 plot_bgcolor="rgba(0,0,0,0)",
                 font=dict(family="Inter", color="#f8fafc"),
@@ -4165,7 +4165,7 @@ def main():
             fig_risk.update_layout(
                 height=260, 
                 margin=dict(l=10, r=10, t=24, b=24),
-                template=plotly_template
+                template="plotly_dark"
             )
             st.plotly_chart(fig_risk, use_container_width=True)
             
@@ -4217,7 +4217,7 @@ def main():
                 fig_quota.update_layout(
                     xaxis_tickangle=-45, 
                     yaxis=dict(range=[2000, 2800]),
-                    template=plotly_template
+                    template="plotly_dark"
                 )
                 st.plotly_chart(fig_quota, use_container_width=True)
         except Exception:
@@ -4237,7 +4237,7 @@ def main():
         fig_bar_total.update_traces(texttemplate='%{text:.0f} km', textposition='outside')
         fig_bar_total.update_layout(
             xaxis_tickangle=-45,
-            template=plotly_template
+            template="plotly_dark"
         )
         st.plotly_chart(fig_bar_total, use_container_width=True)
 
@@ -4269,7 +4269,7 @@ def main():
                     )
                     fig_acts.update_layout(
                         xaxis_tickangle=-45,
-                        template=plotly_template,
+                        template="plotly_dark",
                         paper_bgcolor="rgba(0,0,0,0)",
                         plot_bgcolor="rgba(0,0,0,0)"
                     )
@@ -4342,7 +4342,7 @@ def main():
             )
             fig_stack.update_layout(
                 xaxis_tickangle=-45,
-                template=plotly_template,
+                template="plotly_dark",
                 paper_bgcolor="rgba(0,0,0,0)",
                 plot_bgcolor="rgba(0,0,0,0)",
                 font=dict(family="Inter", color="#f8fafc"),
@@ -4433,7 +4433,7 @@ def main():
                 fig_lines.update_layout(
                     xaxis_title="Data", 
                     yaxis_title="Spessore medio (cm)",
-                    template=plotly_template,
+                    template="plotly_dark",
                     paper_bgcolor="rgba(0,0,0,0)",
                     plot_bgcolor="rgba(0,0,0,0)"
                 )
@@ -4547,7 +4547,7 @@ def main():
                 )
                 fig_kids.update_layout(
                     xaxis_tickangle=-45,
-                    template=plotly_template,
+                    template="plotly_dark",
                     paper_bgcolor="rgba(0,0,0,0)",
                     plot_bgcolor="rgba(0,0,0,0)"
                 )
@@ -4580,7 +4580,7 @@ def main():
                     labels={"nome_stazione": "Impianto", "Prezzo": "€"}
                 )
                 fig_prices.update_layout(
-                    template=plotly_template,
+                    template="plotly_dark",
                     xaxis_tickangle=-45,
                     paper_bgcolor="rgba(0,0,0,0)",
                     plot_bgcolor="rgba(0,0,0,0)"
@@ -4625,7 +4625,7 @@ def main():
                     labels={"Scii_notte": "Km sci notturno", "nome_stazione": "Impianto"}
                 )
                 fig_night.update_layout(
-                    template=plotly_template,
+                    template="plotly_dark",
                     paper_bgcolor="rgba(0,0,0,0)",
                     plot_bgcolor="rgba(0,0,0,0)"
                 )
@@ -4644,7 +4644,7 @@ def main():
                 )
                 fig_acts.update_layout(
                     xaxis_tickangle=-45,
-                    template=plotly_template,
+                    template="plotly_dark",
                     paper_bgcolor="rgba(0,0,0,0)",
                     plot_bgcolor="rgba(0,0,0,0)"
                 )
@@ -4703,7 +4703,7 @@ def main():
                 )
                 fig_prices_lowcost.update_layout(
                     xaxis_tickangle=-45,
-                    template=plotly_template
+                    template="plotly_dark"
                 )
                 st.plotly_chart(fig_prices_lowcost, use_container_width=True)
             else:
