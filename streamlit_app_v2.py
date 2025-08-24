@@ -2708,14 +2708,19 @@ def generate_panoramic_calendar(df_meteo: pd.DataFrame, df_recensioni: pd.DataFr
             (station_data["date"].dt.month.isin([11, 12, 1, 2, 3, 4]))
         ].copy()
         
+        print(f"Dati dopo filtro stagionale: {len(season_data)} righe")
+        
         if season_data.empty:
             # Fallback: usa tutti i dati disponibili se non ci sono dati stagionali
             print(f"Nessun dato stagionale per {station_name}, uso tutti i dati disponibili")
             season_data = station_data.copy()
+            print(f"Dati fallback: {len(season_data)} righe")
         
         if season_data.empty:
             print(f"Nessun dato disponibile per {station_name}")
             return None
+        
+        print(f"Procedura calcolo indice panoramico per {len(season_data)} righe")
         
         # Calcola indice panoramico per ogni giorno
         def calculate_panoramic_index(row):
@@ -2753,6 +2758,7 @@ def generate_panoramic_calendar(df_meteo: pd.DataFrame, df_recensioni: pd.DataFr
         
         # Applica calcolo indice panoramico
         season_data["indice_panoramico"] = season_data.apply(calculate_panoramic_index, axis=1)
+        print(f"Indici panoramici calcolati. Range: {season_data['indice_panoramico'].min():.3f} - {season_data['indice_panoramico'].max():.3f}")
         
         # Raggruppa per data e calcola media ±3 giorni per smoothing
         season_data["date_str"] = season_data["date"].dt.strftime("%Y-%m-%d")
@@ -2763,16 +2769,23 @@ def generate_panoramic_calendar(df_meteo: pd.DataFrame, df_recensioni: pd.DataFr
             if col in season_data.columns:
                 agg_cols.append(col)
         
+        print(f"Colonne per aggregazione: {agg_cols}")
         daily_avg = season_data.groupby("date_str")[agg_cols].mean().reset_index()
+        print(f"Dati aggregati per giorno: {len(daily_avg)} giorni unici")
         
         # Converti date string in datetime per il calendario
         daily_avg["date"] = pd.to_datetime(daily_avg["date_str"])
         
         # Prepara dati per il calendario heatmap
         calendar_data = []
-        for _, row in daily_avg.iterrows():
+        print(f"Inizio creazione dati calendario da {len(daily_avg)} righe")
+        
+        for i, (_, row) in enumerate(daily_avg.iterrows()):
             date = row["date"]
             indice = row["indice_panoramico"]
+            
+            if i < 3:  # Debug primi 3 elementi
+                print(f"Riga {i}: data={date}, indice={indice:.3f}")
             
             # Calcola breakdown percentuale per tooltip con i nuovi pesi
             breakdown_parts = []
@@ -2808,10 +2821,14 @@ def generate_panoramic_calendar(df_meteo: pd.DataFrame, df_recensioni: pd.DataFr
             })
         
         if not calendar_data:
+            print(f"ERRORE: calendar_data vuoto dopo il ciclo!")
             return None
+        
+        print(f"Calendar_data creato con {len(calendar_data)} elementi")
         
         # Crea DataFrame per il calendario
         df_calendar = pd.DataFrame(calendar_data)
+        print(f"DataFrame calendario: {len(df_calendar)} righe, anni: {sorted(df_calendar['date'].dt.year.unique())}")
         
         # Crea heatmap calendario con Plotly
         px, go, make_subplots = get_plotly()  # Lazy import
