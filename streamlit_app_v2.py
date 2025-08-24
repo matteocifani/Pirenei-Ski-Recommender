@@ -3747,20 +3747,26 @@ def main():
     st.write("")
     # AI overview: disattivata quando livello == "nessuno"
     if livello != "nessuno":
-        # AI Overview temporaneamente disabilitato per risparmiare chiamate OpenRouter
-        st.markdown(f"""
-        <div class="ai-overview-section">
-            <div class="ai-header">
-                <div class="ai-header-text">
-                    <div class="ai-title">AI Overview ✨</div>
-                    <div class="ai-badge">Temporaneamente in pausa</div>
+        # AI Overview riattivato
+        try:
+            prompt = build_llm_prompt(df_kpis, best_name, livello, profilo, data_sel)
+            ai_overview, metadata = safe_llm_call(prompt, max_tokens=200)
+            
+            st.markdown(f"""
+            <div class="ai-overview-section">
+                <div class="ai-header">
+                    <div class="ai-header-text">
+                        <div class="ai-title">AI Overview ✨</div>
+                        <div class="ai-badge">Analisi personalizzata</div>
+                    </div>
+                </div>
+                <div class="ai-overview-content">
+                    {ai_overview}
                 </div>
             </div>
-            <div class="ai-overview-content">
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
+            """, unsafe_allow_html=True)
+        except Exception as e:
+            st.warning(f"AI Overview non disponibile: {e}")
 
     # Level-specific visualizations (no raw index shown)
     if livello == "base":
@@ -4531,20 +4537,26 @@ def main():
         st.markdown('<hr class="profile-divider">', unsafe_allow_html=True)
         st.markdown('<h2 class="profile-main-title">🏔️ Profilo: panoramico</h2>', unsafe_allow_html=True)
         
-        # AI Overview per profilo panoramico (PRIMA dei grafici) - Temporaneamente disabilitato
-        st.markdown(f"""
-        <div class="ai-overview-section">
-            <div class="ai-header">
-                <div class="ai-header-text">
-                    <div class="ai-title">AI Overview ✨</div>
-                    <div class="ai-badge">Temporaneamente in pausa</div>
+        # AI Overview per profilo panoramico (PRIMA dei grafici) - Riattivato
+        try:
+            prompt_panoramico = build_panoramico_prompt(df_with_indices, best_name, livello, data_sel)
+            ai_overview_panoramico, metadata = safe_llm_call(prompt_panoramico, max_tokens=200)
+            
+            st.markdown(f"""
+            <div class="ai-overview-section">
+                <div class="ai-header">
+                    <div class="ai-header-text">
+                        <div class="ai-title">AI Overview ✨</div>
+                        <div class="ai-badge">Profilo Panoramico</div>
+                    </div>
+                </div>
+                <div class="ai-overview-content">
+                    {ai_overview_panoramico}
                 </div>
             </div>
-            <div class="ai-overview-content">
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
+            """, unsafe_allow_html=True)
+        except Exception as e:
+            st.warning(f"AI Overview panoramico non disponibile: {e}")
         
         # Titolo per i grafici specifici del profilo
         st.markdown('<h4 class="section-subtitle">📊 Analisi specifica per panorami</h4>', unsafe_allow_html=True)
@@ -4600,20 +4612,26 @@ def main():
         st.markdown('<hr class="profile-divider">', unsafe_allow_html=True)
         st.markdown('<h2 class="profile-main-title">👶 Profilo: familiare</h2>', unsafe_allow_html=True)
         
-        # AI Overview per profilo familiare (PRIMA dei grafici) - Temporaneamente disabilitato
-        st.markdown(f"""
-        <div class="ai-overview-section">
-            <div class="ai-header">
-                <div class="ai-header-text">
-                    <div class="ai-title">AI Overview ✨</div>
-                    <div class="ai-badge">Temporaneamente in pausa</div>
+        # AI Overview per profilo familiare (PRIMA dei grafici) - Riattivato
+        try:
+            prompt_familiare = build_familiare_prompt(df_with_indices, best_name, livello, data_sel)
+            ai_overview_familiare, metadata = safe_llm_call(prompt_familiare, max_tokens=200)
+            
+            st.markdown(f"""
+            <div class="ai-overview-section">
+                <div class="ai-header">
+                    <div class="ai-header-text">
+                        <div class="ai-title">AI Overview ✨</div>
+                        <div class="ai-badge">Profilo Familiare</div>
+                    </div>
+                </div>
+                <div class="ai-overview-content">
+                    {ai_overview_familiare}
                 </div>
             </div>
-            <div class="ai-overview-content">
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
+            """, unsafe_allow_html=True)
+        except Exception as e:
+            st.warning(f"AI Overview familiare non disponibile: {e}")
         
         # Titolo per i grafici specifici del profilo
         st.markdown('<h4 class="section-subtitle">📊 Analisi specifica per famiglie</h4>', unsafe_allow_html=True)
@@ -4684,20 +4702,26 @@ def main():
         st.markdown('<hr class="profile-divider">', unsafe_allow_html=True)
         st.markdown('<h2 class="profile-main-title">🎉 Profilo: festaiolo</h2>', unsafe_allow_html=True)
         
-        # AI Overview per profilo festaiolo (PRIMA dei grafici) - Temporaneamente disabilitato
-        st.markdown(f"""
-        <div class="ai-overview-section">
-            <div class="ai-header">
-                <div class="ai-header-text">
-                    <div class="ai-title">AI Overview ✨</div>
-                    <div class="ai-badge">Temporaneamente in pausa</div>
+        # AI Overview per profilo festaiolo (PRIMA dei grafici) - Riattivato
+        try:
+            prompt_festaiolo = build_festaiolo_prompt(df_with_indices, best_name, livello, data_sel)
+            ai_overview_festaiolo, metadata = safe_llm_call(prompt_festaiolo, max_tokens=200)
+            
+            st.markdown(f"""
+            <div class="ai-overview-section">
+                <div class="ai-header">
+                    <div class="ai-header-text">
+                        <div class="ai-title">AI Overview ✨</div>
+                        <div class="ai-badge">Profilo Festaiolo</div>
+                    </div>
+                </div>
+                <div class="ai-overview-content">
+                    {ai_overview_festaiolo}
                 </div>
             </div>
-            <div class="ai-overview-content">
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
+            """, unsafe_allow_html=True)
+        except Exception as e:
+            st.warning(f"AI Overview festaiolo non disponibile: {e}")
         
 
         
@@ -4758,20 +4782,26 @@ def main():
         # Titolo sezione profilo
         st.markdown('<h2 class="profile-main-title">💰 Profilo: lowcost</h2>', unsafe_allow_html=True)
         
-        # AI Overview per profilo low-cost (PRIMA dei grafici) - Temporaneamente disabilitato
-        st.markdown(f"""
-        <div class="ai-overview-section">
-            <div class="ai-header">
-                <div class="ai-header-text">
-                    <div class="ai-title">AI Overview ✨</div>
-                    <div class="ai-badge">Temporaneamente in pausa</div>
+        # AI Overview per profilo low-cost (PRIMA dei grafici) - Riattivato
+        try:
+            prompt_lowcost = build_lowcost_prompt(df_with_indices, best_name, livello, data_sel)
+            ai_overview_lowcost, metadata = safe_llm_call(prompt_lowcost, max_tokens=200)
+            
+            st.markdown(f"""
+            <div class="ai-overview-section">
+                <div class="ai-header">
+                    <div class="ai-header-text">
+                        <div class="ai-title">AI Overview ✨</div>
+                        <div class="ai-badge">Profilo Low-Cost</div>
+                    </div>
+                </div>
+                <div class="ai-overview-content">
+                    {ai_overview_lowcost}
                 </div>
             </div>
-            <div class="ai-overview-content">
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
+            """, unsafe_allow_html=True)
+        except Exception as e:
+            st.warning(f"AI Overview low-cost non disponibile: {e}")
         
         # Titolo per i grafici specifici del profilo
         st.markdown('<h4 class="section-subtitle">📊 Analisi specifica per low-cost</h4>', unsafe_allow_html=True)
@@ -4916,7 +4946,7 @@ def main():
             st.warning(f"Errore nel calcolo del rapporto: {e}")
             st.write(f"Errore completo: {str(e)}")
         
-        # 3) AI Overview – Low-Cost (TEMPORANEAMENTE DISABILITATO)
+        # 3) AI Overview – Low-Cost (attivo sopra nella sezione profilo)
 
     
 
