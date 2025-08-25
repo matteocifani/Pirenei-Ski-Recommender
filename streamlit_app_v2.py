@@ -4525,7 +4525,15 @@ def main():
             top3 = (df_with_indices.groupby("nome_stazione")["indice_base"].mean()
                     .sort_values(ascending=False).head(3).reset_index())
             if len(top3) > 0:
-                st.markdown('<h4 class="section-subtitle">🏆 Classifica Top 3</h4>', unsafe_allow_html=True)
+                st.markdown('<h4 class="section-subtitle">🏆 Classifica Top 3 (Base)</h4>', unsafe_allow_html=True)
+
+                # Debug: mostra i valori degli indici per verificare la variabilità
+                with st.expander("🔍 Debug: Valori Indici Base", expanded=False):
+                    st.write("Top 5 stazioni per indice_base:")
+                    debug_df = (df_with_indices.groupby("nome_stazione")["indice_base"].mean()
+                               .sort_values(ascending=False).head(5).reset_index())
+                    st.dataframe(debug_df.style.format({"indice_base": ".4f"}))
+
                 st.markdown(
                     render_podium(top3),
                     unsafe_allow_html=True
@@ -4688,7 +4696,14 @@ def main():
                 first = names[0] if len(names) > 0 else ""
                 second = names[1] if len(names) > 1 else ""
                 third = names[2] if len(names) > 2 else ""
-                st.markdown('<h4 class="section-subtitle">🏆 Classifica Top 3</h4>', unsafe_allow_html=True)
+                st.markdown('<h4 class="section-subtitle">🏆 Classifica Top 3 (Medio)</h4>', unsafe_allow_html=True)
+
+                # Debug: mostra i valori degli indici per verificare la variabilità
+                with st.expander("🔍 Debug: Valori Indici Medio", expanded=False):
+                    st.write("Top 5 stazioni per indice_medio:")
+                    debug_df = (df_with_indices.groupby("nome_stazione")["indice_medio"].mean()
+                               .sort_values(ascending=False).head(5).reset_index())
+                    st.dataframe(debug_df.style.format({"indice_medio": ".4f"}))
                 st.markdown(
                     f"""
                     <div class='podium-container'>
@@ -4880,7 +4895,14 @@ def main():
                 first = names[0] if len(names) > 0 else ""
                 second = names[1] if len(names) > 1 else ""
                 third = names[2] if len(names) > 2 else ""
-                st.markdown('<h4 class="section-subtitle">🏆 Classifica Top 3</h4>', unsafe_allow_html=True)
+                st.markdown('<h4 class="section-subtitle">🏆 Classifica Top 3 (Esperto)</h4>', unsafe_allow_html=True)
+
+                # Debug: mostra i valori degli indici per verificare la variabilità
+                with st.expander("🔍 Debug: Valori Indici Esperto", expanded=False):
+                    st.write("Top 5 stazioni per indice_esperto:")
+                    debug_df = (df_with_indices.groupby("nome_stazione")["indice_esperto"].mean()
+                               .sort_values(ascending=False).head(5).reset_index())
+                    st.dataframe(debug_df.style.format({"indice_esperto": ".4f"}))
                 st.markdown(
                     f"""
                     <div class='podium-container'>
