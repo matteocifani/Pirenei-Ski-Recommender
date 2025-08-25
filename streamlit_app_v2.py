@@ -3227,7 +3227,7 @@ def build_lowcost_prompt(df_rec: pd.DataFrame, best_name: str, livello: str, tar
         if not best_ratio.empty:
             euro_km = best_ratio.iloc[0].get("rapporto_euro_km", 0)
             km_open = best_ratio.iloc[0].get("kmopen", 0)
-            price = best_ratio.iloc[0].get("Prezzo_skipass", 0)
+            price = best_ratio.iloc[0].get("Prezzo skipass", 0)
             
             value_rating = "eccellente" if euro_km < 3 else "buon" if euro_km < 5 else "standard"
             price_context = f"{best_name}: {value_rating} rapporto qualità-prezzo (€{euro_km:.2f}/km, {km_open:.1f}km disponibili, skipass €{price:.0f})"
@@ -5433,9 +5433,9 @@ def main():
         except Exception:
             pass
 
-        # 2) Prezzi medi per impianto (skipass, scuola, noleggio)
+        # 2) Prezzi medi per impianto (Prezzo skipass, Prezzo scuola, Prezzo noleggio)
         try:
-            price_cols = [c for c in ["Prezzo_skipass", "Prezzo_scuola", "Prezzo_noleggio"] if c in df_with_indices.columns]
+            price_cols = [c for c in ["Prezzo skipass", "Prezzo scuola", "Prezzo noleggio"] if c in df_with_indices.columns]
             if price_cols:
                 df_price = (
                     df_with_indices[["nome_stazione"] + price_cols]
@@ -5452,7 +5452,7 @@ def main():
                     melted_p,
                     x="nome_stazione", y="Prezzo", color="Voce",
                     barmode="group",
-                    title="Prezzi medi per impianto (skipass, scuola, noleggio)",
+                    title="Prezzi medi per impianto (Prezzo skipass, Prezzo scuola, Prezzo noleggio)",
                     labels={"nome_stazione": "Impianto", "Prezzo": "€"}
                 )
                 fig_prices.update_layout(
@@ -5463,7 +5463,7 @@ def main():
                 )
                 st.plotly_chart(fig_prices, use_container_width=True)
             else:
-                st.info("Dati prezzo non disponibili (skipass/scuola/noleggio)")
+                st.info("Dati prezzo non disponibili (Prezzo skipass/Prezzo scuola/Prezzo noleggio)")
         except Exception:
             pass
 
@@ -5585,9 +5585,9 @@ def main():
         # Titolo per i grafici specifici del profilo
         st.markdown('<h4 class="section-subtitle">📊 Analisi specifica per low-cost</h4>', unsafe_allow_html=True)
         
-        # 1) Grafico a barre: costi di ski pass, scuola sci e noleggio
+        # 1) Grafico a barre: costi di Prezzo skipass, Prezzo scuola e Prezzo noleggio
         try:
-            price_cols = [c for c in ["Prezzo_skipass", "Prezzo_scuola", "Prezzo_noleggio"] if c in df_with_indices.columns]
+            price_cols = [c for c in ["Prezzo skipass", "Prezzo scuola", "Prezzo noleggio"] if c in df_with_indices.columns]
             
             if price_cols:
                 df_price_lowcost = (
@@ -5603,9 +5603,9 @@ def main():
                     melted_prices,
                     x="nome_stazione", y="Prezzo", color="Voce",
                     barmode="group",
-                    title="💰 Costi per impianto (skipass, scuola, noleggio) - Ordine crescente per prezzo medio",
+                    title="💰 Costi per impianto (Prezzo skipass, Prezzo scuola, Prezzo noleggio) - Ordine crescente per prezzo medio",
                     labels={"nome_stazione": "Impianto", "Prezzo": "€", "Voce": "Tipo costo"},
-                    color_discrete_map={"Prezzo_skipass": "#FF6B6B", "Prezzo_scuola": "#4ECDC4", "Prezzo_noleggio": "#45B7D1"}
+                    color_discrete_map={"Prezzo skipass": "#FF6B6B", "Prezzo scuola": "#4ECDC4", "Prezzo noleggio": "#45B7D1"}
                 )
                 fig_prices_lowcost.update_layout(
                     xaxis_tickangle=-45,
@@ -5621,13 +5621,13 @@ def main():
         
         # 2) Tabella rapporto kmopen/costo skipass
         try:
-            if not df_with_indices.empty and "kmopen" in df_with_indices.columns and "Prezzo_skipass" in df_with_indices.columns:
+            if not df_with_indices.empty and "kmopen" in df_with_indices.columns and "Prezzo skipass" in df_with_indices.columns:
                 # Raggruppa per stazione e calcola le medie per avere una riga per stazione
                 df_ratio = (
                     df_with_indices.groupby("nome_stazione")
                     .agg({
                         "kmopen": "mean",
-                        "Prezzo_skipass": "mean"
+                        "Prezzo skipass": "mean"
                     })
                     .reset_index()
                     .dropna()
@@ -5682,7 +5682,7 @@ def main():
                     # Calcola il rapporto euro/km (costo per chilometro di pista)
                     df_ratio["rapporto_euro_km"] = np.where(
                         df_ratio["kmopen"] > 0,
-                        df_ratio["Prezzo_skipass"] / df_ratio["kmopen"],
+                        df_ratio["Prezzo skipass"] / df_ratio["kmopen"],
                         0
                     )
                     
@@ -5690,12 +5690,12 @@ def main():
                     df_ratio = df_ratio.sort_values("rapporto_euro_km", ascending=True)
                     
                     # Prepara tabella finale
-                    df_table = df_ratio[["nome_stazione", "Prezzo_skipass", "kmopen", "rapporto_euro_km"]].copy()
-                    
+                    df_table = df_ratio[["nome_stazione", "Prezzo skipass", "kmopen", "rapporto_euro_km"]].copy()
+
                     # Rinomina colonne per la visualizzazione
                     rename_map = {
                         "nome_stazione": "🏔️ Impianto",
-                        "Prezzo_skipass": "💶 Skipass (€)",
+                        "Prezzo skipass": "💶 Skipass (€)",
                         "kmopen": "🛷 Km Aperti",
                         "rapporto_euro_km": "💸 €/Km"
                     }
@@ -5720,7 +5720,7 @@ def main():
                 else:
                     st.info("Dati insufficienti per calcolare il rapporto kmopen/costo skipass")
             else:
-                st.info("Colonne 'kmopen' o 'Prezzo_skipass' non disponibili per l'analisi")
+                st.info("Colonne 'kmopen' o 'Prezzo skipass' non disponibili per l'analisi")
         except Exception as e:
             st.warning(f"Errore nel calcolo del rapporto: {e}")
             st.write(f"Errore completo: {str(e)}")
