@@ -3334,7 +3334,7 @@ def main():
             disabled=(st.session_state.onboarding_step != 2 and not st.session_state.onboarding_completed),
             help=level_help_text
         )
-        # Ignora il placeholder e processa solo selezioni valide
+                    # Ignora il placeholder e processa solo selezioni valide
         if new_level and new_level != "Seleziona prima la data" and new_level != st.session_state.selected_level:
             st.session_state.selected_level = new_level
             st.session_state.dock_level = new_level
@@ -3344,12 +3344,7 @@ def main():
             elif st.session_state.onboarding_completed:
                 st.rerun()
             
-            # Completa onboarding se abbiamo data e livello (profilo opzionale)
-            if (not st.session_state.onboarding_completed and 
-                st.session_state.selected_date is not None and 
-                st.session_state.selected_level is not None):
-                st.session_state.onboarding_completed = True
-                st.rerun()
+            # NON completare l'onboarding qui - aspetta che anche il profilo sia selezionato
         st.markdown('</div>', unsafe_allow_html=True)
     
     with col3:
@@ -3362,10 +3357,12 @@ def main():
             profile_opts = [p for p in SUPPORTED_PROFILES if p != "nessuno"]
             all_profile_opts = ["Salta questo step"] + profile_opts
             current_index = None
-            if st.session_state.selected_profile == "nessuno" or st.session_state.selected_profile is None:
-                current_index = 0
+            if st.session_state.selected_profile is None:
+                current_index = None  # Nessun valore pre-selezionato
+            elif st.session_state.selected_profile == "nessuno":
+                current_index = 0  # "Salta questo step" è il primo
             elif st.session_state.selected_profile in profile_opts:
-                current_index = profile_opts.index(st.session_state.selected_profile) + 1
+                current_index = profile_opts.index(st.session_state.selected_profile) + 1  # +1 perché "Salta questo step" è in posizione 0
             
         # Aggiungi help text per profilo durante onboarding
         profile_help_text = "Scegli il tuo profilo di sciatore" if st.session_state.onboarding_step == 3 else None
@@ -3390,13 +3387,12 @@ def main():
                 st.session_state.selected_profile = new_profile
                 st.session_state.dock_profile = new_profile
             
-            # Completa onboarding solo se tutti i requisiti minimi sono soddisfatti
+            # Completa onboarding solo se tutti i requisiti sono soddisfatti (data, livello E profilo selezionato)
             if (not st.session_state.onboarding_completed and 
                 st.session_state.selected_date is not None and 
-                st.session_state.selected_level is not None):
+                st.session_state.selected_level is not None and
+                st.session_state.selected_profile is not None):
                 st.session_state.onboarding_completed = True
-                # Non fare rerun immediato per permettere alla celebrazione di essere visualizzata
-            elif st.session_state.onboarding_completed:
                 st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
     
@@ -3967,13 +3963,19 @@ def main():
                 .reset_index()
                 .sort_values("indice_base", ascending=False)
             )
+            # Rinomina le colonne per le legende
+            piste_base_renamed = piste_base.rename(columns={
+                "Piste_verdi": "Piste verdi",
+                "Piste_blu": "Piste blu"
+            })
+            
             px, go, make_subplots = get_plotly()  # Lazy import
             fig_piste_base = px.bar(
-                piste_base,
+                piste_base_renamed,
                 x="nome_stazione",
-                y=["Piste_verdi", "Piste_blu"],
+                y=["Piste verdi", "Piste blu"],
                 title="Piste verdi e blu per stazione (ordinate per indice base)",
-                color_discrete_map={"Piste_verdi": "#10b981", "Piste_blu": "#06b6d4"},
+                color_discrete_map={"Piste verdi": "#10b981", "Piste blu": "#06b6d4"},
                 barmode="group"
             )
             fig_piste_base.update_layout(
@@ -4158,11 +4160,13 @@ def main():
                 .sort_values("indice_medio", ascending=False)
             )
             melted = piste.melt("nome_stazione", value_vars=["Piste_blu", "Piste_rosse"], var_name="Tipo", value_name="Numero")
+            melted["Tipo"] = melted["Tipo"].map({"Piste_blu": "Piste blu", "Piste_rosse": "Piste rosse"})
             px, go, make_subplots = get_plotly()  # Lazy import
             fig = px.bar(
                 melted,
                 x="nome_stazione", y="Numero", color="Tipo", barmode="group",
-                color_discrete_map={"Piste_blu": "#06b6d4", "Piste_rosse": "#ef4444"},
+                color_discrete_map={"Piste blu": "#06b6d4", "Piste rosse": "#ef4444"},
+                labels={"Tipo": "Tipo pista", "Numero": "Numero piste"}
             )
             fig.update_layout(
                 xaxis_tickangle=-45,
@@ -4425,7 +4429,7 @@ def main():
             x="nome_stazione", 
             y="km_total_est", 
             title="Km piste totali", 
-            labels={"nome_stazione": "Stazione", "km_total_est": "Km totali"},
+                            labels={"nome_stazione": "Stazione", "km_total_est": "Km totali stimati"},
             text="km_total_est"
         )
         fig_bar_total.update_traces(texttemplate='%{text:.0f} km', textposition='outside')
@@ -4825,8 +4829,9 @@ def main():
                     x="Scii_notte", y="nome_stazione",
                     orientation='h',  # Barre orizzontali
                     title="Km di sci notturno per impianto",
-                    labels={"Scii_notte": "Km sci notturno", "nome_stazione": "Impianto"},
-                    text="Scii_notte"
+                                    labels={"Scii_notte": "Km sci notturno", "nome_stazione": "Impianto"},
+                text="Scii_notte",
+                hover_data={"Scii_notte": ":.1f"}
                 )
                 fig_night.update_traces(texttemplate='%{text:.1f} km', textposition='outside')
                 fig_night.update_layout(
@@ -4910,13 +4915,20 @@ def main():
                 df_price_lowcost = df_price_lowcost.sort_values("prezzo_medio", ascending=True)
                 
                 melted_prices = df_price_lowcost.melt("nome_stazione", value_vars=price_cols, var_name="Voce", value_name="Prezzo")
+                # Converti i nomi delle voci per rimuovere gli underscore
+                melted_prices["Voce"] = melted_prices["Voce"].replace({
+                    "Prezzo_skipass": "Prezzo skipass",
+                    "Prezzo_scuola": "Prezzo scuola",
+                    "Prezzo_noleggio": "Prezzo noleggio"
+                })
+                
                 fig_prices_lowcost = px.bar(
                     melted_prices,
                     x="nome_stazione", y="Prezzo", color="Voce",
                     barmode="group",
                     title="💰 Costi per impianto (skipass, scuola, noleggio) - Ordine crescente per prezzo medio",
                     labels={"nome_stazione": "Impianto", "Prezzo": "€", "Voce": "Tipo costo"},
-                    color_discrete_map={"Prezzo_skipass": "#FF6B6B", "Prezzo_scuola": "#4ECDC4", "Prezzo_noleggio": "#45B7D1"}
+                    color_discrete_map={"Prezzo skipass": "#FF6B6B", "Prezzo scuola": "#4ECDC4", "Prezzo noleggio": "#45B7D1"}
                 )
                 fig_prices_lowcost.update_layout(
                     xaxis_tickangle=-45,
@@ -5007,7 +5019,7 @@ def main():
                     rename_map = {
                         "nome_stazione": "🏔️ Impianto",
                         "Prezzo_skipass": "💶 Skipass (€)",
-                        "kmopen": "🛷 Km Aperti",
+                        "kmopen": "🛷 Km aperti",
                         "rapporto_euro_km": "💸 €/Km"
                     }
                     df_table = df_table.rename(columns=rename_map)
