@@ -2406,14 +2406,15 @@ def build_llm_prompt(df_kpis: pd.DataFrame, best_name: str, livello: str, profil
     context = "\n".join(lines)
     target_date_italian = format_date_for_display(target_date)
     
-    # Prompt ottimizzato per consigli pratici
+    # Prompt ottimizzato per consigli pratici con struttura migliorata
     prompt = (
-        f"Scrivi ESATTAMENTE 2-3 frasi complete (massimo 50 parole totali) che spieghino perché {best_name} "
+        f"Scrivi ESATTAMENTE 2-3 frasi complete (massimo 60 parole totali) che spieghino perché {best_name} "
         f"è la scelta migliore per livello '{livello}' e profilo '{profilo}' il {target_date_italian}. "
         f"Usa SOLO i dati forniti. NON inventare nomi di piste, rifugi, montagne o luoghi specifici. "
-        f"Includi: km piste aperte, condizioni meteo, confronto con alternativa. "
-        f"IMPORTANTE: Termina con punto finale, non lasciare frasi incomplete. "
-        f"Esempio: '{best_name} offre 45 km aperti con condizioni meteo favorevoli. Supera Formigal che ha solo 30 km disponibili.'\n\n"
+        f"STRUTTURA: 1) Descrivi condizioni attuali (km aperti, probabilità apertura, meteo). "
+        f"2) Confronta con alternative principali. 3) Motiva la scelta per il profilo specifico. "
+        f"IMPORTANTE: Termina con punto finale, usa linguaggio naturale e convincente. "
+        f"Stile: Professionale ma amichevole, focalizzato sui benefici pratici.\n\n"
         f"Dati da utilizzare:\n{context}"
     )
     return prompt
@@ -2451,15 +2452,17 @@ def build_festaiolo_prompt(df_rec: pd.DataFrame, best_name: str, livello: str, t
     
     context = "\n".join(context_lines) if context_lines else ""
     
-    # Prompt per profilo festaiolo
+    # Prompt migliorato per profilo festaiolo con dati specifici
     prompt = (
-        f"Scrivi ESATTAMENTE 2 frasi complete (massimo 45 parole totali) sul perché {best_name} "
-        f"è migliore per divertimento il {target_date_italian} (livello '{livello}'). "
+        f"Scrivi ESATTAMENTE 2-3 frasi complete (massimo 55 parole totali) sul perché {best_name} "
+        f"è la destinazione ideale per divertimento e vita notturna il {target_date_italian} (livello '{livello}'). "
         f"Usa SOLO i dati forniti. NON inventare nomi di locali, bar o ristoranti specifici. "
-        f"Parla solo di 'atmosfera' e 'après-ski' generici. "
-        f"IMPORTANTE: Termina con punto finale. "
-        f"Esempio: '{best_name} ha atmosfera eccellente per après-ski. Supera Formigal con recensioni migliori per divertimento.'\n\n"
-        f"Dati atmosfera:\n{context}"
+        f"STRUTTURA: 1) Descrivi l'atmosfera e i servizi di ristorazione basati sui dati. "
+        f"2) Confronta l'affollamento e la qualità dell'esperienza con altre stazioni. "
+        f"3) Evidenzia perché è adatto per il divertimento serale. "
+        f"Stile: Energico e coinvolgente, focalizzato sull'esperienza festaiola. "
+        f"IMPORTANTE: Termina con punto finale, usa linguaggio vivace.\n\n"
+        f"Dati divertimento:\n{context}"
     )
     
     return prompt
@@ -2497,15 +2500,17 @@ def build_familiare_prompt(df_rec: pd.DataFrame, best_name: str, livello: str, t
     
     context = "\n".join(context_lines) if context_lines else ""
     
-    # Prompt per profilo familiare
+    # Prompt migliorato per profilo familiare con focus sulla sicurezza e comfort
     prompt = (
-        f"Scrivi ESATTAMENTE 2 frasi complete (massimo 45 parole totali) sul perché {best_name} "
-        f"è migliore per famiglie il {target_date_italian} (livello '{livello}'). "
+        f"Scrivi ESATTAMENTE 2-3 frasi complete (massimo 55 parole totali) sul perché {best_name} "
+        f"è la destinazione perfetta per famiglie il {target_date_italian} (livello '{livello}'). "
         f"Usa SOLO i dati forniti. NON inventare nomi di servizi, aree o strutture specifiche. "
-        f"Parla solo di 'servizi famiglia' e 'sicurezza' generici. "
-        f"IMPORTANTE: Termina con punto finale. "
-        f"Esempio: '{best_name} offre buona sicurezza e servizi famiglia. Supera Formigal con recensioni migliori per famiglie.'\n\n"
-        f"Dati family:\n{context}"
+        f"STRUTTURA: 1) Descrivi l'idoneità per famiglie e i livelli di sicurezza basati sui dati. "
+        f"2) Confronta l'esperienza familiare e la gestione delle code con altre stazioni. "
+        f"3) Evidenzia perché garantisce comfort e tranquillità per tutti i componenti. "
+        f"Stile: Calmo e rassicurante, focalizzato sulla serenità familiare. "
+        f"IMPORTANTE: Termina con punto finale, usa linguaggio protettivo e confortante.\n\n"
+        f"Dati famiglie:\n{context}"
     )
     
     return prompt
@@ -2541,14 +2546,16 @@ def build_panoramico_prompt(df_rec: pd.DataFrame, best_name: str, livello: str, 
     
     context = "\n".join(context_lines) if context_lines else ""
     
-    # Prompt per profilo panoramico
+    # Prompt migliorato per profilo panoramico con focus sulla visibilità
     prompt = (
-        f"Scrivi ESATTAMENTE 2 frasi complete (massimo 45 parole totali) sul perché {best_name} "
-        f"è migliore per panorami il {target_date_italian} (livello '{livello}'). "
+        f"Scrivi ESATTAMENTE 2-3 frasi complete (massimo 55 parole totali) sul perché {best_name} "
+        f"offre le migliori esperienze panoramiche il {target_date_italian} (livello '{livello}'). "
         f"Usa SOLO i dati forniti. NON inventare nomi di montagne, rifugi o luoghi specifici. "
-        f"Parla solo di 'viste panoramiche' o 'panorami' generici. "
-        f"IMPORTANTE: Termina con punto finale. "
-        f"Esempio: '{best_name} ha panorami eccellenti. Supera Formigal con recensioni migliori per le viste.'\n\n"
+        f"STRUTTURA: 1) Descrivi la qualità delle viste basata sui punteggi panoramici e condizioni meteo. "
+        f"2) Confronta con altre stazioni in termini di apprezzamento visivo. "
+        f"3) Spiega come le condizioni atmosferiche influenzano l'esperienza panoramica. "
+        f"Stile: Poetico e contemplativo, focalizzato sulla bellezza naturale. "
+        f"IMPORTANTE: Termina con punto finale, usa linguaggio evocativo dei paesaggi.\n\n"
         f"Dati panorami:\n{context}"
     )
     
@@ -2604,15 +2611,17 @@ def build_lowcost_prompt(df_rec: pd.DataFrame, best_name: str, livello: str, tar
     
     context = "\n".join(all_context) if all_context else ""
     
-    # Prompt per profilo low-cost
+    # Prompt ottimizzato per profilo low-cost con analisi dettagliata qualità-prezzo
     prompt = (
-        f"Scrivi ESATTAMENTE 2 frasi complete (massimo 45 parole totali) sul perché {best_name} "
-        f"è migliore per convenienza il {target_date_italian} (livello '{livello}'). "
+        f"Scrivi ESATTAMENTE 2-3 frasi complete (massimo 60 parole totali) sul perché {best_name} "
+        f"rappresenta la scelta più conveniente il {target_date_italian} (livello '{livello}'). "
         f"Usa SOLO i dati forniti sui prezzi. NON inventare costi o offerte specifiche non presenti nei dati. "
-        f"Parla solo di 'convenienza' e 'rapporto qualità-prezzo' generici. "
-        f"IMPORTANTE: Termina con punto finale. "
-        f"Esempio: '{best_name} offre buon rapporto qualità-prezzo. Supera Formigal con recensioni migliori per convenienza.'\n\n"
-        f"Dati costi:\n{context}"
+        f"STRUTTURA: 1) Analizza il rapporto qualità-prezzo basato sui costi e km disponibili. "
+        f"2) Confronta con altre stazioni in termini di valore economico. "
+        f"3) Evidenzia l'equilibrio tra costi contenuti e qualità dell'esperienza. "
+        f"Stile: Pratico e razionale, focalizzato sul risparmio intelligente. "
+        f"IMPORTANTE: Termina con punto finale, usa dati numerici quando disponibili.\n\n"
+        f"Dati economici:\n{context}"
     )
     
     return prompt
@@ -3344,12 +3353,9 @@ def main():
             elif st.session_state.onboarding_completed:
                 st.rerun()
             
-            # Completa onboarding se abbiamo data e livello (profilo opzionale)
-            if (not st.session_state.onboarding_completed and 
-                st.session_state.selected_date is not None and 
-                st.session_state.selected_level is not None):
-                st.session_state.onboarding_completed = True
-                st.rerun()
+            # NON completare automaticamente l'onboarding qui
+            # Lascia che l'utente arrivi allo step 3 del profilo
+            # L'onboarding si completerà solo dopo aver interagito con il profilo
         st.markdown('</div>', unsafe_allow_html=True)
     
     with col3:
@@ -3358,7 +3364,13 @@ def main():
         if st.session_state.onboarding_step < 3 and not st.session_state.onboarding_completed:
             all_profile_opts = ["Seleziona prima data e livello", "Salta questo step"] + [p for p in SUPPORTED_PROFILES if p != "nessuno"]
             current_index = 0
+        elif st.session_state.onboarding_step == 3 and not st.session_state.onboarding_completed:
+            # Step 3: mostra le opzioni del profilo senza pre-selezionare "Salta questo step"
+            profile_opts = [p for p in SUPPORTED_PROFILES if p != "nessuno"]
+            all_profile_opts = ["Salta questo step"] + profile_opts
+            current_index = None  # Nessuna selezione predefinita
         else:
+            # Onboarding completato o step successivo
             profile_opts = [p for p in SUPPORTED_PROFILES if p != "nessuno"]
             all_profile_opts = ["Salta questo step"] + profile_opts
             current_index = None
@@ -3390,10 +3402,11 @@ def main():
                 st.session_state.selected_profile = new_profile
                 st.session_state.dock_profile = new_profile
             
-            # Completa onboarding solo se tutti i requisiti minimi sono soddisfatti
+            # Completa onboarding SOLO dopo aver interagito con il profilo
             if (not st.session_state.onboarding_completed and 
                 st.session_state.selected_date is not None and 
-                st.session_state.selected_level is not None):
+                st.session_state.selected_level is not None and
+                st.session_state.selected_profile is not None):  # Richiedi esplicitamente il profilo
                 st.session_state.onboarding_completed = True
                 # Non fare rerun immediato per permettere alla celebrazione di essere visualizzata
             elif st.session_state.onboarding_completed:
