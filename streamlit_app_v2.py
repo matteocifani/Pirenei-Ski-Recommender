@@ -3285,14 +3285,14 @@ def main():
     # Show welcome message FIRST if onboarding not completed
     if not st.session_state.onboarding_completed:
         st.markdown("""
-        <div class="welcome-message">
-            <div class="welcome-content">
-                <h2 class="welcome-title">Benvenuto su Pirenei Ski Recommender! 🎿</h2>
-                <p class="welcome-subtitle">Analizziamo condizioni meteo storiche, apertura piste e qualità della neve per suggerirti la stazione sciistica più adatta al tuo livello e profilo.</p>
-                <p class="welcome-guide">👇 Inizia selezionando le tue preferenze qui sotto</p>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
+<div class="welcome-message">
+    <div class="welcome-content">
+        <h2 class="welcome-title">Benvenuto su Pirenei Ski Recommender! 🎿</h2>
+        <p class="welcome-subtitle">Analizziamo condizioni meteo storiche, apertura piste e qualità della neve per suggerirti la stazione sciistica più adatta al tuo livello e profilo.</p>
+        <p class="welcome-guide">👇 Inizia selezionando le tue preferenze qui sotto</p>
+    </div>
+</div>
+""", unsafe_allow_html=True)
 
     # Onboarding Selectors with proper overlay
     st.markdown('<div id="selectors-container">', unsafe_allow_html=True)
@@ -3309,6 +3309,7 @@ def main():
         
         # Aggiungi un help text durante l'onboarding per guidare l'utente
         help_text = "Seleziona la data della tua giornata sulla neve" if st.session_state.onboarding_step == 1 else None
+
         
         new_date = st.date_input(
             "📅 DATA",
@@ -3358,6 +3359,7 @@ def main():
         
         # Aggiungi help text per livello durante onboarding
         level_help_text = "Seleziona il tuo livello di esperienza" if st.session_state.onboarding_step == 2 else None
+
         
         new_level = st.selectbox(
             "🎯 LIVELLO",
@@ -3367,8 +3369,9 @@ def main():
             disabled=(st.session_state.onboarding_step != 2 and not st.session_state.onboarding_completed),
             help=level_help_text
         )
-                    # Ignora il placeholder e processa solo selezioni valide
+        # Ignora il placeholder e processa solo selezioni valide
         if new_level and new_level != "Seleziona prima la data" and new_level != st.session_state.selected_level:
+
             st.session_state.selected_level = new_level
             st.session_state.dock_level = new_level
             if st.session_state.onboarding_step == 2:
@@ -3385,6 +3388,7 @@ def main():
         # Gestione placeholder per profilo durante onboarding
         if st.session_state.onboarding_step < 3 and not st.session_state.onboarding_completed:
             all_profile_opts = ["Seleziona prima data e livello", "Salta questo step"] + [p for p in SUPPORTED_PROFILES if p != "nessuno"]
+
             current_index = 0
         else:
             profile_opts = [p for p in SUPPORTED_PROFILES if p != "nessuno"]
@@ -3396,9 +3400,11 @@ def main():
                 current_index = 0  # "Salta questo step" è il primo
             elif st.session_state.selected_profile in profile_opts:
                 current_index = profile_opts.index(st.session_state.selected_profile) + 1  # +1 perché "Salta questo step" è in posizione 0
+
             
         # Aggiungi help text per profilo durante onboarding
         profile_help_text = "Scegli il tuo profilo di sciatore" if st.session_state.onboarding_step == 3 else None
+
         
         new_profile = st.selectbox(
             "👥 PROFILO",
@@ -3421,6 +3427,7 @@ def main():
                 st.session_state.dock_profile = new_profile
             
             # Completa onboarding solo se tutti i requisiti sono soddisfatti (data, livello E profilo selezionato)
+
             if (not st.session_state.onboarding_completed and 
                 st.session_state.selected_date is not None and 
                 st.session_state.selected_level is not None and
@@ -3430,22 +3437,6 @@ def main():
         st.markdown('</div>', unsafe_allow_html=True)
     
     st.markdown('</div>', unsafe_allow_html=True)
-
-    # Tasto Ricomincia - POSIZIONATO SUBITO DOPO I SELETTORI
-    col1, col2, col3 = st.columns([2, 1, 2])
-    with col2:
-        if st.button("🔄 Ricomincia", key="restart_onboarding", use_container_width=True, type="secondary"):
-            # Reset onboarding state
-            st.session_state.onboarding_completed = False
-            st.session_state.onboarding_step = 1
-            st.session_state.selected_date = None
-            st.session_state.selected_level = None
-            st.session_state.selected_profile = None
-            if "snowfall_shown" in st.session_state:
-                del st.session_state.snowfall_shown
-            if "date_interaction_tracked" in st.session_state:
-                del st.session_state.date_interaction_tracked
-            st.rerun()
 
     # Onboarding tooltip - SOTTO I SELETTORI nel flusso normale
     if not st.session_state.onboarding_completed:
@@ -3470,86 +3461,86 @@ def main():
         
         # Show tooltip in normal document flow - allineato con i selettori  
         st.markdown(f"""
-        <div id="tooltip-container" style="
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 20px;
-            width: 100%;
-            margin: 0 0 8px 0;
-            padding: 0 20px;
-        ">
-            <div style="grid-column: {step}; justify-self: center;">
-                <div class="onboarding-tooltip-flow tooltip-step-{step}" style="
-                background: #1f2937;
-                border: 2px solid #10b981;
-                border-radius: 16px;
-                padding: 12px 18px;
-                color: #f8fafc;
-                font-family: Inter, sans-serif;
-                font-size: 15px;
-                font-weight: 600;
-                box-shadow: 
-                    0 0 0 1px rgba(16, 185, 129, 0.3),
-                    0 0 16px rgba(16, 185, 129, 0.15),
-                    0 0 32px rgba(16, 185, 129, 0.1),
-                    0 0 48px rgba(16, 185, 129, 0.07),
-                    0 0 64px rgba(16, 185, 129, 0.05),
-                    0 0 80px rgba(16, 185, 129, 0.03);
-                filter: drop-shadow(0 0 12px rgba(16, 185, 129, 0.12));
-                max-width: 280px;
-                text-align: center;
-                animation: tooltipSlideDown 0.3s ease-out;
-                position: relative;
-                backdrop-filter: blur(10px);
-            ">
-                    {current_message}
-                </div>
-            </div>
+<div id="tooltip-container" style="
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 20px;
+    width: 100%;
+    margin: 0 0 8px 0;
+    padding: 0 20px;
+">
+    <div style="grid-column: {step}; justify-self: center;">
+        <div class="onboarding-tooltip-flow tooltip-step-{step}" style="
+        background: #1f2937;
+        border: 2px solid #10b981;
+        border-radius: 16px;
+        padding: 12px 18px;
+        color: #f8fafc;
+        font-family: Inter, sans-serif;
+        font-size: 15px;
+        font-weight: 600;
+        box-shadow: 
+            0 0 0 1px rgba(16, 185, 129, 0.3),
+            0 0 16px rgba(16, 185, 129, 0.15),
+            0 0 32px rgba(16, 185, 129, 0.1),
+            0 0 48px rgba(16, 185, 129, 0.07),
+            0 0 64px rgba(16, 185, 129, 0.05),
+            0 0 80px rgba(16, 185, 129, 0.03);
+        filter: drop-shadow(0 0 12px rgba(16, 185, 129, 0.12));
+        max-width: 280px;
+        text-align: center;
+        animation: tooltipSlideDown 0.3s ease-out;
+        position: relative;
+        backdrop-filter: blur(10px);
+    ">
+            {current_message}
         </div>
-        
-        <!-- Freccia separata con CSS -->
-        <style>
-        .tooltip-step-{step}::before {{
-            content: '';
-            position: absolute;
-            top: -12px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 0;
-            height: 0;
-            border-left: 12px solid transparent;
-            border-right: 12px solid transparent;
-            border-bottom: 12px solid #10b981;
-            filter: drop-shadow(0 -2px 6px rgba(16, 185, 129, 0.18));
-        }}
-        
-        .tooltip-step-{step}::after {{
-            content: '';
-            position: absolute;
-            top: -9px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 0;
-            height: 0;
-            border-left: 10px solid transparent;
-            border-right: 10px solid transparent;
-            border-bottom: 10px solid #1f2937;
-        }}
-        </style>
-        
-        <style>
-        @keyframes tooltipSlideDown {{
-            from {{ 
-                opacity: 0; 
-                transform: translateY(-20px); 
-            }}
-            to {{ 
-                opacity: 1; 
-                transform: translateY(0); 
-            }}
-        }}
-        </style>
-        """, unsafe_allow_html=True)
+    </div>
+</div>
+
+<!-- Freccia separata con CSS -->
+<style>
+.tooltip-step-{step}::before {{
+    content: '';
+    position: absolute;
+    top: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 12px solid transparent;
+    border-right: 12px solid transparent;
+    border-bottom: 12px solid #10b981;
+    filter: drop-shadow(0 -2px 6px rgba(16, 185, 129, 0.18));
+}}
+
+.tooltip-step-{step}::after {{
+    content: '';
+    position: absolute;
+    top: -9px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    border-bottom: 10px solid #1f2937;
+}}
+</style>
+
+<style>
+@keyframes tooltipSlideDown {{
+    from {{ 
+        opacity: 0; 
+        transform: translateY(-20px); 
+    }}
+    to {{ 
+        opacity: 1; 
+        transform: translateY(0); 
+    }}
+}}
+</style>
+""", unsafe_allow_html=True)
     
     # Onboarding completato - auto-scroll silenzioso ai risultati
     if st.session_state.onboarding_completed:
@@ -3563,6 +3554,8 @@ def main():
         }, 500);
         </script>
         """, unsafe_allow_html=True)
+
+
 
     # Use selected values or defaults
     data_sel = st.session_state.selected_date or st.session_state.dock_date
@@ -4459,7 +4452,7 @@ def main():
                     barmode="group", 
                     title="Piste rosse e nere per stazione (ordinate per preferenza calcolata)",
                     labels={"nome_stazione": "Stazione", "Numero": "Numero piste"},
-                    color_discrete_map={"Piste rosse": "#ef4444", "Piste_nere": "#1f2937"}
+                    color_discrete_map={"Piste rosse": "#ef4444", "Piste nere": "#1f2937"}
                 )
                 fig_piste.update_layout(
                     xaxis_tickangle=-45, 
