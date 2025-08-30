@@ -2408,12 +2408,21 @@ def build_llm_prompt(df_kpis: pd.DataFrame, best_name: str, livello: str, profil
     
     # Prompt ottimizzato per consigli pratici
     prompt = (
-        f"Scrivi ESATTAMENTE 2-3 frasi complete (massimo 50 parole totali) che spieghino perché {best_name} "
+        f"Scrivi ESATTAMENTE 2-3 frasi complete (massimo 80 parole totali) che spieghino perché {best_name} "
         f"è la scelta migliore per livello '{livello}' e profilo '{profilo}' il {target_date_italian}. "
         f"Usa SOLO i dati forniti. NON inventare nomi di piste, rifugi, montagne o luoghi specifici. "
         f"Includi: km piste aperte, condizioni meteo, confronto con alternativa. "
-        f"IMPORTANTE: Termina con punto finale, non lasciare frasi incomplete. "
-        f"Esempio: '{best_name} offre 45 km aperti con condizioni meteo favorevoli. Supera Formigal che ha solo 30 km disponibili.'\n\n"
+        f"PRIMA di scrivere i confronti, verifica SEMPRE i numeri nei dati forniti! "
+        f"CONTROLLO FINALE: Prima di scrivere, scrivi mentalmente 'Se A=X km e B=Y km, allora A ha [MENO/PIÙ] km di B' e verifica che sia corretto! "
+        f"IMPORTANTE: 1) REGOLA ORO per confronti numerici: se A ha X km e B ha Y km, e X < Y, allora A ha MENO km di B. "
+        f"MAI dire 'solo Y km' quando Y > X. Esempio: se A=38 km e B=81 km, scrivi 'A ha MENO km di B' NON 'B ha solo 81 km'. "
+        f"2) Termina sempre con punto finale. 3) Non troncare mai le frasi a metà. "
+        f"4) ATTENZIONE: Controlla sempre i numeri nei dati forniti prima di scrivere i confronti! "
+        f"5) REGOLA CRITICA: Se A=64 km e B=121 km, scrivi 'A ha MENO km di B' NON 'B offre meno km di A'! "
+        f"6) FAI SEMPRE: A < B significa A ha MENO km di B, A > B significa A ha PIÙ km di B. "
+        f"Esempio CORRETTO: '{best_name} offre 45 km aperti con condizioni meteo favorevoli. Supera Formigal che ha 30 km disponibili.' "
+        f"Esempio SBAGLIATO da NON fare: 'Formigal ha 30 km ma offre meno km di {best_name}' (confuso!). "
+        f"Esempio CORRETTO: 'Se {best_name} ha 45 km e Formigal ha 30 km, allora {best_name} ha PIÙ km di Formigal.'\n\n"
         f"Dati da utilizzare:\n{context}"
     )
     return prompt
@@ -2453,11 +2462,17 @@ def build_festaiolo_prompt(df_rec: pd.DataFrame, best_name: str, livello: str, t
     
     # Prompt per profilo festaiolo
     prompt = (
-        f"Scrivi ESATTAMENTE 2 frasi complete (massimo 45 parole totali) sul perché {best_name} "
+        f"Scrivi ESATTAMENTE 2-3 frasi complete (massimo 80 parole totali) sul perché {best_name} "
         f"è migliore per divertimento il {target_date_italian} (livello '{livello}'). "
         f"Usa SOLO i dati forniti. NON inventare nomi di locali, bar o ristoranti specifici. "
         f"Parla solo di 'atmosfera' e 'après-ski' generici. "
-        f"IMPORTANTE: Termina con punto finale. "
+        f"IMPORTANTE: 1) REGOLA ORO per confronti numerici: se A ha X km e B ha Y km, e X < Y, allora A ha MENO km di B. "
+        f"MAI dire 'solo Y km' quando Y > X. Esempio: se A=38 km e B=81 km, scrivi 'A ha MENO km di B' NON 'B ha solo 81 km'. "
+        f"2) Termina sempre con punto finale. 3) Non troncare mai le frasi a metà. "
+        f"4) ATTENZIONE: Controlla sempre i numeri nei dati forniti prima di scrivere i confronti! "
+        f"5) REGOLA CRITICA: Se A=64 km e B=121 km, scrivi 'A ha MENO km di B' NON 'B offre meno km di A'! "
+        f"6) FAI SEMPRE: A < B significa A ha MENO km di B, A > B significa A ha PIÙ km di B. "
+        f"7) CONTROLLO FINALE: Prima di scrivere, scrivi mentalmente 'Se A=X km e B=Y km, allora A ha [MENO/PIÙ] km di B' e verifica che sia corretto! "
         f"Esempio: '{best_name} ha atmosfera eccellente per après-ski. Supera Formigal con recensioni migliori per divertimento.'\n\n"
         f"Dati atmosfera:\n{context}"
     )
@@ -2499,11 +2514,17 @@ def build_familiare_prompt(df_rec: pd.DataFrame, best_name: str, livello: str, t
     
     # Prompt per profilo familiare
     prompt = (
-        f"Scrivi ESATTAMENTE 2 frasi complete (massimo 45 parole totali) sul perché {best_name} "
+        f"Scrivi ESATTAMENTE 2-3 frasi complete (massimo 80 parole totali) sul perché {best_name} "
         f"è migliore per famiglie il {target_date_italian} (livello '{livello}'). "
         f"Usa SOLO i dati forniti. NON inventare nomi di servizi, aree o strutture specifiche. "
         f"Parla solo di 'servizi famiglia' e 'sicurezza' generici. "
-        f"IMPORTANTE: Termina con punto finale. "
+        f"IMPORTANTE: 1) REGOLA ORO per confronti numerici: se A ha X km e B ha Y km, e X < Y, allora A ha MENO km di B. "
+        f"MAI dire 'solo Y km' quando Y > X. Esempio: se A=38 km e B=81 km, scrivi 'A ha MENO km di B' NON 'B ha solo 81 km'. "
+        f"2) Termina sempre con punto finale. 3) Non troncare mai le frasi a metà. "
+        f"4) ATTENZIONE: Controlla sempre i numeri nei dati forniti prima di scrivere i confronti! "
+        f"5) REGOLA CRITICA: Se A=64 km e B=121 km, scrivi 'A ha MENO km di B' NON 'B offre meno km di A'! "
+        f"6) FAI SEMPRE: A < B significa A ha MENO km di B, A > B significa A ha PIÙ km di B. "
+        f"7) CONTROLLO FINALE: Prima di scrivere, scrivi mentalmente 'Se A=X km e B=Y km, allora A ha [MENO/PIÙ] km di B' e verifica che sia corretto! "
         f"Esempio: '{best_name} offre buona sicurezza e servizi famiglia. Supera Formigal con recensioni migliori per famiglie.'\n\n"
         f"Dati family:\n{context}"
     )
@@ -2543,11 +2564,17 @@ def build_panoramico_prompt(df_rec: pd.DataFrame, best_name: str, livello: str, 
     
     # Prompt per profilo panoramico
     prompt = (
-        f"Scrivi ESATTAMENTE 2 frasi complete (massimo 45 parole totali) sul perché {best_name} "
+        f"Scrivi ESATTAMENTE 2-3 frasi complete (massimo 80 parole totali) sul perché {best_name} "
         f"è migliore per panorami il {target_date_italian} (livello '{livello}'). "
         f"Usa SOLO i dati forniti. NON inventare nomi di montagne, rifugi o luoghi specifici. "
         f"Parla solo di 'viste panoramiche' o 'panorami' generici. "
-        f"IMPORTANTE: Termina con punto finale. "
+        f"IMPORTANTE: 1) REGOLA ORO per confronti numerici: se A ha X km e B ha Y km, e X < Y, allora A ha MENO km di B. "
+        f"MAI dire 'solo Y km' quando Y > X. Esempio: se A=38 km e B=81 km, scrivi 'A ha MENO km di B' NON 'B ha solo 81 km'. "
+        f"2) Termina sempre con punto finale. 3) Non troncare mai le frasi a metà. "
+        f"4) ATTENZIONE: Controlla sempre i numeri nei dati forniti prima di scrivere i confronti! "
+        f"5) REGOLA CRITICA: Se A=64 km e B=121 km, scrivi 'A ha MENO km di B' NON 'B offre meno km di A'! "
+        f"6) FAI SEMPRE: A < B significa A ha MENO km di B, A > B significa A ha PIÙ km di B. "
+        f"7) CONTROLLO FINALE: Prima di scrivere, scrivi mentalmente 'Se A=X km e B=Y km, allora A ha [MENO/PIÙ] km di B' e verifica che sia corretto! "
         f"Esempio: '{best_name} ha panorami eccellenti. Supera Formigal con recensioni migliori per le viste.'\n\n"
         f"Dati panorami:\n{context}"
     )
@@ -2606,11 +2633,17 @@ def build_lowcost_prompt(df_rec: pd.DataFrame, best_name: str, livello: str, tar
     
     # Prompt per profilo low-cost
     prompt = (
-        f"Scrivi ESATTAMENTE 2 frasi complete (massimo 45 parole totali) sul perché {best_name} "
+        f"Scrivi ESATTAMENTE 2-3 frasi complete (massimo 80 parole totali) sul perché {best_name} "
         f"è migliore per convenienza il {target_date_italian} (livello '{livello}'). "
         f"Usa SOLO i dati forniti sui prezzi. NON inventare costi o offerte specifiche non presenti nei dati. "
         f"Parla solo di 'convenienza' e 'rapporto qualità-prezzo' generici. "
-        f"IMPORTANTE: Termina con punto finale. "
+        f"IMPORTANTE: 1) REGOLA ORO per confronti numerici: se A ha X km e B ha Y km, e X < Y, allora A ha MENO km di B. "
+        f"MAI dire 'solo Y km' quando Y > X. Esempio: se A=38 km e B=81 km, scrivi 'A ha MENO km di B' NON 'B ha solo 81 km'. "
+        f"2) Termina sempre con punto finale. 3) Non troncare mai le frasi a metà. "
+        f"4) ATTENZIONE: Controlla sempre i numeri nei dati forniti prima di scrivere i confronti! "
+        f"5) REGOLA CRITICA: Se A=64 km e B=121 km, scrivi 'A ha MENO km di B' NON 'B offre meno km di A'! "
+        f"6) FAI SEMPRE: A < B significa A ha MENO km di B, A > B significa A ha PIÙ km di B. "
+        f"7) CONTROLLO FINALE: Prima di scrivere, scrivi mentalmente 'Se A=X km e B=Y km, allora A ha [MENO/PIÙ] km di B' e verifica che sia corretto! "
         f"Esempio: '{best_name} offre buon rapporto qualità-prezzo. Supera Formigal con recensioni migliori per convenienza.'\n\n"
         f"Dati costi:\n{context}"
     )
@@ -3107,7 +3140,7 @@ def safe_data_load():
         st.error(f"Errore nel caricamento dati: {str(e)}")
         return None, None, None, None
 
-def safe_llm_call(prompt: str, max_tokens: int = 150):
+def safe_llm_call(prompt: str, max_tokens: int = 300):
     """Chiamata LLM con error handling migliorato"""
     try:
         return _llm_overview_cached(prompt, max_tokens)
@@ -3398,6 +3431,22 @@ def main():
     
     st.markdown('</div>', unsafe_allow_html=True)
 
+    # Tasto Ricomincia - POSIZIONATO SUBITO DOPO I SELETTORI
+    col1, col2, col3 = st.columns([2, 1, 2])
+    with col2:
+        if st.button("🔄 Ricomincia", key="restart_onboarding", use_container_width=True, type="secondary"):
+            # Reset onboarding state
+            st.session_state.onboarding_completed = False
+            st.session_state.onboarding_step = 1
+            st.session_state.selected_date = None
+            st.session_state.selected_level = None
+            st.session_state.selected_profile = None
+            if "snowfall_shown" in st.session_state:
+                del st.session_state.snowfall_shown
+            if "date_interaction_tracked" in st.session_state:
+                del st.session_state.date_interaction_tracked
+            st.rerun()
+
     # Onboarding tooltip - SOTTO I SELETTORI nel flusso normale
     if not st.session_state.onboarding_completed:
         step = st.session_state.onboarding_step
@@ -3564,23 +3613,8 @@ def main():
     </style>
     """, unsafe_allow_html=True)
     
-    # Più spazio per avvicinarlo ai selettori e allontanarlo dall'hero
-    st.markdown('<div style="margin: 2px 0;"></div>', unsafe_allow_html=True)
-    
-    col1, col2, col3 = st.columns([2, 1, 2])
-    with col2:
-        if st.button("🔄 Ricomincia", key="restart_onboarding", use_container_width=True, type="secondary"):
-            # Reset onboarding state
-            st.session_state.onboarding_completed = False
-            st.session_state.onboarding_step = 1
-            st.session_state.selected_date = None
-            st.session_state.selected_level = None
-            st.session_state.selected_profile = None
-            if "snowfall_shown" in st.session_state:
-                del st.session_state.snowfall_shown
-            if "date_interaction_tracked" in st.session_state:
-                del st.session_state.date_interaction_tracked
-            st.rerun()
+    # Spazio per separare i selettori dal contenuto successivo
+    st.markdown('<div style="margin: 8px 0;"></div>', unsafe_allow_html=True)
 
     # Plotly theme synchronization
     plotly_template = "plotly_white" if theme == "light" else "plotly_dark"
@@ -3816,7 +3850,7 @@ def main():
         # AI Overview riattivato
         try:
             prompt = build_llm_prompt(df_kpis, best_name, livello, profilo, data_sel)
-            ai_overview, metadata = safe_llm_call(prompt, max_tokens=120)
+            ai_overview, metadata = safe_llm_call(prompt, max_tokens=300)
             
             # Genera badge con nome modello
             model_name = parse_model_name(metadata.get("model"))
@@ -3931,7 +3965,7 @@ def main():
             with col1:
                 prob_nebbia = float(meteo_data.get("nebbia", 0).mean() * 100)
                 baseline_nebbia = float((baseline.get("nebbia", 0).mean() * 100) if not baseline.empty else 0)
-                fig_n = create_speedometer(prob_nebbia, "Prob. Nebbia", "#6b7280", reference_pct=baseline_nebbia)
+                fig_n = create_speedometer(prob_nebbia, "Prob. Nebbia", "#3b82f6", reference_pct=baseline_nebbia)
                 st.plotly_chart(fig_n, use_container_width=True)
             with col2:
                 prob_pioggia = float(meteo_data.get("pioggia", 0).mean() * 100)
@@ -4379,7 +4413,7 @@ def main():
         except Exception:
             pass
 
-        # Piste rosse e nere per livello esperto
+        # Piste rosse e nere per livello esperto (ordinate per preferenza calcolata)
         try:
             piste = (
                 df_with_indices[["nome_stazione", "Piste_rosse", "Piste_nere"]]
@@ -4392,9 +4426,25 @@ def main():
                 .reset_index()
                 .fillna(0)
             )
-            # Ordina per numero totale di piste rosse + nere
-            piste["totale_difficili"] = piste["Piste_rosse"] + piste["Piste_nere"]
-            piste = piste.sort_values("totale_difficili", ascending=False).head(10)
+            
+            # Ordina secondo l'ordine di preferenza calcolato (ranking)
+            if not ranking.empty:
+                # Crea un mapping per l'ordine dal ranking
+                ranking_order = {name: idx for idx, name in enumerate(ranking["nome_stazione"])}
+                # Aggiungi un valore alto per stazioni non nel ranking (appariranno alla fine)
+                max_rank = len(ranking_order)
+                piste["ranking_order"] = piste["nome_stazione"].map(lambda x: ranking_order.get(x, max_rank))
+                # Ordina per ranking_order (stazioni nel ranking prima, poi le altre)
+                piste = piste.sort_values("ranking_order", ascending=True)
+                # Rimuovi la colonna temporanea
+                piste = piste.drop("ranking_order", axis=1)
+            else:
+                # Fallback: ordina per numero totale di piste rosse + nere se non c'è ranking
+                piste["totale_difficili"] = piste["Piste_rosse"] + piste["Piste_nere"]
+                piste = piste.sort_values("totale_difficili", ascending=False)
+            
+            # Prendi le prime 10 stazioni dopo l'ordinamento
+            piste = piste.head(10)
             
             if not piste.empty:
                 melted = piste.melt("nome_stazione", value_vars=["Piste_rosse", "Piste_nere"], var_name="Tipo", value_name="Numero")
@@ -4407,9 +4457,9 @@ def main():
                 fig_piste = px.bar(
                     melted, x="nome_stazione", y="Numero", color="Tipo",
                     barmode="group", 
-                    title="Piste rosse e nere per stazione",
+                    title="Piste rosse e nere per stazione (ordinate per preferenza calcolata)",
                     labels={"nome_stazione": "Stazione", "Numero": "Numero piste"},
-                    color_discrete_map={"Piste rosse": "#ef4444", "Piste nere": "#1f2937"}
+                    color_discrete_map={"Piste rosse": "#ef4444", "Piste_nere": "#1f2937"}
                 )
                 fig_piste.update_layout(
                     xaxis_tickangle=-45, 
@@ -4437,7 +4487,15 @@ def main():
             xaxis_tickangle=-45,
             template="plotly_dark",
             paper_bgcolor="rgba(0,0,0,0)",
-            plot_bgcolor="rgba(0,0,0,0)"
+            plot_bgcolor="rgba(0,0,0,0)",
+            # Aggiungi margini per evitare che il testo venga tagliato
+            margin=dict(t=80, b=80, l=60, r=60),
+            # Aggiungi padding all'asse Y per dare spazio al testo
+            yaxis=dict(
+                rangemode='tozero',
+                # Aumenta il range dell'asse Y per dare spazio al testo sopra le barre
+                range=[0, top_total["km_total_est"].max() * 1.15]
+            )
         )
         st.plotly_chart(fig_bar_total, use_container_width=True)
 
@@ -4618,7 +4676,7 @@ def main():
         # AI Overview per profilo panoramico (PRIMA dei grafici) - Riattivato
         try:
             prompt_panoramico = build_panoramico_prompt(df_with_indices, best_name, livello, data_sel)
-            ai_overview_panoramico, metadata = safe_llm_call(prompt_panoramico, max_tokens=100)
+            ai_overview_panoramico, metadata = safe_llm_call(prompt_panoramico, max_tokens=300)
             
             # Genera badge con nome modello
             model_name = parse_model_name(metadata.get("model"))
@@ -4697,7 +4755,7 @@ def main():
         # AI Overview per profilo familiare (PRIMA dei grafici) - Riattivato
         try:
             prompt_familiare = build_familiare_prompt(df_with_indices, best_name, livello, data_sel)
-            ai_overview_familiare, metadata = safe_llm_call(prompt_familiare, max_tokens=100)
+            ai_overview_familiare, metadata = safe_llm_call(prompt_familiare, max_tokens=300)
             
             # Genera badge con nome modello
             model_name = parse_model_name(metadata.get("model"))
@@ -4722,18 +4780,34 @@ def main():
         # Titolo per i grafici specifici del profilo
         st.markdown('<h4 class="section-subtitle">📊 Analisi specifica per famiglie</h4>', unsafe_allow_html=True)
         
-        # 1) Numero aree bambini per impianto
+        # 1) Numero aree bambini per impianto (ordinate per preferenza calcolata)
         try:
             if "Area_bambini" in df_with_indices.columns:
+                # Prendi i dati delle aree bambini e ordina secondo il ranking di preferenza
                 df_kids = (
                     df_with_indices[["nome_stazione", "Area_bambini"]]
                     .drop_duplicates().fillna(0)
-                    .sort_values("Area_bambini", ascending=False)
                 )
+                
+                # Ordina secondo l'ordine di preferenza calcolato (ranking)
+                if not ranking.empty:
+                    # Crea un mapping per l'ordine dal ranking
+                    ranking_order = {name: idx for idx, name in enumerate(ranking["nome_stazione"])}
+                    # Aggiungi un valore alto per stazioni non nel ranking (appariranno alla fine)
+                    max_rank = len(ranking_order)
+                    df_kids["ranking_order"] = df_kids["nome_stazione"].map(lambda x: ranking_order.get(x, max_rank))
+                    # Ordina per ranking_order (stazioni nel ranking prima, poi le altre)
+                    df_kids = df_kids.sort_values("ranking_order", ascending=True)
+                    # Rimuovi la colonna temporanea
+                    df_kids = df_kids.drop("ranking_order", axis=1)
+                else:
+                    # Fallback: ordina per numero di aree bambini se non c'è ranking
+                    df_kids = df_kids.sort_values("Area_bambini", ascending=False)
+                
                 fig_kids = px.bar(
                     df_kids,
                     x="nome_stazione", y="Area_bambini",
-                    title="Numero aree bambini per impianto",
+                    title="Numero aree bambini per impianto (ordinate per preferenza calcolata)",
                     labels={"nome_stazione": "Impianto", "Area_bambini": "Aree bambini"}
                 )
                 fig_kids.update_layout(
@@ -4791,7 +4865,7 @@ def main():
         # AI Overview per profilo festaiolo (PRIMA dei grafici) - Riattivato
         try:
             prompt_festaiolo = build_festaiolo_prompt(df_with_indices, best_name, livello, data_sel)
-            ai_overview_festaiolo, metadata = safe_llm_call(prompt_festaiolo, max_tokens=100)
+            ai_overview_festaiolo, metadata = safe_llm_call(prompt_festaiolo, max_tokens=300)
             
             # Genera badge con nome modello
             model_name = parse_model_name(metadata.get("model"))
@@ -4800,7 +4874,8 @@ def main():
             st.markdown(f"""
             <div class="ai-overview-section">
                 <div class="ai-header">
-                    <div class="ai-header-text">
+                    <div class="ai-header-text"
+                    >
                         <div class="ai-title">AI Overview ✨</div>
                         <div class="ai-badge">{ai_badge}</div>
                     </div>
@@ -4876,7 +4951,7 @@ def main():
         # AI Overview per profilo low-cost (PRIMA dei grafici) - Riattivato
         try:
             prompt_lowcost = build_lowcost_prompt(df_with_indices, best_name, livello, data_sel)
-            ai_overview_lowcost, metadata = safe_llm_call(prompt_lowcost, max_tokens=100)
+            ai_overview_lowcost, metadata = safe_llm_call(prompt_lowcost, max_tokens=300)
             
             # Genera badge con nome modello
             model_name = parse_model_name(metadata.get("model"))
