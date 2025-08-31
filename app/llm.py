@@ -14,7 +14,11 @@ from .config import (
 
 
 def _get_client() -> openai.OpenAI:
-    api_key = "***REMOVED***"
+    # Usa i secrets di Streamlit Cloud o variabili d'ambiente
+    api_key = st.secrets.get(OPENROUTER_API_KEY_ENV) or os.getenv(OPENROUTER_API_KEY_ENV)
+    if not api_key:
+        raise ValueError(f"API key non trovata. Configura {OPENROUTER_API_KEY_ENV} nei secrets di Streamlit Cloud o come variabile d'ambiente.")
+    
     # Aggiunge header consigliati da OpenRouter per migliorare l'affidabilità
     return openai.OpenAI(
         api_key=api_key,
