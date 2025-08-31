@@ -3,6 +3,7 @@ __pycache__/
 *.pyc
 .DS_Store
 .streamlit/
+.vscode/
 *.log
 *.pid
 
