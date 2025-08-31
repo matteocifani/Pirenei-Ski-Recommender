@@ -4913,22 +4913,22 @@ def main():
         except Exception:
             pass
         try:
-            cols = [c for c in ["Snowpark", "Superpipe"] if c in df_with_indices.columns]
-            df_acts = df_with_indices[["nome_stazione"] + cols].drop_duplicates().fillna(0)
-            if not df_acts.empty:
-                melted = df_acts.melt("nome_stazione", value_vars=cols, var_name="Attività", value_name="Valore")
-                fig_acts = px.bar(
-                    melted, x="nome_stazione", y="Valore", color="Attività",
-                    barmode="group", title="Snowpark e Superpipe",
-                    labels={"nome_stazione": "Nome stazione", "Valore": "Valore", "Attività": "Attività"}
-                )
-                fig_acts.update_layout(
-                    xaxis_tickangle=-45,
-                    template="plotly_dark",
-                    paper_bgcolor="rgba(0,0,0,0)",
-                    plot_bgcolor="rgba(0,0,0,0)"
-                )
-                st.plotly_chart(fig_acts, use_container_width=True)
+            # Solo Snowpark, rimuovendo Superpipe
+            if "Snowpark" in df_with_indices.columns:
+                df_snowpark = df_with_indices[["nome_stazione", "Snowpark"]].drop_duplicates().fillna(0)
+                if not df_snowpark.empty:
+                    fig_snowpark = px.bar(
+                        df_snowpark, x="nome_stazione", y="Snowpark",
+                        title="Snowpark per stazione",
+                        labels={"nome_stazione": "Nome stazione", "Snowpark": "Numero Snowpark"}
+                    )
+                    fig_snowpark.update_layout(
+                        xaxis_tickangle=-45,
+                        template="plotly_dark",
+                        paper_bgcolor="rgba(0,0,0,0)",
+                        plot_bgcolor="rgba(0,0,0,0)"
+                    )
+                    st.plotly_chart(fig_snowpark, use_container_width=True)
         except Exception:
             pass
     
