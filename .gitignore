@@ -5,3 +5,11 @@ __pycache__/
 .streamlit/
 *.log
 *.pid
+
+# Sicurezza - file con chiavi API
+.env
+.env.local
+.env.production
+secrets.toml
+*.key
+*.pem

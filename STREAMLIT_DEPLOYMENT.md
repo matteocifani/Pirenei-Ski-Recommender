@@ -32,6 +32,12 @@ git push origin main
 Se hai API keys o configurazioni sensibili, aggiungile in:
 - Streamlit Cloud → App → Settings → Secrets
 
+**⚠️ IMPORTANTE - Sicurezza API Keys:**
+- **NON committare mai** chiavi API nel codice
+- Usa sempre `st.secrets` per Streamlit Cloud
+- Per sviluppo locale, usa file `.env` (non committato)
+- La tua chiave OpenRouter è stata rimossa per sicurezza
+
 ### 5. Monitoraggio
 - **Logs**: Streamlit Cloud → App → Logs
 - **Analytics**: Streamlit Cloud → App → Analytics

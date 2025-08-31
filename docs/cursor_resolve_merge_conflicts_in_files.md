@@ -14024,7 +14024,7 @@ File "/opt/homebrew/lib/python3.13/site-packages/streamlit/runtime/secrets.py", 
 File "/opt/homebrew/lib/python3.13/site-packages/streamlit/runtime/secrets.py", line 377, in _parse
     raise StreamlitSecretNotFoundError(error_msg)
 
-La mia nuova chiave per Open Router è ***REMOVED***, il modello che devi utilizzare è openai/gpt-oss-20b:free
+La mia nuova chiave per Open Router è [CHIAVE_API_RIMOSSA_PER_SICUREZZA], il modello che devi utilizzare è openai/gpt-oss-20b:free
 
 ---
 
@@ -14811,14 +14811,14 @@ def generate_overview(prompt: str, max_tokens: int = 220) -> Tuple[str, dict]:
 - Gauges: delta integrato nello strumento resta, con formattazione pulita.
 
 Per far funzionare l’overview:
-- Nel terminale dove lanci Streamlit: export OPENROUTER_API_KEY="***REMOVED***"
+- Nel terminale dove lanci Streamlit: export OPENROUTER_API_KEY="[LA_TUA_CHIAVE_API]"
 - Poi rilancia: streamlit run streamlit_app_v2.py
 
 ---
 
 **User**
 
-Ma questo devon farlo io o l'hai già fatto? "Nel terminale dove lanci Streamlit: export OPENROUTER_API_KEY="***REMOVED***"
+Ma questo devon farlo io o l'hai già fatto? "Nel terminale dove lanci Streamlit: export OPENROUTER_API_KEY="[LA_TUA_CHIAVE_API]"
 
 
 ---
