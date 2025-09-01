@@ -3850,8 +3850,6 @@ def main():
             ai_badge = f"Powered by {model_name}"
             
             # Debug: mostra cosa restituisce la chiamata LLM
-            st.write("DEBUG - AI Overview content:", repr(ai_overview))
-            st.write("DEBUG - Metadata:", metadata)
             
             st.markdown(f"""
             <div class="ai-overview-section">
