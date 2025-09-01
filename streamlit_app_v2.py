@@ -3849,6 +3849,10 @@ def main():
             model_name = parse_model_name(metadata.get("model"))
             ai_badge = f"Powered by {model_name}"
             
+            # Debug: mostra cosa restituisce la chiamata LLM
+            st.write("DEBUG - AI Overview content:", repr(ai_overview))
+            st.write("DEBUG - Metadata:", metadata)
+            
             st.markdown(f"""
             <div class="ai-overview-section">
                 <div class="ai-header">
@@ -3858,7 +3862,7 @@ def main():
                     </div>
                 </div>
                 <div class="ai-overview-content">
-                    {ai_overview}
+                    {ai_overview if ai_overview else "Nessun contenuto disponibile"}
                 </div>
             </div>
             """, unsafe_allow_html=True)
