@@ -3716,6 +3716,31 @@ def main():
     # Aggregated KPIs (mean over the window) for all stations
     df_kpis = aggregate_station_kpis(df_with_indices)
 
+    # Se la data è nel passato/oggi e tutti i KPI di apertura sono zero, mostra "Nessuna stazione aperta"
+    try:
+        sel_date = pd.to_datetime(data_sel).date() if data_sel is not None else None
+    except Exception:
+        sel_date = None
+    if sel_date is not None:
+        import datetime as _dt
+        if sel_date <= _dt.date.today() and not df_kpis.empty:
+            all_closed = (
+                (df_kpis.get("km_open_est", 0).fillna(0) == 0)
+                & (df_kpis.get("pct_open", 0).fillna(0) == 0)
+                & (df_kpis.get("open_prob", 0).fillna(0) == 0)
+            ).all()
+            if all_closed:
+                st.markdown("""
+                <div class="no-data-message">
+                    <div class="no-data-content">
+                        <h3 class="no-data-title">😔 Nessuna stazione aperta</h3>
+                        <p class="no-data-subtitle">Le piste sono chiuse in questa data. Prova a scegliere un altro giorno per divertirti sulla neve!</p>
+                        <p class="no-data-guide">⬆️ Modifica la data qui sopra</p>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+                return
+
     # Best station name
     best_name = ranking.iloc[0]["nome_stazione"] if not ranking.empty else df_kpis.sort_values("km_open_est", ascending=False).iloc[0]["nome_stazione"]
 
@@ -3878,16 +3903,27 @@ def main():
         st.markdown('<h4 class="section-subtitle">🗺️ Mappa delle stazioni (consigliata evidenziata)</h4>', unsafe_allow_html=True)
         render_map_with_best(df_with_indices, best_name)
 
-        # Podio Top 3 (estetico, senza esporre il valore indice)
-        if not df_with_indices.empty and "indice_base" in df_with_indices.columns:
-            top3 = (df_with_indices.groupby("nome_stazione")["indice_base"].mean()
-                    .sort_values(ascending=False).head(3).reset_index())
-            if len(top3) > 0:
-                st.markdown('<h4 class="section-subtitle">🏆 Classifica Top 3</h4>', unsafe_allow_html=True)
-                st.markdown(
-                    render_podium(top3),
-                    unsafe_allow_html=True
-                )
+        # Podio Top 3 (allineato alla logica della raccomandazione quando è selezionato un profilo)
+        if profilo_norm != "nessuno":
+            if not ranking.empty:
+                top_names = ranking["nome_stazione"].head(3).tolist()
+                top3 = pd.DataFrame({"nome_stazione": top_names})
+                if len(top3) > 0:
+                    st.markdown('<h4 class="section-subtitle">🏆 Classifica Top 3</h4>', unsafe_allow_html=True)
+                    st.markdown(
+                        render_podium(top3),
+                        unsafe_allow_html=True
+                    )
+        else:
+            if not df_with_indices.empty and "indice_base" in df_with_indices.columns:
+                top3 = (df_with_indices.groupby("nome_stazione")["indice_base"].mean()
+                        .sort_values(ascending=False).head(3).reset_index())
+                if len(top3) > 0:
+                    st.markdown('<h4 class="section-subtitle">🏆 Classifica Top 3</h4>', unsafe_allow_html=True)
+                    st.markdown(
+                        render_podium(top3),
+                        unsafe_allow_html=True
+                    )
 
         # Probabilità meteo (±3 giorni su anni precedenti per date future)
         from datetime import date as _date
@@ -4041,14 +4077,10 @@ def main():
         st.markdown('<h4 class="section-subtitle">🗺️ Mappa delle stazioni (consigliata evidenziata)</h4>', unsafe_allow_html=True)
         render_map_with_best(df_with_indices, best_name)
 
-        # Podio Top 3 per indice_medio
-        if "indice_medio" in df_with_indices.columns and not df_with_indices.empty:
-            top3m = (
-                df_with_indices.groupby("nome_stazione")["indice_medio"].mean()
-                .sort_values(ascending=False).head(3).reset_index()
-            )
-            if not top3m.empty:
-                names = top3m["nome_stazione"].tolist()
+        # Podio Top 3 per indice medio o ranking finale se profilo selezionato
+        if profilo_norm != "nessuno":
+            if not ranking.empty:
+                names = ranking["nome_stazione"].head(3).tolist()
                 first = names[0] if len(names) > 0 else ""
                 second = names[1] if len(names) > 1 else ""
                 third = names[2] if len(names) > 2 else ""
@@ -4078,6 +4110,43 @@ def main():
                     """,
                     unsafe_allow_html=True,
                 )
+        else:
+            if "indice_medio" in df_with_indices.columns and not df_with_indices.empty:
+                top3m = (
+                    df_with_indices.groupby("nome_stazione")["indice_medio"].mean()
+                    .sort_values(ascending=False).head(3).reset_index()
+                )
+                if not top3m.empty:
+                    names = top3m["nome_stazione"].tolist()
+                    first = names[0] if len(names) > 0 else ""
+                    second = names[1] if len(names) > 1 else ""
+                    third = names[2] if len(names) > 2 else ""
+                    st.markdown('<h4 class="section-subtitle">🏆 Classifica Top 3</h4>', unsafe_allow_html=True)
+                    st.markdown(
+                        f"""
+                        <div class='podium-container'>
+                          <div class='podium-step second'>
+                            <div class='podium-platform second'>
+                              <div class='podium-medal'>🥈</div>
+                              <div class='name'>{second}</div>
+                            </div>
+                          </div>
+                          <div class='podium-step first'>
+                            <div class='podium-platform first'>
+                              <div class='podium-medal'>🥇</div>
+                              <div class='name'>{first}</div>
+                            </div>
+                          </div>
+                          <div class='podium-step third'>
+                            <div class='podium-platform third'>
+                              <div class='podium-medal'>🥉</div>
+                              <div class='name'>{third}</div>
+                            </div>
+                          </div>
+                        </div>
+                        """,
+                        unsafe_allow_html=True,
+                    )
 
         # Meteo compatto (5 mini-donut) per la stazione consigliata
         try:
@@ -4235,14 +4304,10 @@ def main():
         st.markdown('<h4 class="section-subtitle">🗺️ Mappa delle stazioni</h4>', unsafe_allow_html=True)
         render_map_with_best(df_with_indices, best_name)
 
-        # Podio Top 3 per indice_esperto
-        if not df_with_indices.empty and "indice_esperto" in df_with_indices.columns:
-            top3e = (
-                df_with_indices.groupby("nome_stazione")["indice_esperto"].mean()
-                .sort_values(ascending=False).head(3).reset_index()
-            )
-            if not top3e.empty:
-                names = top3e["nome_stazione"].tolist()
+        # Podio Top 3 per indice esperto o ranking finale se profilo selezionato
+        if profilo_norm != "nessuno":
+            if not ranking.empty:
+                names = ranking["nome_stazione"].head(3).tolist()
                 first = names[0] if len(names) > 0 else ""
                 second = names[1] if len(names) > 1 else ""
                 third = names[2] if len(names) > 2 else ""
@@ -4272,6 +4337,43 @@ def main():
                     """,
                     unsafe_allow_html=True,
                 )
+        else:
+            if not df_with_indices.empty and "indice_esperto" in df_with_indices.columns:
+                top3e = (
+                    df_with_indices.groupby("nome_stazione")["indice_esperto"].mean()
+                    .sort_values(ascending=False).head(3).reset_index()
+                )
+                if not top3e.empty:
+                    names = top3e["nome_stazione"].tolist()
+                    first = names[0] if len(names) > 0 else ""
+                    second = names[1] if len(names) > 1 else ""
+                    third = names[2] if len(names) > 2 else ""
+                    st.markdown('<h4 class="section-subtitle">🏆 Classifica Top 3</h4>', unsafe_allow_html=True)
+                    st.markdown(
+                        f"""
+                        <div class='podium-container'>
+                          <div class='podium-step second'>
+                            <div class='podium-platform second'>
+                              <div class='podium-medal'>🥈</div>
+                              <div class='name'>{second}</div>
+                            </div>
+                          </div>
+                          <div class='podium-step first'>
+                            <div class='podium-platform first'>
+                              <div class='podium-medal'>🥇</div>
+                              <div class='name'>{first}</div>
+                            </div>
+                          </div>
+                          <div class='podium-step third'>
+                            <div class='podium-platform third'>
+                              <div class='podium-medal'>🥉</div>
+                              <div class='name'>{third}</div>
+                            </div>
+                          </div>
+                        </div>
+                        """,
+                        unsafe_allow_html=True,
+                    )
 
         # Speedometer rischio valanghe (1-5) per la stazione consigliata (con delta vs baseline ±15g)
         try:
