@@ -2334,6 +2334,49 @@ def build_textual_tags(row: pd.Series, livello: str, profilo: str) -> List[str]:
     return tags
 
 
+def _ai_make_fallback_overview(df_kpis: pd.DataFrame, best_name: str) -> str:
+    """Crea una sintesi deterministica e coerente (2 frasi) in caso di output LLM discutibile."""
+    try:
+        row = df_kpis[df_kpis["nome_stazione"] == best_name].iloc[0]
+    except Exception:
+        return f"{best_name} è la scelta più pratica per questo periodo."
+    km = float(row.get("km_open_est", 0) or 0)
+    pct = float(row.get("pct_open", 0) or 0)
+    prob = float(row.get("open_prob", 0) or 0)
+    nebbia = float(row.get("nebbia", 0) or 0)
+    vento = float(row.get("vento", 0) or 0)
+    avalanche = float(row.get("avalanche", 3) or 3)
+    meteo_status = "ottime" if nebbia < 0.2 and vento < 0.3 else "buone" if nebbia < 0.4 and vento < 0.5 else "variabili"
+    sicurezza_status = "eccellente" if avalanche < 2.5 else "buona" if avalanche < 3.5 else "da monitorare"
+
+    s1 = f"{best_name}: {km:.0f} km aperti ({pct*100:.0f}%), probabilità apertura {prob*100:.0f}%, condizioni {meteo_status}, sicurezza {sicurezza_status}."
+    others = df_kpis[df_kpis["nome_stazione"] != best_name].sort_values("km_open_est", ascending=False).head(2)
+    if not others.empty:
+        parts = []
+        for _, r in others.iterrows():
+            parts.append(f"{r['nome_stazione']} {float(r.get('km_open_est', 0) or 0):.0f} km")
+        s2 = "Confronto: " + ", ".join(parts) + "."
+        return s1 + " " + s2
+    return s1
+
+
+def _ai_output_has_km_contradiction(text: str, best_km: float, alt_kms: List[float]) -> bool:
+    """Rileva incongruenze grossolane: se il testo usa lessico comparativo e i km del best sono inferiori."""
+    if text is None:
+        return False
+    t = str(text).lower()
+    if "km" not in t:
+        return False
+    # lessico comparativo a rischio
+    risky = any(w in t for w in ["supera", "più km", "maggiore numero di km", "piu km", "più chilometri", "piu chilometri"])
+    if not risky:
+        return False
+    try:
+        return best_km < max([k for k in alt_kms if k is not None] or [0])
+    except Exception:
+        return False
+
+
 def ensure_lat_lon(df: pd.DataFrame) -> pd.DataFrame:
     """Try to provide 'lat' and 'lon' columns by renaming common variants.
 
@@ -3912,13 +3955,26 @@ def main():
         try:
             prompt = build_llm_prompt(df_kpis, best_name, livello, profilo, data_sel)
             ai_overview, metadata = safe_llm_call(prompt, max_tokens=300)
-            
+
+            # Controllo coerenza numerica basilare: evita 'supera/più km' se i km del best sono inferiori
+            try:
+                brow = df_kpis[df_kpis["nome_stazione"] == best_name].iloc[0]
+                best_km = float(brow.get("km_open_est", 0) or 0)
+                others = (
+                    df_kpis[df_kpis["nome_stazione"] != best_name]
+                    .sort_values("km_open_est", ascending=False).head(2)
+                )
+                alt_kms = [float(others.iloc[i].get("km_open_est", 0) or 0) for i in range(len(others))]
+            except Exception:
+                best_km, alt_kms = 0.0, []
+
+            if _ai_output_has_km_contradiction(ai_overview, best_km, alt_kms):
+                ai_overview = _ai_make_fallback_overview(df_kpis, best_name)
+
             # Genera badge con nome modello
             model_name = parse_model_name(metadata.get("model"))
             ai_badge = f"Powered by {model_name}"
-            
-            # Debug: mostra cosa restituisce la chiamata LLM
-            
+
             st.markdown(f"""
             <div class="ai-overview-section">
                 <div class="ai-header">
