@@ -157,66 +157,70 @@ indice_esperto = 0.15 * esperto.Piste_nere      # 15% - Piste nere (difficoltà)
 
 ### Indici Profilo (con pesi specifici)
 
-#### **🏔️ Profilo Panoramico**
+#### Profilo Panoramico
 ```python
 panoramico = normalizza([panoramico, pioggia, vento, nebbia, sole, quota_max])
 
-indice_panoramico = 0.30 * panoramico.panoramico    # 30% - Rating panoramico
-                     + 0.15 * (1 - panoramico.pioggia) # 15% - Assenza pioggia
-                     + 0.15 * (1 - panoramico.vento)   # 15% - Assenza vento
-                     + 0.15 * (1 - panoramico.nebbia)  # 15% - Assenza nebbia
-                     + 0.15 * panoramico.sole          # 15% - Presenza sole
-                     + 0.10 * (1 - panoramico.quota_max) # 10% - Quota moderata
+indice_panoramico = 0.25 * panoramico.panoramico       # 25% - Rating panoramico
+                     + 0.15 * (1 - panoramico.pioggia)   # 15% - Assenza pioggia
+                     + 0.10 * (1 - panoramico.vento)     # 10% - Assenza vento
+                     + 0.20 * panoramico.sole            # 20% - Presenza sole
+                     + 0.10 * (1 - panoramico.nebbia)    # 10% - Assenza nebbia
+                     + 0.20 * (1 - panoramico.quota_max) # 20% - Quota moderata
 ```
 
-#### **👨‍👩‍👧‍👦 Profilo Familiare**
+#### Profilo Familiare
 ```python
-familiare = normalizza([Piste_verdi, Piste_blu, area_bambini, noleggio, scuola, 
+familiare = normalizza([Piste_verdi, Piste_blu, area_bambini, prezzo_noleggio, prezzo_scuola,
                         sicurezza, ristoranti, familiare, pioggia, nebbia, coda])
 
-indice_familiare = 0.20 * familiare.Piste_verdi     # 20% - Piste verdi (sicurezza)
-                    + 0.15 * familiare.Piste_blu      # 15% - Piste blu (intermediate)
-                    + 0.15 * familiare.area_bambini   # 15% - Area bambini
-                    + 0.10 * (1 - familiare.noleggio) # 10% - Assenza noleggio (semplicità)
-                    + 0.10 * (1 - familiare.scuola)   # 10% - Assenza scuola (indipendenza)
-                    + 0.10 * familiare.sicurezza      # 10% - Rating sicurezza
-                    + 0.10 * familiare.ristoranti     # 10% - Presenza ristoranti
-                    + 0.05 * familiare.familiare      # 5%  - Rating familiare
-                    + 0.03 * (1 - familiare.pioggia)  # 3%  - Assenza pioggia
-                    + 0.01 * (1 - familiare.nebbia)   # 1%  - Assenza nebbia
-                    + 0.01 * (1 - familiare.coda)     # 1%  - Assenza code
+indice_familiare = 0.10 * familiare.Piste_verdi         # 10% - Piste verdi (sicurezza)
+                    + 0.15 * familiare.Piste_blu          # 15% - Piste blu (intermediate)
+                    + 0.15 * familiare.area_bambini       # 15% - Area bambini
+                    + 0.05 * (1 - familiare.prezzo_noleggio) # 5%  - Prezzo noleggio contenuto
+                    + 0.05 * (1 - familiare.prezzo_scuola)   # 5%  - Prezzo scuola contenuto
+                    + 0.10 * familiare.sicurezza          # 10% - Rating sicurezza
+                    + 0.10 * familiare.ristoranti         # 10% - Presenza ristoranti
+                    + 0.15 * familiare.familiare          # 15% - Rating familiare
+                    + 0.05 * (1 - familiare.pioggia)      # 5%  - Assenza pioggia
+                    + 0.05 * (1 - familiare.nebbia)       # 5%  - Assenza nebbia
+                    + 0.05 * (1 - familiare.coda)         # 5%  - Assenza code
 ```
 
-#### **🎉 Profilo Festaiolo**
+#### Profilo Festaiolo
 ```python
 festaiolo = normalizza([snowpark, Scii_notte, ristoranti, Stelle, festaiolo, pioggia])
 
-indice_festaiolo = 0.25 * festaiolo.snowpark         # 25% - Snowpark (divertimento)
-                    + 0.20 * festaiolo.Scii_notte      # 20% - Sci notturno (vita notturna)
-                    + 0.20 * festaiolo.ristoranti      # 20% - Presenza ristoranti
-                    + 0.20 * festaiolo.Stelle          # 20% - Rating generale (qualità)
-                    + 0.10 * festaiolo.festaiolo       # 10% - Rating festaiolo
-                    + 0.05 * (1 - festaiolo.pioggia)   # 5%  - Assenza pioggia
+indice_festaiolo = 0.20 * festaiolo.snowpark            # 20% - Snowpark (divertimento)
+                    + 0.15 * festaiolo.Scii_notte         # 15% - Sci notturno (vita notturna)
+                    + 0.20 * festaiolo.ristoranti         # 20% - Presenza ristoranti
+                    + 0.10 * festaiolo.Stelle             # 10% - Rating generale (qualità)
+                    + 0.30 * festaiolo.festaiolo          # 30% - Rating festaiolo
+                    + 0.05 * (1 - festaiolo.pioggia)      # 5%  - Assenza pioggia
 ```
 
-#### **💰 Profilo Lowcost**
+#### Profilo Lowcost
 ```python
-lowcost = normalizza([lowcost, skipass, scuola, noleggio, kmopen])
+lowcost = normalizza([lowcost, skipass, kmopen, scuola, noleggio])
 
-indice_lowcost = 0.35 * lowcost.lowcost              # 35% - Rating convenienza
-                  + 0.25 * (1 - lowcost.skipass)       # 25% - Prezzo skipass contenuto
-                  + 0.20 * (1 - lowcost.scuola)        # 20% - Assenza scuola (risparmio)
-                  + 0.15 * (1 - lowcost.noleggio)      # 15% - Assenza noleggio (risparmio)
-                  + 0.05 * lowcost.kmopen              # 5%  - Chilometri aperti (valore)
+indice_lowcost = 0.25 * lowcost.lowcost                 # 25% - Rating convenienza
+                  + 0.20 * (1 - lowcost.skipass)          # 20% - Prezzo skipass contenuto
+                  + 0.15 * lowcost.kmopen                 # 15% - Km aperti (valore)
+                  + 0.20 * (1 - lowcost.scuola)           # 20% - Prezzo scuola contenuto
+                  + 0.20 * (1 - lowcost.noleggio)         # 20% - Prezzo noleggio contenuto
 ```
 
-### 🔍 **Note sui Pesi**
+### Combinazione Livello + Profilo
+- Solo livello selezionato: ranking su `indice_<livello>`.
+- Solo profilo selezionato: ranking su `indice_<profilo>`.
+- Entrambi selezionati: indice finale = 0.5 livello + 0.5 profilo.
 
-- **Pesi maggiori (20-35%)**: Caratteristiche principali del profilo
-- **Pesi medi (10-15%)**: Caratteristiche secondarie importanti
-- **Pesi minori (1-5%)**: Caratteristiche di supporto o bonus
-- **Normalizzazione**: Tutti i valori vengono normalizzati tra 0 e 1 prima del calcolo
-- **Inversione**: Per metriche negative (vento, nebbia, pioggia) si usa `(1 - valore)` per convertire in positivo
+### 🔍 Note sui Pesi
+- Pesi maggiori (20–30%): driver principali del profilo.
+- Pesi medi (10–15%): caratteristiche secondarie importanti.
+- Pesi minori (≤5%): fattori di supporto/condizioni.
+- Normalizzazione: MinMaxScaler (0–1) per ogni metrica.
+- Inversione: per metriche negative (vento, nebbia, pioggia) si usa `(1 - valore)`.
 
 ## 🎨 Tecnologie Utilizzate
 
