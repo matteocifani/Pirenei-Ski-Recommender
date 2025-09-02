@@ -2463,25 +2463,45 @@ def _ai_build_explanatory_overview(
     return " ".join([s for s in [s1, s2, s3, s4] if s])
 
 
-def _ai_output_has_km_contradiction(text: str, best_km: float, alt_kms: List[float]) -> bool:
-    """Rileva incongruenze grossolane: se il testo usa lessico comparativo e i km del best sono inferiori."""
-    if text is None:
-        return False
-    t = str(text).lower()
-    if "km" not in t:
-        return False
-    # lessico comparativo a rischio
-    risky = any(w in t for w in ["supera", "più km", "maggiore numero di km", "piu km", "più chilometri", "piu chilometri"])
-    if not risky:
+def _ai_output_has_km_contradiction(
+    text: str,
+    best_name: str,
+    best_km: float,
+    alt_names: List[str],
+    alt_kms: List[float],
+) -> bool:
+    """Rileva contraddizioni sui km SOLO se il testo attribuisce esplicitamente al best 'più km/supera in km'.
+
+    Esempi che triggerano:
+    - "{best} ha più km ..."
+    - "{best} supera ... in km"
+    - "{best} offre il maggiore numero di km"
+    """
+    if text is None or not best_name:
         return False
     try:
-        return best_km < max([k for k in alt_kms if k is not None] or [0])
+        max_alt = max([k for k in alt_kms if k is not None] or [0])
     except Exception:
-        return False
+        max_alt = 0
+    if best_km >= max_alt:
+        return False  # non c'è contraddizione se il best ha almeno i km massimi
+    t = str(text)
+    bn = re.escape(str(best_name))
+    patterns = [
+        rf"{bn}[^.]*ha[^.]*pi[ùu]\s+km",
+        rf"{bn}[^.]*offre[^.]*pi[ùu]\s+km",
+        rf"{bn}[^.]*supera[^.]*km",
+        rf"{bn}[^.]*maggiore\s+numero\s+di\s+km",
+    ]
+    for p in patterns:
+        if re.search(p, t, flags=re.IGNORECASE):
+            return True
+    return False
 
 
 def _ai_output_has_opening_pct_or_prob_contradiction(
     text: str,
+    best_name: str,
     best_pct: float,
     alt_pcts: List[float],
     best_prob: float,
@@ -2490,12 +2510,12 @@ def _ai_output_has_opening_pct_or_prob_contradiction(
     """Rileva incongruenze su percentuale di apertura e probabilità di apertura.
 
     Heuristic:
-    - Se il testo contiene segnali di confronto su percentuali ("percentuale", "%", "più alta") e best_pct < max(alt_pcts) ⇒ contraddizione
-    - Se il testo contiene segnali di confronto su probabilità ("probabil", "più probabile") e best_prob < max(alt_probs) ⇒ contraddizione
+    - Flag solo se il testo attribuisce esplicitamente al best 'percentuale/probabilità più alta/superiore' e i numeri non lo supportano.
     """
-    if text is None:
+    if text is None or not best_name:
         return False
-    t = str(text).lower()
+    t = str(text)
+    bn = re.escape(str(best_name))
     try:
         max_pct = max([p for p in alt_pcts if p is not None] or [0])
         max_prob = max([p for p in alt_probs if p is not None] or [0])
@@ -2503,11 +2523,19 @@ def _ai_output_has_opening_pct_or_prob_contradiction(
         max_pct = 0
         max_prob = 0
 
-    pct_lex = ("percentuale" in t or "%" in t) and ("più" in t or "maggiore" in t or "supera" in t)
-    prob_lex = ("probabil" in t) and ("più" in t or "maggiore" in t or "supera" in t)
+    pct_patterns = [
+        rf"{bn}[^.]*percentuale[^.]*(pi[ùu]\s+alta|maggiore|superiore)",
+        rf"{bn}[^.]*%[^.]*(pi[ùu]\s+alta|maggiore|superiore)",
+    ]
+    prob_patterns = [
+        rf"{bn}[^.]*probabil[^.]*(pi[ùu]\s+alta|maggiore|superiore|pi[ùu]\s+probabile)",
+    ]
 
-    pct_wrong = pct_lex and (best_pct < max_pct)
-    prob_wrong = prob_lex and (best_prob < max_prob)
+    pct_claim = any(re.search(p, t, flags=re.IGNORECASE) for p in pct_patterns)
+    prob_claim = any(re.search(p, t, flags=re.IGNORECASE) for p in prob_patterns)
+
+    pct_wrong = pct_claim and (best_pct < max_pct)
+    prob_wrong = prob_claim and (best_prob < max_prob)
 
     return bool(pct_wrong or prob_wrong)
 
@@ -4111,14 +4139,16 @@ def main():
                 alt_kms = [float(others.iloc[i].get("km_open_est", 0) or 0) for i in range(len(others))]
                 alt_pcts = [float(others.iloc[i].get("pct_open", 0) or 0) for i in range(len(others))]
                 alt_probs = [float(others.iloc[i].get("open_prob", 0) or 0) for i in range(len(others))]
+                alt_names = [str(others.iloc[i].get("nome_stazione", "")) for i in range(len(others))]
             except Exception:
                 best_km, alt_kms = 0.0, []
                 best_pct, alt_pcts = 0.0, []
                 best_prob, alt_probs = 0.0, []
+                alt_names = []
 
             if (
-                _ai_output_has_km_contradiction(ai_overview, best_km, alt_kms)
-                or _ai_output_has_opening_pct_or_prob_contradiction(ai_overview, best_pct, alt_pcts, best_prob, alt_probs)
+                _ai_output_has_km_contradiction(ai_overview, best_name, best_km, alt_names, alt_kms)
+                or _ai_output_has_opening_pct_or_prob_contradiction(ai_overview, best_name, best_pct, alt_pcts, best_prob, alt_probs)
             ):
                 ai_overview = _ai_build_explanatory_overview(df_kpis, best_name, livello, profilo)
 
@@ -5037,14 +5067,16 @@ def main():
                 alt_kms = [float(others.iloc[i].get("km_open_est", 0) or 0) for i in range(len(others))]
                 alt_pcts = [float(others.iloc[i].get("pct_open", 0) or 0) for i in range(len(others))]
                 alt_probs = [float(others.iloc[i].get("open_prob", 0) or 0) for i in range(len(others))]
+                alt_names = [str(others.iloc[i].get("nome_stazione", "")) for i in range(len(others))]
             except Exception:
                 best_km, alt_kms = 0.0, []
                 best_pct, alt_pcts = 0.0, []
                 best_prob, alt_probs = 0.0, []
+                alt_names = []
 
             if (
-                _ai_output_has_km_contradiction(ai_overview_panoramico, best_km, alt_kms)
-                or _ai_output_has_opening_pct_or_prob_contradiction(ai_overview_panoramico, best_pct, alt_pcts, best_prob, alt_probs)
+                _ai_output_has_km_contradiction(ai_overview_panoramico, best_name, best_km, alt_names, alt_kms)
+                or _ai_output_has_opening_pct_or_prob_contradiction(ai_overview_panoramico, best_name, best_pct, alt_pcts, best_prob, alt_probs)
             ):
                 ai_overview_panoramico = _ai_build_explanatory_overview(df_kpis, best_name, livello, profilo)
             
@@ -5249,14 +5281,16 @@ def main():
                 alt_kms = [float(others.iloc[i].get("km_open_est", 0) or 0) for i in range(len(others))]
                 alt_pcts = [float(others.iloc[i].get("pct_open", 0) or 0) for i in range(len(others))]
                 alt_probs = [float(others.iloc[i].get("open_prob", 0) or 0) for i in range(len(others))]
+                alt_names = [str(others.iloc[i].get("nome_stazione", "")) for i in range(len(others))]
             except Exception:
                 best_km, alt_kms = 0.0, []
                 best_pct, alt_pcts = 0.0, []
                 best_prob, alt_probs = 0.0, []
+                alt_names = []
 
             if (
-                _ai_output_has_km_contradiction(ai_overview_festaiolo, best_km, alt_kms)
-                or _ai_output_has_opening_pct_or_prob_contradiction(ai_overview_festaiolo, best_pct, alt_pcts, best_prob, alt_probs)
+                _ai_output_has_km_contradiction(ai_overview_festaiolo, best_name, best_km, alt_names, alt_kms)
+                or _ai_output_has_opening_pct_or_prob_contradiction(ai_overview_festaiolo, best_name, best_pct, alt_pcts, best_prob, alt_probs)
             ):
                 ai_overview_festaiolo = _ai_build_explanatory_overview(df_kpis, best_name, livello, profilo)
             
@@ -5358,14 +5392,16 @@ def main():
                 alt_kms = [float(others.iloc[i].get("km_open_est", 0) or 0) for i in range(len(others))]
                 alt_pcts = [float(others.iloc[i].get("pct_open", 0) or 0) for i in range(len(others))]
                 alt_probs = [float(others.iloc[i].get("open_prob", 0) or 0) for i in range(len(others))]
+                alt_names = [str(others.iloc[i].get("nome_stazione", "")) for i in range(len(others))]
             except Exception:
                 best_km, alt_kms = 0.0, []
                 best_pct, alt_pcts = 0.0, []
                 best_prob, alt_probs = 0.0, []
+                alt_names = []
 
             if (
-                _ai_output_has_km_contradiction(ai_overview_lowcost, best_km, alt_kms)
-                or _ai_output_has_opening_pct_or_prob_contradiction(ai_overview_lowcost, best_pct, alt_pcts, best_prob, alt_probs)
+                _ai_output_has_km_contradiction(ai_overview_lowcost, best_name, best_km, alt_names, alt_kms)
+                or _ai_output_has_opening_pct_or_prob_contradiction(ai_overview_lowcost, best_name, best_pct, alt_pcts, best_prob, alt_probs)
             ):
                 ai_overview_lowcost = _ai_build_explanatory_overview(df_kpis, best_name, livello, profilo)
             
