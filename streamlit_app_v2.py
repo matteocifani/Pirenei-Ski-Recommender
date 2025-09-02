@@ -2525,10 +2525,27 @@ def _ai_build_explanatory_overview(
         else:
             s3 = f"Le alternative {', '.join(o_names)} mostrano numeri simili sui km disponibili."
 
-    # Quarta frase (facoltativa): chiusura
-    s4 = "In sintesi, bilancia meglio condizioni e apertura piste per il periodo selezionato."
+    # Quarta frase (facoltativa): recensioni sintetiche
+    s4 = ""
+    if best_rec:
+        rec_bits = []
+        if "Stelle" in best_rec and best_rec.get("Stelle"):
+            try:
+                rec_bits.append(f"{float(best_rec['Stelle']):.1f}★")
+            except Exception:
+                pass
+        for key in ["festaiolo", "familiare", "panoramico", "sicurezza", "ristoranti", "coda"]:
+            if key in best_rec:
+                lv = _lvl(best_rec.get(key, 0), key)
+                if lv:
+                    rec_bits.append(lv)
+        if rec_bits:
+            s4 = "Recensioni: " + ", ".join(rec_bits[:2]) + "."
 
-    return " ".join([s for s in [s1, s2, s3, s4] if s])
+    # Quinta frase: chiusura
+    s5 = "In sintesi, offre il miglior equilibrio per il periodo selezionato."
+
+    return " ".join([s for s in [s1, s2, s3, s4, s5] if s])
 
 
 def _ai_output_has_km_contradiction(
@@ -2560,11 +2577,38 @@ def _ai_output_has_km_contradiction(
         rf"{bn}[^.]*offre[^.]*pi[ùu]\s+km",
         rf"{bn}[^.]*supera[^.]*km",
         rf"{bn}[^.]*maggiore\s+numero\s+di\s+km",
+        rf"{bn}[^.]*maggiore\s+estensione[^.]*piste",
+        rf"{bn}[^.]*pi[ùu]\s+ampia[^.]*estensione[^.]*piste",
+        rf"{bn}[^.]*estensione[^.]*maggiore[^.]*piste",
     ]
     for p in patterns:
         if re.search(p, t, flags=re.IGNORECASE):
             return True
     return False
+
+
+def _ai_text_internal_km_conflict(text: str, best_name: str) -> bool:
+    """Rileva affermazioni opposte sul best nella stessa risposta (es. 'maggiore estensione' e 'meno km')."""
+    if text is None or not best_name:
+        return False
+    t = str(text)
+    bn = re.escape(str(best_name))
+    # claim di superiorità in km/estensione
+    more_patterns = [
+        rf"{bn}[^.]*pi[ùu]\s+km",
+        rf"{bn}[^.]*maggiore\s+numero\s+di\s+km",
+        rf"{bn}[^.]*supera[^.]*km",
+        rf"{bn}[^.]*maggiore\s+estensione[^.]*piste",
+        rf"{bn}[^.]*pi[ùu]\s+ampia[^.]*estensione[^.]*piste",
+        rf"{bn}[^.]*estensione[^.]*maggiore[^.]*piste",
+    ]
+    less_patterns = [
+        rf"{bn}[^.]*meno\s+km",
+        rf"{bn}[^.]*inferiore\s+numero\s+di\s+km",
+    ]
+    more = any(re.search(p, t, flags=re.IGNORECASE) for p in more_patterns)
+    less = any(re.search(p, t, flags=re.IGNORECASE) for p in less_patterns)
+    return bool(more and less)
 
 
 def _ai_output_has_opening_pct_or_prob_contradiction(
@@ -2687,6 +2731,7 @@ def build_llm_prompt(df_kpis: pd.DataFrame, best_name: str, livello: str, profil
         f"Usa SOLO i dati forniti. NON inventare nomi di piste, rifugi, montagne o luoghi specifici. "
         f"Includi: km piste aperte, condizioni meteo, confronto con alternativa. "
         f"Collega i numeri ai grafici sottostanti: km piste aperte, % piste aperte, probabilità di apertura, meteo (nebbia/vento) e rischio valanghe. "
+        f"Se disponibili, integra brevemente un aspetto dalle recensioni (stelle, atmosfera, sicurezza, code). "
         f"PRIMA di scrivere i confronti, verifica SEMPRE i numeri nei dati forniti! "
         f"SE {best_name} ha meno km aperti delle alternative, spiega perché è comunque preferibile citando meteo più stabile, maggiore probabilità di apertura o rischio valanghe più basso. "
         f"NON usare 'supera' o 'più km' se {best_name} ha meno km; usa invece 'nonostante meno km, offre X'. "
@@ -4217,6 +4262,7 @@ def main():
             if (
                 _ai_output_has_km_contradiction(ai_overview, best_name, best_km, alt_names, alt_kms)
                 or _ai_output_has_opening_pct_or_prob_contradiction(ai_overview, best_name, best_pct, alt_pcts, best_prob, alt_probs)
+                or _ai_text_internal_km_conflict(ai_overview, best_name)
             ):
                 ai_overview = _ai_build_explanatory_overview(df_kpis, best_name, livello, profilo, df_filtered_rec, df_with_indices)
 
@@ -5225,7 +5271,34 @@ def main():
         # AI Overview per profilo familiare (PRIMA dei grafici) - Riattivato
         try:
             prompt_familiare = build_familiare_prompt(df_filtered_rec, best_name, livello, data_sel)
-            ai_overview_familiare, metadata = safe_llm_call(prompt_familiare, max_tokens=300)
+            ai_overview_familiare, metadata = safe_llm_call(prompt_familiare, max_tokens=360)
+
+            # Guardrail su km/%/prob e conflitto interno
+            try:
+                brow = df_kpis[df_kpis["nome_stazione"] == best_name].iloc[0]
+                best_km = float(brow.get("km_open_est", 0) or 0)
+                best_pct = float(brow.get("pct_open", 0) or 0)
+                best_prob = float(brow.get("open_prob", 0) or 0)
+                others = (
+                    df_kpis[df_kpis["nome_stazione"] != best_name]
+                    .sort_values("km_open_est", ascending=False).head(2)
+                )
+                alt_kms = [float(others.iloc[i].get("km_open_est", 0) or 0) for i in range(len(others))]
+                alt_pcts = [float(others.iloc[i].get("pct_open", 0) or 0) for i in range(len(others))]
+                alt_probs = [float(others.iloc[i].get("open_prob", 0) or 0) for i in range(len(others))]
+                alt_names = [str(others.iloc[i].get("nome_stazione", "")) for i in range(len(others))]
+            except Exception:
+                best_km, alt_kms = 0.0, []
+                best_pct, alt_pcts = 0.0, []
+                best_prob, alt_probs = 0.0, []
+                alt_names = []
+
+            if (
+                _ai_output_has_km_contradiction(ai_overview_familiare, best_name, best_km, alt_names, alt_kms)
+                or _ai_output_has_opening_pct_or_prob_contradiction(ai_overview_familiare, best_name, best_pct, alt_pcts, best_prob, alt_probs)
+                or _ai_text_internal_km_conflict(ai_overview_familiare, best_name)
+            ):
+                ai_overview_familiare = _ai_build_explanatory_overview(df_kpis, best_name, livello, profilo, df_filtered_rec, df_with_indices)
             
             # Genera badge con nome modello
             model_name = parse_model_name(metadata.get("model"))
