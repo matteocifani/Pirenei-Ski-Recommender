@@ -2335,7 +2335,12 @@ def build_textual_tags(row: pd.Series, livello: str, profilo: str) -> List[str]:
 
 
 def _ai_build_explanatory_overview(
-    df_kpis: pd.DataFrame, best_name: str, livello: str, profilo: str
+    df_kpis: pd.DataFrame,
+    best_name: str,
+    livello: str,
+    profilo: str,
+    df_rec: pd.DataFrame | None = None,
+    df_all: pd.DataFrame | None = None,
 ) -> str:
     """Crea una sintesi deterministica, coerente e utile basata sui dati.
 
@@ -2366,7 +2371,7 @@ def _ai_build_explanatory_overview(
     b_av = float(best.get("avalanche", 3) or 3)
     b_sole = float(best.get("sole", 0) or 0)
 
-    # Alternative principali
+    # Alternative principali (per km, ma useremo anche recensioni se disponibili)
     others = (
         df_kpis[df_kpis["nome_stazione"] != best_name]
         .sort_values("km_open_est", ascending=False)
@@ -2404,7 +2409,71 @@ def _ai_build_explanatory_overview(
     if b_km >= max_okm:
         reasons.append(f"molti km disponibili ({fmt(b_km)} km)")
 
-    # Se nessuna ragione forte, scegli le migliori disponibili in base a soglie assolute
+    # Recensioni: fattori specifici del profilo
+    best_rec = None
+    others_rec = []
+    if df_rec is not None and not df_rec.empty and "nome_stazione" in df_rec.columns:
+        try:
+            rec_agg = (
+                df_rec.groupby("nome_stazione")[
+                    [c for c in ["festaiolo", "ristoranti", "coda", "Stelle", "familiare", "sicurezza", "panoramico"] if c in df_rec.columns]
+                ]
+                .mean().reset_index()
+            )
+            best_rec = rec_agg[rec_agg["nome_stazione"] == best_name].iloc[0].to_dict() if not rec_agg.empty else None
+            others_rec = rec_agg[rec_agg["nome_stazione"] != best_name].sort_values(
+                by=[c for c in ["festaiolo", "familiare", "panoramico"] if c in rec_agg.columns] or ["Stelle"],
+                ascending=False,
+            ).head(2).to_dict(orient="records")
+        except Exception:
+            best_rec, others_rec = None, []
+
+    def _lvl(x: float, kind: str) -> str:
+        try:
+            v = float(x)
+        except Exception:
+            return ""
+        if kind == "festaiolo":
+            return "atmosfera eccellente" if v > 0.7 else "atmosfera buona" if v > 0.4 else "atmosfera moderata"
+        if kind == "familiare":
+            return "molto adatta alle famiglie" if v > 0.7 else "adatta alle famiglie" if v > 0.4 else "adeguata"
+        if kind == "sicurezza":
+            return "sicurezza elevata" if v > 0.7 else "buona sicurezza" if v > 0.4 else "sicurezza standard"
+        if kind == "panoramico":
+            return "viste eccellenti" if v > 0.7 else "bei panorami" if v > 0.4 else "panorami discreti"
+        if kind == "ristoranti":
+            return "ristoranti ottimi" if v > 0.7 else "ristoranti buoni" if v > 0.4 else "ristoranti basic"
+        if kind == "coda":
+            return "code gestibili" if v < 0.4 else "code moderate" if v < 0.7 else "lunghe attese"
+        return ""
+
+    # Inserisci motivazioni review-driven se coerenti col profilo
+    prof = (profilo or "").strip().lower()
+    if best_rec:
+        if prof == "festaiolo" and "festaiolo" in best_rec:
+            reasons.append(_lvl(best_rec.get("festaiolo", 0), "festaiolo"))
+            if "ristoranti" in best_rec:
+                reasons.append(_lvl(best_rec.get("ristoranti", 0), "ristoranti"))
+        if prof == "familiare":
+            if "familiare" in best_rec:
+                reasons.append(_lvl(best_rec.get("familiare", 0), "familiare"))
+            if "sicurezza" in best_rec:
+                reasons.append(_lvl(best_rec.get("sicurezza", 0), "sicurezza"))
+            if "coda" in best_rec:
+                reasons.append(_lvl(best_rec.get("coda", 0), "coda"))
+        if prof == "panoramico" and "panoramico" in best_rec:
+            reasons.append(_lvl(best_rec.get("panoramico", 0), "panoramico"))
+        if prof == "lowcost":
+            # prova a usare €/km se disponibile nei dati complessivi
+            if df_all is not None and not df_all.empty and "Prezzo_skipass" in df_all.columns:
+                try:
+                    agg_all = df_all.groupby("nome_stazione").agg({"kmopen": "mean", "Prezzo_skipass": "mean"}).reset_index()
+                    brow = agg_all[agg_all["nome_stazione"] == best_name]
+                    if not brow.empty and float(brow.iloc[0]["kmopen"] or 0) > 0:
+                        euro_km = float(brow.iloc[0]["Prezzo_skipass"]) / float(brow.iloc[0]["kmopen"]) if float(brow.iloc[0]["kmopen"]) > 0 else 0
+                        reasons.append(f"buon rapporto €/km ({euro_km:.2f} €/km)")
+                except Exception:
+                    pass
     if not reasons:
         candidates = []
         if b_prob >= 0.6:
@@ -2421,10 +2490,12 @@ def _ai_build_explanatory_overview(
 
     # Frasi
     prof_txt = f" e profilo '{profilo}'" if profilo and str(profilo).lower() != "nessuno" else ""
-    s1 = (
-        f"Per il livello '{livello}'{prof_txt}, {best_name} è la scelta più sensata per questo periodo "
-        f"grazie a {', '.join(reasons[:2])}."
-    )
+    # Trade-off esplicito se ci sono alternative con più km
+    alt_with_more_km = [name for name, km in zip(o_names, o_kms) if km > b_km]
+    trade = ""
+    if alt_with_more_km:
+        trade = f"Pur avendo meno km rispetto a {', '.join(alt_with_more_km)}, "
+    s1 = f"Per il livello '{livello}'{prof_txt}, {trade}{best_name} è preferibile per {', '.join(reasons[:2])}."
 
     # Seconda frase: numeri chiave
     s2_parts = [f"{fmt(b_km)} km aperti", f"{fmt(b_pct, pct=True)} di piste aperte", f"probabilità {fmt(b_prob, pct=True)}"]
@@ -2437,8 +2508,7 @@ def _ai_build_explanatory_overview(
     # Terza frase: alternative, neutrale o con trade-off
     s3 = ""
     if o_names:
-        # Valuta trade-off: alternative con più km ma svantaggi in meteo/prob/proc
-        alt_with_more_km = [name for name, km in zip(o_names, o_kms) if km > b_km]
+        # Trade-off su alternative
         alt_worse = []
         if max_oprob < b_prob - 0.05:
             alt_worse.append("probabilità di apertura inferiore")
@@ -2449,13 +2519,11 @@ def _ai_build_explanatory_overview(
         if min_oav > b_av + 0.3:
             alt_worse.append("sicurezza peggiore")
         if alt_with_more_km and alt_worse:
-            s3 = (
-                f"Le alternative {', '.join(o_names)} offrono più km, ma {', '.join(alt_worse)}."
-            )
+            s3 = f"Le alternative {', '.join(o_names)} hanno più km, ma {', '.join(alt_worse)}."
         elif alt_with_more_km:
-            s3 = f"Le alternative {', '.join(o_names)} offrono più km disponibili."
+            s3 = f"Le alternative {', '.join(o_names)} hanno più km disponibili: valuta il trade-off in base alle priorità."
         else:
-            s3 = f"Le alternative {', '.join(o_names)} hanno numeri simili sui km disponibili."
+            s3 = f"Le alternative {', '.join(o_names)} mostrano numeri simili sui km disponibili."
 
     # Quarta frase (facoltativa): chiusura
     s4 = "In sintesi, bilancia meglio condizioni e apertura piste per il periodo selezionato."
@@ -4150,7 +4218,7 @@ def main():
                 _ai_output_has_km_contradiction(ai_overview, best_name, best_km, alt_names, alt_kms)
                 or _ai_output_has_opening_pct_or_prob_contradiction(ai_overview, best_name, best_pct, alt_pcts, best_prob, alt_probs)
             ):
-                ai_overview = _ai_build_explanatory_overview(df_kpis, best_name, livello, profilo)
+                ai_overview = _ai_build_explanatory_overview(df_kpis, best_name, livello, profilo, df_filtered_rec, df_with_indices)
 
             # Genera badge con nome modello
             model_name = parse_model_name(metadata.get("model"))
@@ -5052,7 +5120,7 @@ def main():
         
         # AI Overview per profilo panoramico (PRIMA dei grafici) - Riattivato
         try:
-            prompt_panoramico = build_panoramico_prompt(df_with_indices, best_name, livello, data_sel)
+            prompt_panoramico = build_panoramico_prompt(df_filtered_rec, best_name, livello, data_sel)
             ai_overview_panoramico, metadata = safe_llm_call(prompt_panoramico, max_tokens=360)
             # Guardrail su km/%/prob
             try:
@@ -5078,7 +5146,7 @@ def main():
                 _ai_output_has_km_contradiction(ai_overview_panoramico, best_name, best_km, alt_names, alt_kms)
                 or _ai_output_has_opening_pct_or_prob_contradiction(ai_overview_panoramico, best_name, best_pct, alt_pcts, best_prob, alt_probs)
             ):
-                ai_overview_panoramico = _ai_build_explanatory_overview(df_kpis, best_name, livello, profilo)
+                ai_overview_panoramico = _ai_build_explanatory_overview(df_kpis, best_name, livello, profilo, df_filtered_rec, df_with_indices)
             
             # Genera badge con nome modello
             model_name = parse_model_name(metadata.get("model"))
@@ -5156,7 +5224,7 @@ def main():
         
         # AI Overview per profilo familiare (PRIMA dei grafici) - Riattivato
         try:
-            prompt_familiare = build_familiare_prompt(df_with_indices, best_name, livello, data_sel)
+            prompt_familiare = build_familiare_prompt(df_filtered_rec, best_name, livello, data_sel)
             ai_overview_familiare, metadata = safe_llm_call(prompt_familiare, max_tokens=300)
             
             # Genera badge con nome modello
@@ -5266,7 +5334,7 @@ def main():
         
         # AI Overview per profilo festaiolo (PRIMA dei grafici) - Riattivato
         try:
-            prompt_festaiolo = build_festaiolo_prompt(df_with_indices, best_name, livello, data_sel)
+            prompt_festaiolo = build_festaiolo_prompt(df_filtered_rec, best_name, livello, data_sel)
             ai_overview_festaiolo, metadata = safe_llm_call(prompt_festaiolo, max_tokens=360)
             # Guardrail su km/%/prob
             try:
@@ -5292,7 +5360,7 @@ def main():
                 _ai_output_has_km_contradiction(ai_overview_festaiolo, best_name, best_km, alt_names, alt_kms)
                 or _ai_output_has_opening_pct_or_prob_contradiction(ai_overview_festaiolo, best_name, best_pct, alt_pcts, best_prob, alt_probs)
             ):
-                ai_overview_festaiolo = _ai_build_explanatory_overview(df_kpis, best_name, livello, profilo)
+                ai_overview_festaiolo = _ai_build_explanatory_overview(df_kpis, best_name, livello, profilo, df_filtered_rec, df_with_indices)
             
             # Genera badge con nome modello
             model_name = parse_model_name(metadata.get("model"))
@@ -5377,7 +5445,7 @@ def main():
         
         # AI Overview per profilo low-cost (PRIMA dei grafici) - Riattivato
         try:
-            prompt_lowcost = build_lowcost_prompt(df_with_indices, best_name, livello, data_sel)
+            prompt_lowcost = build_lowcost_prompt(df_filtered_rec, best_name, livello, data_sel)
             ai_overview_lowcost, metadata = safe_llm_call(prompt_lowcost, max_tokens=360)
             # Guardrail su km/%/prob
             try:
@@ -5403,7 +5471,7 @@ def main():
                 _ai_output_has_km_contradiction(ai_overview_lowcost, best_name, best_km, alt_names, alt_kms)
                 or _ai_output_has_opening_pct_or_prob_contradiction(ai_overview_lowcost, best_name, best_pct, alt_pcts, best_prob, alt_probs)
             ):
-                ai_overview_lowcost = _ai_build_explanatory_overview(df_kpis, best_name, livello, profilo)
+                ai_overview_lowcost = _ai_build_explanatory_overview(df_kpis, best_name, livello, profilo, df_filtered_rec, df_with_indices)
             
             # Genera badge con nome modello
             model_name = parse_model_name(metadata.get("model"))
