@@ -2377,6 +2377,38 @@ def _ai_output_has_km_contradiction(text: str, best_km: float, alt_kms: List[flo
         return False
 
 
+def _ai_output_has_opening_pct_or_prob_contradiction(
+    text: str,
+    best_pct: float,
+    alt_pcts: List[float],
+    best_prob: float,
+    alt_probs: List[float],
+) -> bool:
+    """Rileva incongruenze su percentuale di apertura e probabilità di apertura.
+
+    Heuristic:
+    - Se il testo contiene segnali di confronto su percentuali ("percentuale", "%", "più alta") e best_pct < max(alt_pcts) ⇒ contraddizione
+    - Se il testo contiene segnali di confronto su probabilità ("probabil", "più probabile") e best_prob < max(alt_probs) ⇒ contraddizione
+    """
+    if text is None:
+        return False
+    t = str(text).lower()
+    try:
+        max_pct = max([p for p in alt_pcts if p is not None] or [0])
+        max_prob = max([p for p in alt_probs if p is not None] or [0])
+    except Exception:
+        max_pct = 0
+        max_prob = 0
+
+    pct_lex = ("percentuale" in t or "%" in t) and ("più" in t or "maggiore" in t or "supera" in t)
+    prob_lex = ("probabil" in t) and ("più" in t or "maggiore" in t or "supera" in t)
+
+    pct_wrong = pct_lex and (best_pct < max_pct)
+    prob_wrong = prob_lex and (best_prob < max_prob)
+
+    return bool(pct_wrong or prob_wrong)
+
+
 def ensure_lat_lon(df: pd.DataFrame) -> pd.DataFrame:
     """Try to provide 'lat' and 'lon' columns by renaming common variants.
 
@@ -2451,10 +2483,11 @@ def build_llm_prompt(df_kpis: pd.DataFrame, best_name: str, livello: str, profil
     
     # Prompt ottimizzato per consigli pratici
     prompt = (
-        f"Scrivi ESATTAMENTE 2-3 frasi complete (massimo 80 parole totali) che spieghino perché {best_name} "
+        f"Scrivi ESATTAMENTE 3-4 frasi complete (massimo 120 parole totali) che spieghino perché {best_name} "
         f"è la scelta migliore per livello '{livello}' e profilo '{profilo}' il {target_date_italian}. "
         f"Usa SOLO i dati forniti. NON inventare nomi di piste, rifugi, montagne o luoghi specifici. "
         f"Includi: km piste aperte, condizioni meteo, confronto con alternativa. "
+        f"Collega i numeri ai grafici sottostanti: km piste aperte, % piste aperte, probabilità di apertura, meteo (nebbia/vento) e rischio valanghe. "
         f"PRIMA di scrivere i confronti, verifica SEMPRE i numeri nei dati forniti! "
         f"CONTROLLO FINALE: Prima di scrivere, scrivi mentalmente 'Se A=X km e B=Y km, allora A ha [MENO/PIÙ] km di B' e verifica che sia corretto! "
         f"IMPORTANTE: 1) REGOLA ORO per confronti numerici: se A ha X km e B ha Y km, e X < Y, allora A ha MENO km di B. "
@@ -2505,10 +2538,11 @@ def build_festaiolo_prompt(df_rec: pd.DataFrame, best_name: str, livello: str, t
     
     # Prompt per profilo festaiolo
     prompt = (
-        f"Scrivi ESATTAMENTE 2-3 frasi complete (massimo 80 parole totali) sul perché {best_name} "
+        f"Scrivi ESATTAMENTE 3-4 frasi complete (massimo 120 parole totali) sul perché {best_name} "
         f"è migliore per divertimento il {target_date_italian} (livello '{livello}'). "
         f"Usa SOLO i dati forniti. NON inventare nomi di locali, bar o ristoranti specifici. "
         f"Parla solo di 'atmosfera' e 'après-ski' generici. "
+        f"Collega i numeri ai grafici sottostanti quando possibile (es. sci notturno, snowpark, km aperti, % aperte, probabilità di apertura). "
         f"IMPORTANTE: 1) REGOLA ORO per confronti numerici: se A ha X km e B ha Y km, e X < Y, allora A ha MENO km di B. "
         f"MAI dire 'solo Y km' quando Y > X. Esempio: se A=38 km e B=81 km, scrivi 'A ha MENO km di B' NON 'B ha solo 81 km'. "
         f"2) Termina sempre con punto finale. 3) Non troncare mai le frasi a metà. "
@@ -2557,10 +2591,11 @@ def build_familiare_prompt(df_rec: pd.DataFrame, best_name: str, livello: str, t
     
     # Prompt per profilo familiare
     prompt = (
-        f"Scrivi ESATTAMENTE 2-3 frasi complete (massimo 80 parole totali) sul perché {best_name} "
+        f"Scrivi ESATTAMENTE 3-4 frasi complete (massimo 120 parole totali) sul perché {best_name} "
         f"è migliore per famiglie il {target_date_italian} (livello '{livello}'). "
         f"Usa SOLO i dati forniti. NON inventare nomi di servizi, aree o strutture specifiche. "
         f"Parla solo di 'servizi famiglia' e 'sicurezza' generici. "
+        f"Collega i numeri ai grafici sottostanti quando possibile (es. km aperti, % aperte, probabilità di apertura, sicurezza/affollamento se presenti). "
         f"IMPORTANTE: 1) REGOLA ORO per confronti numerici: se A ha X km e B ha Y km, e X < Y, allora A ha MENO km di B. "
         f"MAI dire 'solo Y km' quando Y > X. Esempio: se A=38 km e B=81 km, scrivi 'A ha MENO km di B' NON 'B ha solo 81 km'. "
         f"2) Termina sempre con punto finale. 3) Non troncare mai le frasi a metà. "
@@ -2607,10 +2642,11 @@ def build_panoramico_prompt(df_rec: pd.DataFrame, best_name: str, livello: str, 
     
     # Prompt per profilo panoramico
     prompt = (
-        f"Scrivi ESATTAMENTE 2-3 frasi complete (massimo 80 parole totali) sul perché {best_name} "
+        f"Scrivi ESATTAMENTE 3-4 frasi complete (massimo 120 parole totali) sul perché {best_name} "
         f"è migliore per panorami il {target_date_italian} (livello '{livello}'). "
         f"Usa SOLO i dati forniti. NON inventare nomi di montagne, rifugi o luoghi specifici. "
         f"Parla solo di 'viste panoramiche' o 'panorami' generici. "
+        f"Collega i numeri ai grafici sottostanti quando possibile (es. meteo, calendario panoramico, km aperti, % aperte, probabilità di apertura). "
         f"IMPORTANTE: 1) REGOLA ORO per confronti numerici: se A ha X km e B ha Y km, e X < Y, allora A ha MENO km di B. "
         f"MAI dire 'solo Y km' quando Y > X. Esempio: se A=38 km e B=81 km, scrivi 'A ha MENO km di B' NON 'B ha solo 81 km'. "
         f"2) Termina sempre con punto finale. 3) Non troncare mai le frasi a metà. "
@@ -2676,10 +2712,11 @@ def build_lowcost_prompt(df_rec: pd.DataFrame, best_name: str, livello: str, tar
     
     # Prompt per profilo low-cost
     prompt = (
-        f"Scrivi ESATTAMENTE 2-3 frasi complete (massimo 80 parole totali) sul perché {best_name} "
+        f"Scrivi ESATTAMENTE 3-4 frasi complete (massimo 120 parole totali) sul perché {best_name} "
         f"è migliore per convenienza il {target_date_italian} (livello '{livello}'). "
         f"Usa SOLO i dati forniti sui prezzi. NON inventare costi o offerte specifiche non presenti nei dati. "
         f"Parla solo di 'convenienza' e 'rapporto qualità-prezzo' generici. "
+        f"Collega i numeri ai grafici sottostanti quando possibile (es. prezzi, €/km, km aperti, % aperte, probabilità di apertura). "
         f"IMPORTANTE: 1) REGOLA ORO per confronti numerici: se A ha X km e B ha Y km, e X < Y, allora A ha MENO km di B. "
         f"MAI dire 'solo Y km' quando Y > X. Esempio: se A=38 km e B=81 km, scrivi 'A ha MENO km di B' NON 'B ha solo 81 km'. "
         f"2) Termina sempre con punto finale. 3) Non troncare mai le frasi a metà. "
@@ -3954,21 +3991,30 @@ def main():
         # AI Overview riattivato
         try:
             prompt = build_llm_prompt(df_kpis, best_name, livello, profilo, data_sel)
-            ai_overview, metadata = safe_llm_call(prompt, max_tokens=300)
+            ai_overview, metadata = safe_llm_call(prompt, max_tokens=360)
 
             # Controllo coerenza numerica basilare: evita 'supera/più km' se i km del best sono inferiori
             try:
                 brow = df_kpis[df_kpis["nome_stazione"] == best_name].iloc[0]
                 best_km = float(brow.get("km_open_est", 0) or 0)
+                best_pct = float(brow.get("pct_open", 0) or 0)
+                best_prob = float(brow.get("open_prob", 0) or 0)
                 others = (
                     df_kpis[df_kpis["nome_stazione"] != best_name]
                     .sort_values("km_open_est", ascending=False).head(2)
                 )
                 alt_kms = [float(others.iloc[i].get("km_open_est", 0) or 0) for i in range(len(others))]
+                alt_pcts = [float(others.iloc[i].get("pct_open", 0) or 0) for i in range(len(others))]
+                alt_probs = [float(others.iloc[i].get("open_prob", 0) or 0) for i in range(len(others))]
             except Exception:
                 best_km, alt_kms = 0.0, []
+                best_pct, alt_pcts = 0.0, []
+                best_prob, alt_probs = 0.0, []
 
-            if _ai_output_has_km_contradiction(ai_overview, best_km, alt_kms):
+            if (
+                _ai_output_has_km_contradiction(ai_overview, best_km, alt_kms)
+                or _ai_output_has_opening_pct_or_prob_contradiction(ai_overview, best_pct, alt_pcts, best_prob, alt_probs)
+            ):
                 ai_overview = _ai_make_fallback_overview(df_kpis, best_name)
 
             # Genera badge con nome modello
@@ -4872,7 +4918,30 @@ def main():
         # AI Overview per profilo panoramico (PRIMA dei grafici) - Riattivato
         try:
             prompt_panoramico = build_panoramico_prompt(df_with_indices, best_name, livello, data_sel)
-            ai_overview_panoramico, metadata = safe_llm_call(prompt_panoramico, max_tokens=300)
+            ai_overview_panoramico, metadata = safe_llm_call(prompt_panoramico, max_tokens=360)
+            # Guardrail su km/%/prob
+            try:
+                brow = df_kpis[df_kpis["nome_stazione"] == best_name].iloc[0]
+                best_km = float(brow.get("km_open_est", 0) or 0)
+                best_pct = float(brow.get("pct_open", 0) or 0)
+                best_prob = float(brow.get("open_prob", 0) or 0)
+                others = (
+                    df_kpis[df_kpis["nome_stazione"] != best_name]
+                    .sort_values("km_open_est", ascending=False).head(2)
+                )
+                alt_kms = [float(others.iloc[i].get("km_open_est", 0) or 0) for i in range(len(others))]
+                alt_pcts = [float(others.iloc[i].get("pct_open", 0) or 0) for i in range(len(others))]
+                alt_probs = [float(others.iloc[i].get("open_prob", 0) or 0) for i in range(len(others))]
+            except Exception:
+                best_km, alt_kms = 0.0, []
+                best_pct, alt_pcts = 0.0, []
+                best_prob, alt_probs = 0.0, []
+
+            if (
+                _ai_output_has_km_contradiction(ai_overview_panoramico, best_km, alt_kms)
+                or _ai_output_has_opening_pct_or_prob_contradiction(ai_overview_panoramico, best_pct, alt_pcts, best_prob, alt_probs)
+            ):
+                ai_overview_panoramico = _ai_make_fallback_overview(df_kpis, best_name)
             
             # Genera badge con nome modello
             model_name = parse_model_name(metadata.get("model"))
@@ -5061,7 +5130,30 @@ def main():
         # AI Overview per profilo festaiolo (PRIMA dei grafici) - Riattivato
         try:
             prompt_festaiolo = build_festaiolo_prompt(df_with_indices, best_name, livello, data_sel)
-            ai_overview_festaiolo, metadata = safe_llm_call(prompt_festaiolo, max_tokens=300)
+            ai_overview_festaiolo, metadata = safe_llm_call(prompt_festaiolo, max_tokens=360)
+            # Guardrail su km/%/prob
+            try:
+                brow = df_kpis[df_kpis["nome_stazione"] == best_name].iloc[0]
+                best_km = float(brow.get("km_open_est", 0) or 0)
+                best_pct = float(brow.get("pct_open", 0) or 0)
+                best_prob = float(brow.get("open_prob", 0) or 0)
+                others = (
+                    df_kpis[df_kpis["nome_stazione"] != best_name]
+                    .sort_values("km_open_est", ascending=False).head(2)
+                )
+                alt_kms = [float(others.iloc[i].get("km_open_est", 0) or 0) for i in range(len(others))]
+                alt_pcts = [float(others.iloc[i].get("pct_open", 0) or 0) for i in range(len(others))]
+                alt_probs = [float(others.iloc[i].get("open_prob", 0) or 0) for i in range(len(others))]
+            except Exception:
+                best_km, alt_kms = 0.0, []
+                best_pct, alt_pcts = 0.0, []
+                best_prob, alt_probs = 0.0, []
+
+            if (
+                _ai_output_has_km_contradiction(ai_overview_festaiolo, best_km, alt_kms)
+                or _ai_output_has_opening_pct_or_prob_contradiction(ai_overview_festaiolo, best_pct, alt_pcts, best_prob, alt_probs)
+            ):
+                ai_overview_festaiolo = _ai_make_fallback_overview(df_kpis, best_name)
             
             # Genera badge con nome modello
             model_name = parse_model_name(metadata.get("model"))
@@ -5147,7 +5239,30 @@ def main():
         # AI Overview per profilo low-cost (PRIMA dei grafici) - Riattivato
         try:
             prompt_lowcost = build_lowcost_prompt(df_with_indices, best_name, livello, data_sel)
-            ai_overview_lowcost, metadata = safe_llm_call(prompt_lowcost, max_tokens=300)
+            ai_overview_lowcost, metadata = safe_llm_call(prompt_lowcost, max_tokens=360)
+            # Guardrail su km/%/prob
+            try:
+                brow = df_kpis[df_kpis["nome_stazione"] == best_name].iloc[0]
+                best_km = float(brow.get("km_open_est", 0) or 0)
+                best_pct = float(brow.get("pct_open", 0) or 0)
+                best_prob = float(brow.get("open_prob", 0) or 0)
+                others = (
+                    df_kpis[df_kpis["nome_stazione"] != best_name]
+                    .sort_values("km_open_est", ascending=False).head(2)
+                )
+                alt_kms = [float(others.iloc[i].get("km_open_est", 0) or 0) for i in range(len(others))]
+                alt_pcts = [float(others.iloc[i].get("pct_open", 0) or 0) for i in range(len(others))]
+                alt_probs = [float(others.iloc[i].get("open_prob", 0) or 0) for i in range(len(others))]
+            except Exception:
+                best_km, alt_kms = 0.0, []
+                best_pct, alt_pcts = 0.0, []
+                best_prob, alt_probs = 0.0, []
+
+            if (
+                _ai_output_has_km_contradiction(ai_overview_lowcost, best_km, alt_kms)
+                or _ai_output_has_opening_pct_or_prob_contradiction(ai_overview_lowcost, best_pct, alt_pcts, best_prob, alt_probs)
+            ):
+                ai_overview_lowcost = _ai_make_fallback_overview(df_kpis, best_name)
             
             # Genera badge con nome modello
             model_name = parse_model_name(metadata.get("model"))
