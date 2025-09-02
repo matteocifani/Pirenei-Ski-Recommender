@@ -2334,30 +2334,133 @@ def build_textual_tags(row: pd.Series, livello: str, profilo: str) -> List[str]:
     return tags
 
 
-def _ai_make_fallback_overview(df_kpis: pd.DataFrame, best_name: str) -> str:
-    """Crea una sintesi deterministica e coerente (2 frasi) in caso di output LLM discutibile."""
-    try:
-        row = df_kpis[df_kpis["nome_stazione"] == best_name].iloc[0]
-    except Exception:
-        return f"{best_name} è la scelta più pratica per questo periodo."
-    km = float(row.get("km_open_est", 0) or 0)
-    pct = float(row.get("pct_open", 0) or 0)
-    prob = float(row.get("open_prob", 0) or 0)
-    nebbia = float(row.get("nebbia", 0) or 0)
-    vento = float(row.get("vento", 0) or 0)
-    avalanche = float(row.get("avalanche", 3) or 3)
-    meteo_status = "ottime" if nebbia < 0.2 and vento < 0.3 else "buone" if nebbia < 0.4 and vento < 0.5 else "variabili"
-    sicurezza_status = "eccellente" if avalanche < 2.5 else "buona" if avalanche < 3.5 else "da monitorare"
+def _ai_build_explanatory_overview(
+    df_kpis: pd.DataFrame, best_name: str, livello: str, profilo: str
+) -> str:
+    """Crea una sintesi deterministica, coerente e utile basata sui dati.
 
-    s1 = f"{best_name}: {km:.0f} km aperti ({pct*100:.0f}%), probabilità apertura {prob*100:.0f}%, condizioni {meteo_status}, sicurezza {sicurezza_status}."
-    others = df_kpis[df_kpis["nome_stazione"] != best_name].sort_values("km_open_est", ascending=False).head(2)
-    if not others.empty:
-        parts = []
-        for _, r in others.iterrows():
-            parts.append(f"{r['nome_stazione']} {float(r.get('km_open_est', 0) or 0):.0f} km")
-        s2 = "Confronto: " + ", ".join(parts) + "."
-        return s1 + " " + s2
-    return s1
+    Regole:
+    - Evita affermazioni comparative se non supportate dai numeri
+    - Evidenzia 2–3 motivi concreti (probabilità, % aperte, meteo, rischio)
+    - Se il best ha meno km, giustifica con meteo/probabilità/sicurezza
+    - Riferimento neutro alle alternative
+    """
+    try:
+        best = df_kpis[df_kpis["nome_stazione"] == best_name].iloc[0]
+    except Exception:
+        return f"{best_name} è una scelta solida per questo periodo."
+
+    def fmt(x, pct=False):
+        try:
+            v = float(x)
+            return f"{v*100:.0f}%" if pct else f"{v:.0f}"
+        except Exception:
+            return "-"
+
+    # Valori best
+    b_km = float(best.get("km_open_est", 0) or 0)
+    b_pct = float(best.get("pct_open", 0) or 0)
+    b_prob = float(best.get("open_prob", 0) or 0)
+    b_nebbia = float(best.get("nebbia", 0) or 0)
+    b_vento = float(best.get("vento", 0) or 0)
+    b_av = float(best.get("avalanche", 3) or 3)
+    b_sole = float(best.get("sole", 0) or 0)
+
+    # Alternative principali
+    others = (
+        df_kpis[df_kpis["nome_stazione"] != best_name]
+        .sort_values("km_open_est", ascending=False)
+        .head(2)
+        .copy()
+    )
+    o_names = others["nome_stazione"].tolist()
+    o_kms = others.get("km_open_est", pd.Series(dtype=float)).fillna(0).tolist()
+    o_pcts = others.get("pct_open", pd.Series(dtype=float)).fillna(0).tolist()
+    o_probs = others.get("open_prob", pd.Series(dtype=float)).fillna(0).tolist()
+    o_neb = others.get("nebbia", pd.Series(dtype=float)).fillna(0).tolist()
+    o_ven = others.get("vento", pd.Series(dtype=float)).fillna(0).tolist()
+    o_avs = others.get("avalanche", pd.Series(dtype=float)).fillna(3).tolist()
+
+    max_okm = max(o_kms) if o_kms else 0
+    max_opct = max(o_pcts) if o_pcts else 0
+    max_oprob = max(o_probs) if o_probs else 0
+    min_oneb = min(o_neb) if o_neb else 1
+    min_oven = min(o_ven) if o_ven else 1
+    min_oav = min(o_avs) if o_avs else 5
+
+    reasons = []
+
+    # Soglie/criteri
+    if b_prob >= 0.75 or (b_prob - max_oprob) >= 0.10:
+        reasons.append(f"alta probabilità di apertura ({fmt(b_prob, pct=True)})")
+    if b_pct >= 0.6 or (b_pct - max_opct) >= 0.10:
+        reasons.append(f"percentuale di piste aperte elevata ({fmt(b_pct, pct=True)})")
+    if b_nebbia <= 0.2 and b_vento <= 0.25:
+        reasons.append(f"meteo stabile (nebbia {fmt(b_nebbia, pct=True)}, vento {fmt(b_vento, pct=True)})")
+    elif (min_oneb - b_nebbia) >= 0.15 or (min_oven - b_vento) >= 0.15:
+        reasons.append(f"meteo più favorevole rispetto alle alternative")
+    if b_av <= 2.5 or (min_oav - b_av) >= 0.5:
+        reasons.append(f"rischio valanghe contenuto (livello {b_av:.1f})")
+    if b_km >= max_okm:
+        reasons.append(f"molti km disponibili ({fmt(b_km)} km)")
+
+    # Se nessuna ragione forte, scegli le migliori disponibili in base a soglie assolute
+    if not reasons:
+        candidates = []
+        if b_prob >= 0.6:
+            candidates.append(f"probabilità di apertura {fmt(b_prob, pct=True)}")
+        if b_pct >= 0.5:
+            candidates.append(f"{fmt(b_pct, pct=True)} di piste aperte")
+        if b_nebbia <= 0.3 and b_vento <= 0.35:
+            candidates.append("meteo tendenzialmente stabile")
+        if b_av <= 3.0:
+            candidates.append(f"sicurezza {('buona' if b_av <= 3.5 else 'da monitorare')}")
+        if b_km > 0:
+            candidates.append(f"{fmt(b_km)} km disponibili")
+        reasons = candidates[:3] if candidates else ["equilibrio tra piste e meteo"]
+
+    # Frasi
+    prof_txt = f" e profilo '{profilo}'" if profilo and str(profilo).lower() != "nessuno" else ""
+    s1 = (
+        f"Per il livello '{livello}'{prof_txt}, {best_name} è la scelta più sensata per questo periodo "
+        f"grazie a {', '.join(reasons[:2])}."
+    )
+
+    # Seconda frase: numeri chiave
+    s2_parts = [f"{fmt(b_km)} km aperti", f"{fmt(b_pct, pct=True)} di piste aperte", f"probabilità {fmt(b_prob, pct=True)}"]
+    if best.get("nebbia") is not None and best.get("vento") is not None:
+        s2_parts.append(f"nebbia {fmt(b_nebbia, pct=True)}, vento {fmt(b_vento, pct=True)}")
+    if best.get("avalanche") is not None:
+        s2_parts.append(f"rischio {b_av:.1f}")
+    s2 = "Dati principali: " + ", ".join(s2_parts) + "."
+
+    # Terza frase: alternative, neutrale o con trade-off
+    s3 = ""
+    if o_names:
+        # Valuta trade-off: alternative con più km ma svantaggi in meteo/prob/proc
+        alt_with_more_km = [name for name, km in zip(o_names, o_kms) if km > b_km]
+        alt_worse = []
+        if max_oprob < b_prob - 0.05:
+            alt_worse.append("probabilità di apertura inferiore")
+        if max_opct < b_pct - 0.08:
+            alt_worse.append("% piste aperte inferiore")
+        if min_oneb > b_nebbia + 0.10 or min_oven > b_vento + 0.10:
+            alt_worse.append("meteo meno stabile")
+        if min_oav > b_av + 0.3:
+            alt_worse.append("sicurezza peggiore")
+        if alt_with_more_km and alt_worse:
+            s3 = (
+                f"Le alternative {', '.join(o_names)} offrono più km, ma {', '.join(alt_worse)}."
+            )
+        elif alt_with_more_km:
+            s3 = f"Le alternative {', '.join(o_names)} offrono più km disponibili."
+        else:
+            s3 = f"Le alternative {', '.join(o_names)} hanno numeri simili sui km disponibili."
+
+    # Quarta frase (facoltativa): chiusura
+    s4 = "In sintesi, bilancia meglio condizioni e apertura piste per il periodo selezionato."
+
+    return " ".join([s for s in [s1, s2, s3, s4] if s])
 
 
 def _ai_output_has_km_contradiction(text: str, best_km: float, alt_kms: List[float]) -> bool:
@@ -2489,6 +2592,8 @@ def build_llm_prompt(df_kpis: pd.DataFrame, best_name: str, livello: str, profil
         f"Includi: km piste aperte, condizioni meteo, confronto con alternativa. "
         f"Collega i numeri ai grafici sottostanti: km piste aperte, % piste aperte, probabilità di apertura, meteo (nebbia/vento) e rischio valanghe. "
         f"PRIMA di scrivere i confronti, verifica SEMPRE i numeri nei dati forniti! "
+        f"SE {best_name} ha meno km aperti delle alternative, spiega perché è comunque preferibile citando meteo più stabile, maggiore probabilità di apertura o rischio valanghe più basso. "
+        f"NON usare 'supera' o 'più km' se {best_name} ha meno km; usa invece 'nonostante meno km, offre X'. "
         f"CONTROLLO FINALE: Prima di scrivere, scrivi mentalmente 'Se A=X km e B=Y km, allora A ha [MENO/PIÙ] km di B' e verifica che sia corretto! "
         f"IMPORTANTE: 1) REGOLA ORO per confronti numerici: se A ha X km e B ha Y km, e X < Y, allora A ha MENO km di B. "
         f"MAI dire 'solo Y km' quando Y > X. Esempio: se A=38 km e B=81 km, scrivi 'A ha MENO km di B' NON 'B ha solo 81 km'. "
@@ -4015,7 +4120,7 @@ def main():
                 _ai_output_has_km_contradiction(ai_overview, best_km, alt_kms)
                 or _ai_output_has_opening_pct_or_prob_contradiction(ai_overview, best_pct, alt_pcts, best_prob, alt_probs)
             ):
-                ai_overview = _ai_make_fallback_overview(df_kpis, best_name)
+                ai_overview = _ai_build_explanatory_overview(df_kpis, best_name, livello, profilo)
 
             # Genera badge con nome modello
             model_name = parse_model_name(metadata.get("model"))
@@ -4941,7 +5046,7 @@ def main():
                 _ai_output_has_km_contradiction(ai_overview_panoramico, best_km, alt_kms)
                 or _ai_output_has_opening_pct_or_prob_contradiction(ai_overview_panoramico, best_pct, alt_pcts, best_prob, alt_probs)
             ):
-                ai_overview_panoramico = _ai_make_fallback_overview(df_kpis, best_name)
+                ai_overview_panoramico = _ai_build_explanatory_overview(df_kpis, best_name, livello, profilo)
             
             # Genera badge con nome modello
             model_name = parse_model_name(metadata.get("model"))
@@ -5153,7 +5258,7 @@ def main():
                 _ai_output_has_km_contradiction(ai_overview_festaiolo, best_km, alt_kms)
                 or _ai_output_has_opening_pct_or_prob_contradiction(ai_overview_festaiolo, best_pct, alt_pcts, best_prob, alt_probs)
             ):
-                ai_overview_festaiolo = _ai_make_fallback_overview(df_kpis, best_name)
+                ai_overview_festaiolo = _ai_build_explanatory_overview(df_kpis, best_name, livello, profilo)
             
             # Genera badge con nome modello
             model_name = parse_model_name(metadata.get("model"))
@@ -5262,7 +5367,7 @@ def main():
                 _ai_output_has_km_contradiction(ai_overview_lowcost, best_km, alt_kms)
                 or _ai_output_has_opening_pct_or_prob_contradiction(ai_overview_lowcost, best_pct, alt_pcts, best_prob, alt_probs)
             ):
-                ai_overview_lowcost = _ai_make_fallback_overview(df_kpis, best_name)
+                ai_overview_lowcost = _ai_build_explanatory_overview(df_kpis, best_name, livello, profilo)
             
             # Genera badge con nome modello
             model_name = parse_model_name(metadata.get("model"))
