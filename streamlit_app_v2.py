@@ -3742,7 +3742,50 @@ def main():
                 return
 
     # Best station name
-    best_name = ranking.iloc[0]["nome_stazione"] if not ranking.empty else df_kpis.sort_values("km_open_est", ascending=False).iloc[0]["nome_stazione"]
+    best_name = None
+    if not ranking.empty:
+        # Per date passate/oggi scegli solo stazioni con KPI di apertura > 0
+        if sel_date is not None and sel_date <= datetime.date.today():
+            allowed = df_kpis[
+                (df_kpis.get("km_open_est", 0).fillna(0) > 0)
+                | (df_kpis.get("pct_open", 0).fillna(0) > 0)
+                | (df_kpis.get("open_prob", 0).fillna(0) > 0)
+            ]
+            if not allowed.empty:
+                allowed_set = set(allowed["nome_stazione"].astype(str))
+                filtered = ranking[ranking["nome_stazione"].astype(str).isin(allowed_set)]
+                if not filtered.empty:
+                    best_name = filtered.iloc[0]["nome_stazione"]
+                else:
+                    # Fallback: prendi la migliore per km aperti stimati tra le consentite
+                    best_name = allowed.sort_values("km_open_est", ascending=False).iloc[0]["nome_stazione"]
+            else:
+                # Tutto chiuso: messaggio e stop (doppia salvaguardia oltre al controllo precedente)
+                st.markdown("""
+                <div class="no-data-message">
+                    <div class="no-data-content">
+                        <h3 class="no-data-title">😔 Nessuna stazione aperta</h3>
+                        <p class="no-data-subtitle">Le piste sono chiuse in questa data. Prova a scegliere un altro giorno per divertirti sulla neve!</p>
+                        <p class="no-data-guide">⬆️ Modifica la data qui sopra</p>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+                return
+        else:
+            # Date future: usa la classifica per indice_finale
+            best_name = ranking.iloc[0]["nome_stazione"]
+
+    # Fallback finale se non impostato sopra
+    if best_name is None and not df_kpis.empty:
+        nonzero = df_kpis[
+            (df_kpis.get("km_open_est", 0).fillna(0) > 0)
+            | (df_kpis.get("pct_open", 0).fillna(0) > 0)
+            | (df_kpis.get("open_prob", 0).fillna(0) > 0)
+        ]
+        if sel_date is not None and sel_date <= datetime.date.today() and not nonzero.empty:
+            best_name = nonzero.sort_values("km_open_est", ascending=False).iloc[0]["nome_stazione"]
+        else:
+            best_name = df_kpis.sort_values("km_open_est", ascending=False).iloc[0]["nome_stazione"]
 
     # Mostra risultati solo dopo il completamento dell'onboarding
     if st.session_state.onboarding_completed and data_sel and livello and livello != "nessuno":
