@@ -40,27 +40,35 @@ def load_datasets():
         else:
             raise FileNotFoundError("File Meteo non trovato")
 
-        if os.path.exists("recensioni_updated.csv") and os.path.getsize("recensioni_updated.csv") > 0:
-            df_recensioni = pd.read_csv("recensioni_updated.csv")
-            if not df_recensioni.empty:
-                df_recensioni = df_recensioni.rename(
-                    columns={
-                        "Stazione": "nome_stazione",
-                        "Data": "date",
-                        "parole_ristorazione": "ristoranti",
-                        "parole_code": "coda",
-                        "parole_sicurezza": "sicurezza",
-                        "parole_famiglia": "familiare",
-                        "parole_festa": "festaiolo",
-                        "parole_panoramico": "panoramico",
-                        "parole_lowcost": "lowcost",
-                    }
-                )
-                df_recensioni["date"] = pd.to_datetime(df_recensioni["date"], errors="coerce")
-            else:
-                raise ValueError("File Recensioni vuoto")
+        # Recensioni: preferisci CSV sanificato pubblico; altrimenti usa quello completo locale
+        rec_pub = "recensioni_public.csv"
+        rec_full = "recensioni_updated.csv"
+        if os.path.exists(rec_pub) and os.path.getsize(rec_pub) > 0:
+            df_recensioni = pd.read_csv(rec_pub)
+        elif os.path.exists(rec_full) and os.path.getsize(rec_full) > 0:
+            df_recensioni = pd.read_csv(rec_full)
+        
+        if not df_recensioni.empty:
+            # Rimuovi PII se presenti (solo versione completa locale)
+            for col in ["Utente", "Contenuto recensione"]:
+                if col in df_recensioni.columns:
+                    df_recensioni = df_recensioni.drop(columns=[col])
+            df_recensioni = df_recensioni.rename(
+                columns={
+                    "Stazione": "nome_stazione",
+                    "Data": "date",
+                    "parole_ristorazione": "ristoranti",
+                    "parole_code": "coda",
+                    "parole_sicurezza": "sicurezza",
+                    "parole_famiglia": "familiare",
+                    "parole_festa": "festaiolo",
+                    "parole_panoramico": "panoramico",
+                    "parole_lowcost": "lowcost",
+                }
+            )
+            df_recensioni["date"] = pd.to_datetime(df_recensioni["date"], errors="coerce")
         else:
-            raise FileNotFoundError("File Recensioni non trovato")
+            raise ValueError("File Recensioni vuoto")
 
         # Derived columns
         if "espesormin" in df_infonieve.columns and "espesormax" in df_infonieve.columns:
@@ -75,5 +83,4 @@ def load_datasets():
     except Exception as exc:  # show a friendly warning in the UI
         st.warning(f"Impossibile caricare i file CSV: {exc}")
         return None, None, None, None
-
 

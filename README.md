@@ -57,7 +57,9 @@ Assicurati di avere nella stessa cartella dell'applicazione:
 - `Infonieve_updated.csv`
 - `Valanghe_filtered_updated.csv`
 - `df_meteo_updated.csv`
-- `recensioni_updated.csv`
+- `recensioni_public.csv` (sanificato, incluso nel repo) oppure `recensioni_updated.csv` locale non tracciato (contiene PII; non committare)
+
+Nota: il file pubblico contiene solo colonne aggregate utili ai calcoli (`Stelle`, `Data`, `Stazione`, indicatori booleani per profili) e non include campi personali come utente o testo recensione.
 
 ## 🛠️ Installazione
 
